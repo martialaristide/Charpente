@@ -216,6 +216,24 @@ an approved file asks again). Your answer is remembered locally in
 - `CHARPENTE_TRUST_ALL=1` skips the check entirely — set this in CI for a
   repository you trust.
 
+## Documentation
+
+This README is the overview. For more depth:
+
+- [`docs/tutorial.md`](docs/tutorial.md) — a hands-on walkthrough: a
+  library target, a dependency, a test, packaging, in about 15 minutes.
+- [`docs/dsl-reference.md`](docs/dsl-reference.md) — every `Workspace`/`Target`
+  method, `Kind`/`Language`/`OS`, name validation rules.
+- [`docs/cli-reference.md`](docs/cli-reference.md) — every command and flag,
+  including `--format installer` and the AI provider table.
+- [`docs/security.md`](docs/security.md) — the trust model in full, and
+  every other security-relevant design choice (no `shell=True`, path-safe
+  names, AI calls always opt-in).
+- [`docs/architecture.md`](docs/architecture.md) — internals, module by
+  module, for anyone reading the code or contributing.
+- [`docs/troubleshooting.md`](docs/troubleshooting.md) — common error
+  messages, organized so you can search this page for the exact text you're seeing.
+
 ## Development
 
 ```bash
@@ -225,7 +243,11 @@ pytest
 
 The test suite includes end-to-end tests that invoke the real host
 compiler (skipped automatically if none is found on `PATH`) alongside
-fully mocked unit tests — see `tests/test_cli_integration.py`.
+fully mocked unit tests — see `tests/test_cli_integration.py`. Every bug
+fixed in this project's history so far (see `CHANGELOG.md`) was caught by
+one of these real-compiler tests, not by code review or a mock — if
+you're adding anything that touches subprocess invocation or path
+construction, add one alongside the unit test.
 
 ## License
 
