@@ -46,3 +46,10 @@ def test_execute_with_no_question_raises_command_error():
 
     with pytest.raises(CommandError):
         execute([])
+
+
+def test_help_flag_shows_usage_instead_of_asking(capsys):
+    assert execute(["--help"]) == 0
+    assert "Usage: charpente ask" in capsys.readouterr().out
+    assert execute(["-h"]) == 0
+    assert "Usage: charpente ask" in capsys.readouterr().out

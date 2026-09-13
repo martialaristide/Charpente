@@ -36,6 +36,11 @@ def _parse_args(args: List[str]) -> Tuple[Optional[str], str]:
 
 
 def execute(args: List[str]) -> int:
+    if args in (["-h"], ["--help"]):
+        print("Usage: charpente ask [--file PATH] <question>")
+        print("Ask the configured AI provider a question, with workspace context if one is found.")
+        return 0
+
     file_arg, question = _parse_args(args)
     if not question:
         raise CommandError("Usage: charpente ask [--file PATH] <question>")
