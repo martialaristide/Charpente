@@ -6,11 +6,10 @@ from __future__ import annotations
 from typing import Optional
 
 from ..dsl.loader import WorkspaceLoadError, load_workspace
-from ..dsl.model import Workspace
+from ..dsl.model import OS, Workspace
 from ..dsl.trust import TrustDeniedError, TrustRequiredError
 from ..toolchains import NoToolchainFoundError, Toolchain, pick_default
 from ..platform import host_os
-from ..dsl.model import OS
 from ..workspace_finder import (
     AmbiguousWorkspaceError,
     WorkspaceNotFoundError,
@@ -50,6 +49,8 @@ def resolve_target(workspace: Workspace, name: Optional[str]):
         return workspace.targets[name]
     if len(workspace.targets) == 1:
         return next(iter(workspace.targets.values()))
+    if not workspace.targets:
+        raise CommandError(f"Workspace {workspace.name!r} has no targets to run.")
     raise CommandError(
         f"Workspace {workspace.name!r} has {len(workspace.targets)} targets; "
         f"specify one with --target. Known targets: {', '.join(sorted(workspace.targets))}"

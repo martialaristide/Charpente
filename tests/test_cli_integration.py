@@ -3,8 +3,6 @@ these are the tests that would have caught the two real bugs found during
 manual smoke testing (a Path.glob('**.cpp') pathlib rejects, and
 str.format() colliding with literal braces in a C++ source template).
 Skipped automatically if no compiler is available."""
-import shutil
-
 import pytest
 
 from charpente.cli import main
