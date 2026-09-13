@@ -193,3 +193,40 @@ with Workspace("W") as ws:
 
     assert main(["test"]) == 0
     assert "No test targets" in capsys.readouterr().out
+
+
+@requires_compiler
+def test_package_installer_format_generates_a_real_platform_script(tmp_path, capsys, monkeypatch):
+    """Doesn't require iscc/dpkg-deb/pkgbuild to be installed (this
+    environment has none of them) -- confirms the honest fallback: the
+    real installer script/staging is written and built for real, only the
+    final compile-to-.exe/.deb/.pkg step is skipped with a clear message
+    when the platform tool isn't on PATH."""
+    import shutil
+
+    from charpente import installer
+    from charpente.platform import host_os
+    from charpente.dsl.model import OS
+
+    monkeypatch.setattr(shutil, "which", lambda name: None)  # force the "tool not found" path
+
+    main(["init", "Demo", "--dir", str(tmp_path)])
+    workspace_file = tmp_path / "Demo.charpente"
+
+    code = main(["package", "--file", str(workspace_file), "--format", "installer",
+                "--config", "Debug", "--version", "9.9.9"])
+    assert code == 0
+    out = capsys.readouterr().out
+
+    this_os = host_os()
+    if this_os == OS.WINDOWS:
+        script = tmp_path / "dist" / "Demo-setup.iss"
+        assert script.exists()
+        assert "AppVersion=9.9.9" in script.read_text()
+        assert "not found on PATH" in out
+    elif this_os == OS.LINUX:
+        assert (tmp_path / "dist" / "Demo-deb-staging" / "DEBIAN" / "control").exists()
+        assert "not found on PATH" in out
+    elif this_os == OS.MACOS:
+        assert (tmp_path / "dist" / "Demo-pkg-staging" / "Demo").exists()
+        assert "not found" in out

@@ -39,7 +39,7 @@ honestly:
 | macOS build (Apple Clang) | ✅ Implemented, unit-tested; not yet run against a real macOS compiler in this environment |
 | Incremental builds | ✅ Timestamp-based only (object newer than source ⇒ skip). **No per-header dependency tracking yet** — editing a header won't trigger a rebuild of the `.cpp` files that include it. Run `charpente clean` if a build looks stale. |
 | `charpente init/build/run/clean/test/package` | ✅ Working |
-| `package` | ✅ Produces a `.zip` of the build output. **Not** a platform installer (no `.msi`/`.pkg`/`.deb` yet) |
+| `package` | ✅ `.zip` by default. `--format installer` generates a real Inno Setup `.iss`/.deb staging/.pkg staging and builds it if `iscc`/`dpkg-deb`/`pkgbuild` is on PATH (otherwise leaves the script/staging with the exact command to finish by hand). Generation logic is unit-tested on all three platforms; actual `iscc`/`dpkg-deb`/`pkgbuild` invocation has only been exercised where the tool happens to be installed |
 | `charpente ask` / `--ai-diagnose` | ✅ Working, fully optional (see [AI features](#ai-features)) |
 | Precompiled headers, C++20 modules, shared library exports on Windows (`__declspec`), cross-compilation | ❌ Not yet |
 | Mobile/web/console targets (Android, iOS, WASM, ...) | ❌ Not yet — desktop only for now |
@@ -53,7 +53,7 @@ Requires Python 3.9+ and a C/C++ compiler for your target platform:
 - **macOS**: Xcode Command Line Tools (`xcode-select --install`), which provides Apple Clang.
 
 ```bash
-git clone https://github.com/<ton-compte-github>/Charpente.git
+git clone https://github.com/martialaristide/Charpente.git
 cd Charpente
 pip install -e .
 
@@ -146,13 +146,29 @@ targets at build time with a message naming the exact problem.
 | `charpente build [--config Debug\|Release] [--keep-going] [--ai-diagnose]` | Compiles every target, in dependency order |
 | `charpente run [--target NAME] [--config ...] [--no-build] [-- program args]` | Builds (unless `--no-build`) then executes the target |
 | `charpente test [--config ...]` | Builds and runs every `Kind.TEST` target, reports pass/fail |
-| `charpente package [--target NAME] [--config Release] [--output PATH]` | Zips the build output |
+| `charpente package [--target NAME] [--config Release] [--format zip\|installer] [--version X.Y.Z] [--output PATH]` | Zips the build output, or builds a real platform installer |
 | `charpente clean` | Removes `build/` |
 | `charpente ask "question"` | Asks the configured AI provider a question, with workspace context if one is found |
 
 Every command accepts `--file PATH` to point at a specific `.charpente`
 file instead of relying on auto-discovery (the single `.charpente` file in
 the current directory or the nearest parent that has one).
+
+### Building a real installer
+
+```bash
+charpente package --format installer --config Release --version 1.2.3
+```
+
+Per platform, this needs the platform's own packaging tool on `PATH`:
+
+| Platform | Tool | Output | If the tool is missing |
+|---|---|---|---|
+| Windows | [Inno Setup](https://jrsoftware.org/isinfo.php) (`iscc`) | `dist/<target>-setup.exe` | The `.iss` script is still written to `dist/`; install Inno Setup and run the printed `iscc ...` command yourself |
+| Linux | `dpkg-deb` (usually preinstalled) | `dist/<target>.deb` | The staging tree (`DEBIAN/control` + binary) is still written to `dist/`; run the printed `dpkg-deb ...` command on a Debian/Ubuntu machine |
+| macOS | `pkgbuild` (via Xcode Command Line Tools) | `dist/<target>.pkg` | The staging tree is still written to `dist/`; run the printed `pkgbuild ...` command on macOS |
+
+`--format zip` (the default) needs no external tool on any platform.
 
 ## AI features
 

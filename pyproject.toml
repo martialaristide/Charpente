@@ -34,8 +34,8 @@ ai = ["anthropic>=0.34.0", "openai>=1.40.0"]
 dev = ["pytest>=7.0"]
 
 [project.urls]
-Source = "https://github.com/<ton-compte-github>/Charpente"
-Issues = "https://github.com/<ton-compte-github>/Charpente/issues"
+Source = "https://github.com/martialaristide/Charpente"
+Issues = "https://github.com/martialaristide/Charpente/issues"
 
 [project.scripts]
 charpente = "charpente.cli:main"
