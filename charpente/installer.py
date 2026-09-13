@@ -35,21 +35,35 @@ def inno_setup_script(
     exe_name: str,
 ) -> str:
     """Text of an Inno Setup (.iss) script that installs every file in
-    `build_dir` and adds a Start Menu shortcut launching `exe_name`."""
+    `build_dir` and adds a Start Menu shortcut launching `exe_name`.
+
+    Inno Setup syntax always requires Windows-style backslash paths,
+    regardless of which host OS actually generates this text: `str(Path)`
+    uses the *runtime* platform's separator (forward slashes on Linux/
+    macOS), which would silently produce an invalid mixed-separator .iss
+    file if this ever ran somewhere other than Windows (currently it
+    doesn't -- commands/package.py only calls this on OS.WINDOWS -- but
+    this function is documented as a pure, standalone generator, and a
+    unit test exercising it directly on Linux/macOS CI is exactly what
+    caught this). Forcing backslashes here makes the output correct
+    independent of that call site.
+    """
+    build_dir_str = str(build_dir).replace("/", "\\")
+    output_dir_str = str(output_dir).replace("/", "\\")
     return (
         f"[Setup]\n"
         f"AppName={target.name}\n"
         f"AppVersion={version}\n"
         f"DefaultDirName={{autopf}}\\{target.name}\n"
         f"DefaultGroupName={target.name}\n"
-        f"OutputDir={output_dir}\n"
+        f"OutputDir={output_dir_str}\n"
         f"OutputBaseFilename={target.name}-setup\n"
         f"Compression=lzma\n"
         f"SolidCompression=yes\n"
         f"DisableProgramGroupPage=yes\n"
         f"\n"
         f"[Files]\n"
-        f'Source: "{build_dir}\\*"; DestDir: "{{app}}"; Flags: recursesubdirs\n'
+        f'Source: "{build_dir_str}\\*"; DestDir: "{{app}}"; Flags: recursesubdirs\n'
         f"\n"
         f"[Icons]\n"
         f'Name: "{{group}}\\{target.name}"; Filename: "{{app}}\\{exe_name}"\n'

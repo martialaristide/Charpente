@@ -73,9 +73,20 @@ def link_args(
         args = [toolchain.linker, *[str(o) for o in objects], f"/Fe{output}", "/nologo"]
         if target.kind == Kind.SHARED_LIBRARY:
             args.append("/LD")
-        args += [f"/LIBPATH:{d}" for d in library_dirs]
+        # /LIBPATH: (and any other pure linker flag) must come after a
+        # literal "/link" separator: cl.exe and clang-cl both compile-then-
+        # link in one invocation, and only forward whatever follows "/link"
+        # to the linker unmodified -- without it, clang-cl in particular
+        # rejects "/LIBPATH:..." outright as an unrecognized input file
+        # ("no such file or directory"), a real failure caught by this
+        # project's own CI (windows-latest ships clang-cl, not cl.exe, on
+        # PATH by default -- a toolchain this project hadn't been
+        # exercised against until CI ran on a machine that has it).
+        if library_dirs or target.extra_link_flags:
+            args.append("/link")
+            args += [f"/LIBPATH:{d}" for d in library_dirs]
+            args += target.extra_link_flags
         args += [f"{lib}.lib" for lib in target.link_libraries]
-        args += target.extra_link_flags
         return args
 
     args = [toolchain.linker, *[str(o) for o in objects], "-o", str(output)]

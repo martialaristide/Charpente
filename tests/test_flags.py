@@ -157,3 +157,35 @@ def test_link_args_without_library_dirs_is_unaffected():
     t = Target(name="app", kind=Kind.EXECUTABLE)
     args = flags.link_args(GCC, t, [Path("a.o")], Path("app"))
     assert not any(a.startswith("-L") for a in args)
+
+
+def test_msvc_link_puts_link_separator_before_libpath():
+    """Regression test: cl.exe and clang-cl both require a literal "/link"
+    token before any pure linker flag (like /LIBPATH:) in a combined
+    compile+link invocation -- clang-cl (unlike, apparently, real cl.exe in
+    some configurations) rejects /LIBPATH: outright without it, a real
+    failure caught by this project's own CI running on a Windows runner
+    that has clang-cl but not cl.exe on PATH."""
+    t = Target(name="app", kind=Kind.EXECUTABLE, link_libraries=["engine"])
+    args = flags.link_args(MSVC, t, [Path("a.obj")], Path("app.exe"),
+                           library_dirs=[Path("build/Debug/engine")])
+    assert "/link" in args
+    link_index = args.index("/link")
+    libpath_index = next(i for i, a in enumerate(args) if a.startswith("/LIBPATH:"))
+    assert link_index < libpath_index
+
+
+def test_msvc_link_without_library_dirs_or_extra_flags_omits_link_separator():
+    """No pure linker flags to forward -> no need for the /link separator
+    at all (lib names alone are fine as plain arguments)."""
+    t = Target(name="app", kind=Kind.EXECUTABLE, link_libraries=["ws2_32"])
+    args = flags.link_args(MSVC, t, [Path("a.obj")], Path("app.exe"))
+    assert "/link" not in args
+    assert "ws2_32.lib" in args
+
+
+def test_msvc_extra_link_flags_come_after_link_separator():
+    t = Target(name="app", kind=Kind.EXECUTABLE, extra_link_flags=["/SUBSYSTEM:CONSOLE"])
+    args = flags.link_args(MSVC, t, [Path("a.obj")], Path("app.exe"))
+    assert "/link" in args
+    assert args.index("/link") < args.index("/SUBSYSTEM:CONSOLE")
