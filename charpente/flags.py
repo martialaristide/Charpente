@@ -50,7 +50,18 @@ def compile_args(toolchain: Toolchain, target: Target, source: Path, obj: Path, 
     return args
 
 
-def link_args(toolchain: Toolchain, target: Target, objects: List[Path], output: Path) -> List[str]:
+def link_args(
+    toolchain: Toolchain,
+    target: Target,
+    objects: List[Path],
+    output: Path,
+    *,
+    library_dirs: List[Path] = (),
+) -> List[str]:
+    """`library_dirs` are extra `-L`/`/LIBPATH:` search paths -- the builder
+    passes each dependency's own build directory here, so `t.links([dep])`
+    finds `libdep.a`/`dep.lib` without the .charpente file having to know
+    where the build system put it."""
     fam = family(toolchain)
 
     if target.kind == Kind.STATIC_LIBRARY:
@@ -62,6 +73,7 @@ def link_args(toolchain: Toolchain, target: Target, objects: List[Path], output:
         args = [toolchain.linker, *[str(o) for o in objects], f"/Fe{output}", "/nologo"]
         if target.kind == Kind.SHARED_LIBRARY:
             args.append("/LD")
+        args += [f"/LIBPATH:{d}" for d in library_dirs]
         args += [f"{lib}.lib" for lib in target.link_libraries]
         args += target.extra_link_flags
         return args
@@ -69,6 +81,7 @@ def link_args(toolchain: Toolchain, target: Target, objects: List[Path], output:
     args = [toolchain.linker, *[str(o) for o in objects], "-o", str(output)]
     if target.kind == Kind.SHARED_LIBRARY:
         args.append("-shared")
+    args += [f"-L{d}" for d in library_dirs]
     args += [f"-l{lib}" for lib in target.link_libraries]
     args += target.extra_link_flags
     return args

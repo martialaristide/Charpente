@@ -160,3 +160,33 @@ def test_keep_going_skips_only_dependents_of_the_failed_target(tmp_path):
     assert result.target("app").ok is False
     assert "depends on failed" in result.target("app").error
     assert result.target("tool").ok is True  # unrelated target still built
+
+
+def test_dependency_library_is_findable_by_the_linker(tmp_path):
+    """The linker step for a target must be able to find a static library
+    it depends on, via an automatically-added -L pointing at that
+    dependency's own build directory -- without the .charpente file
+    declaring any path itself."""
+    (tmp_path / "core.cpp").write_text("void core(){}")
+    (tmp_path / "app.cpp").write_text("int main(){return 0;}")
+    ws = Workspace(name="Demo", location=tmp_path)
+    ws.add_target(Target(name="core", kind=Kind.STATIC_LIBRARY,
+                         source_patterns=["core.cpp"], location=tmp_path))
+    ws.add_target(Target(name="app", depends_on=["core"], link_libraries=["core"],
+                         source_patterns=["app.cpp"], location=tmp_path))
+
+    fake = _fake_compiler()
+    seen_link_argv = []
+
+    def spying_run(argv, **kwargs):
+        if "-o" in argv and "-c" not in argv:  # the link step, not a compile step
+            seen_link_argv.append(argv)
+        return fake(argv, **kwargs)
+
+    result = builder.build_workspace(ws, GCC, OS.LINUX, run=spying_run)
+    assert result.ok
+
+    app_link_argv = seen_link_argv[-1]
+    core_build_dir = str(builder.build_dir(ws, "Debug", ws.targets["core"]))
+    assert f"-L{core_build_dir}" in app_link_argv
+    assert "-lcore" in app_link_argv

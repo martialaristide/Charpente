@@ -1,0 +1,20 @@
+from charpente import *
+
+with Workspace("Game") as ws:
+    ws.configurations(["Debug", "Release"])
+
+    with Target("engine") as t:
+        t.kind(Kind.STATIC_LIBRARY)
+        t.language(Language.CPP)
+        t.standard("c++17")
+        t.sources(["engine/src/**/*.cpp"])
+        t.include_dirs(["engine/include"])
+
+    with Target("game") as t:
+        t.kind(Kind.EXECUTABLE)
+        t.language(Language.CPP)
+        t.standard("c++17")
+        t.depends_on(["engine"])
+        t.links(["engine"])
+        t.sources(["game/src/**/*.cpp"])
+        t.include_dirs(["engine/include"])

@@ -1,0 +1,10 @@
+from charpente import *
+
+with Workspace("HelloConsole") as ws:
+    ws.configurations(["Debug", "Release"])
+
+    with Target("hello") as t:
+        t.kind(Kind.EXECUTABLE)
+        t.language(Language.CPP)
+        t.standard("c++17")
+        t.sources(["src/**/*.cpp"])

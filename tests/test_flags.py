@@ -131,3 +131,29 @@ def test_shared_library_naming_per_os():
     assert flags.output_filename(t, OS.LINUX, GCC) == "libcore.so"
     assert flags.output_filename(t, OS.MACOS, GCC) == "libcore.dylib"
     assert flags.output_filename(t, OS.WINDOWS, MSVC) == "core.dll"
+
+
+# =============================================================================
+#  link_args() library_dirs -- resolving a dependency's static library
+# =============================================================================
+def test_gnu_link_includes_library_search_paths():
+    t = Target(name="app", kind=Kind.EXECUTABLE, link_libraries=["engine"])
+    args = flags.link_args(GCC, t, [Path("a.o")], Path("app"),
+                           library_dirs=[Path("build/Debug/engine")])
+    assert f"-L{Path('build/Debug/engine')}" in args
+    assert "-lengine" in args
+    # -L must come before -l so the linker actually searches it.
+    assert args.index(f"-L{Path('build/Debug/engine')}") < args.index("-lengine")
+
+
+def test_msvc_link_includes_libpath():
+    t = Target(name="app", kind=Kind.EXECUTABLE, link_libraries=["engine"])
+    args = flags.link_args(MSVC, t, [Path("a.obj")], Path("app.exe"),
+                           library_dirs=[Path("build/Debug/engine")])
+    assert f"/LIBPATH:{Path('build/Debug/engine')}" in args
+
+
+def test_link_args_without_library_dirs_is_unaffected():
+    t = Target(name="app", kind=Kind.EXECUTABLE)
+    args = flags.link_args(GCC, t, [Path("a.o")], Path("app"))
+    assert not any(a.startswith("-L") for a in args)

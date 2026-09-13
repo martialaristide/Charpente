@@ -96,7 +96,15 @@ def build_target(
     if not needs_link:
         return TargetResult(target.name, ok=True, output_path=output_path, skipped=True, log=log)
 
-    argv = flags.link_args(toolchain, target, objects, output_path)
+    # Each dependency's own build directory is where its .a/.lib landed --
+    # added as a library search path so `t.links([dep_name])` resolves
+    # without the .charpente file having to know Charpente's build layout.
+    dependency_dirs = [
+        build_dir(workspace, config, workspace.targets[dep])
+        for dep in target.depends_on
+        if dep in workspace.targets
+    ]
+    argv = flags.link_args(toolchain, target, objects, output_path, library_dirs=dependency_dirs)
     log.append(" ".join(argv))
     result = _run(argv, run)
     if result.returncode != 0:
