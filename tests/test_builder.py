@@ -190,3 +190,63 @@ def test_dependency_library_is_findable_by_the_linker(tmp_path):
     core_build_dir = str(builder.build_dir(ws, "Debug", ws.targets["core"]))
     assert f"-L{core_build_dir}" in app_link_argv
     assert "-lcore" in app_link_argv
+
+
+# =============================================================================
+#  dependency_closure() / build_workspace(only=...)
+# =============================================================================
+def test_dependency_closure_includes_transitive_dependencies():
+    ws = Workspace(name="Demo", location=Path("."))
+    ws.add_target(Target(name="base", location=Path(".")))
+    ws.add_target(Target(name="mid", depends_on=["base"], location=Path(".")))
+    ws.add_target(Target(name="top", depends_on=["mid"], location=Path(".")))
+    ws.add_target(Target(name="unrelated", location=Path(".")))
+
+    closure = builder.dependency_closure(ws, "top")
+    assert closure == {"top", "mid", "base"}
+
+
+def test_dependency_closure_of_leaf_target_is_itself_only():
+    ws = Workspace(name="Demo", location=Path("."))
+    ws.add_target(Target(name="alone", location=Path(".")))
+    assert builder.dependency_closure(ws, "alone") == {"alone"}
+
+
+def test_build_workspace_only_skips_targets_outside_the_set(tmp_path):
+    (tmp_path / "core.cpp").write_text("void core(){}")
+    (tmp_path / "app.cpp").write_text("int main(){return 0;}")
+    (tmp_path / "unrelated.cpp").write_text("int unrelated(){return 0;}")
+    ws = Workspace(name="Demo", location=tmp_path)
+    ws.add_target(Target(name="core", kind=Kind.STATIC_LIBRARY, source_patterns=["core.cpp"], location=tmp_path))
+    ws.add_target(Target(name="app", depends_on=["core"], link_libraries=["core"],
+                         source_patterns=["app.cpp"], location=tmp_path))
+    ws.add_target(Target(name="unrelated", source_patterns=["unrelated.cpp"], location=tmp_path))
+
+    closure = builder.dependency_closure(ws, "app")
+    result = builder.build_workspace(ws, GCC, OS.LINUX, run=_fake_compiler(), only=closure)
+
+    assert result.ok
+    assert {t.target_name for t in result.targets} == {"core", "app"}  # "unrelated" never attempted
+
+
+def test_a_config_never_built_via_full_workspace_build_still_links_correctly(tmp_path):
+    """Regression test for a real bug: run/package/test used to build a
+    single target directly without its dependencies, so the *first* time a
+    given config was requested other than through `charpente build`, the
+    link step failed with an undefined reference because the dependency's
+    library had never been built for that config."""
+    (tmp_path / "core.cpp").write_text("void core(){}")
+    (tmp_path / "app.cpp").write_text("int main(){return 0;}")
+    ws = Workspace(name="Demo", location=tmp_path)
+    ws.add_target(Target(name="core", kind=Kind.STATIC_LIBRARY, source_patterns=["core.cpp"], location=tmp_path))
+    ws.add_target(Target(name="app", depends_on=["core"], link_libraries=["core"],
+                         source_patterns=["app.cpp"], location=tmp_path))
+
+    # Note: no prior build_workspace() call for "Release" at all -- this
+    # must be the very first build of either target in this config.
+    closure = builder.dependency_closure(ws, "app")
+    result = builder.build_workspace(ws, GCC, OS.LINUX, run=_fake_compiler(),
+                                     config="Release", only=closure)
+    assert result.ok
+    assert result.target("core").ok
+    assert result.target("app").ok

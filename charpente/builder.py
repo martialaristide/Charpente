@@ -13,7 +13,7 @@ from __future__ import annotations
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, Iterable, List, Optional, Set
 
 from . import flags
 from .dsl.model import Kind, OS, Target, Workspace
@@ -55,6 +55,17 @@ def _run(argv: List[str], run: RunFn) -> "subprocess.CompletedProcess":
     return run(argv, capture_output=True, text=True, shell=False)
 
 
+def _error_text(result: "subprocess.CompletedProcess") -> str:
+    """Both streams, not just one: a compiler/linker can split a single
+    failure across stdout and stderr (e.g. GCC's "undefined reference"
+    detail lines on stderr alongside collect2's summary line also on
+    stderr, or informational compiler output on stdout with the actual
+    error on stderr) -- picking only one risks silently dropping the part
+    a human (or --ai-diagnose) actually needs to see."""
+    parts = [s for s in (result.stdout, result.stderr) if s and s.strip()]
+    return "\n".join(parts).strip()
+
+
 def build_target(
     workspace: Workspace,
     target: Target,
@@ -89,7 +100,7 @@ def build_target(
         log.append(" ".join(argv))
         result = _run(argv, run)
         if result.returncode != 0:
-            return TargetResult(target.name, ok=False, error=(result.stderr or result.stdout).strip(), log=log)
+            return TargetResult(target.name, ok=False, error=_error_text(result), log=log)
 
     output_path = out_dir / flags.output_filename(target, target_os, toolchain)
     needs_link = any_compiled or not output_path.exists()
@@ -108,9 +119,30 @@ def build_target(
     log.append(" ".join(argv))
     result = _run(argv, run)
     if result.returncode != 0:
-        return TargetResult(target.name, ok=False, error=(result.stderr or result.stdout).strip(), log=log)
+        return TargetResult(target.name, ok=False, error=_error_text(result), log=log)
 
     return TargetResult(target.name, ok=True, output_path=output_path, log=log)
+
+
+def dependency_closure(workspace: Workspace, target_name: str) -> Set[str]:
+    """`target_name` plus everything it depends on, transitively -- the
+    minimal set of targets that must be built (in workspace.build_order()
+    order) to produce `target_name` correctly. Used by commands (`run`,
+    `package`, `test`) that build a single target directly: without this,
+    asking for a target in a configuration that's never been built before
+    would try to link against a dependency's library that was never built
+    for that configuration either."""
+    needed: Set[str] = set()
+
+    def visit(name: str) -> None:
+        if name in needed or name not in workspace.targets:
+            return
+        needed.add(name)
+        for dep in workspace.targets[name].depends_on:
+            visit(dep)
+
+    visit(target_name)
+    return needed
 
 
 def build_workspace(
@@ -121,11 +153,18 @@ def build_workspace(
     config: str = "Debug",
     run: RunFn = subprocess.run,
     keep_going: bool = False,
+    only: Optional[Iterable[str]] = None,
 ) -> BuildResult:
-    """Builds every target in dependency order. Stops at the first failure
-    unless keep_going=True, in which case it skips only the targets that
-    depend (directly or transitively) on a failed one."""
+    """Builds every target in dependency order (or, with `only`, just the
+    given subset -- still in dependency order, still with the same
+    keep_going semantics -- see dependency_closure() for building one
+    target plus what it needs). Stops at the first failure unless
+    keep_going=True, in which case it skips only the targets that depend
+    (directly or transitively) on a failed one."""
     order = workspace.build_order()
+    if only is not None:
+        only_set = set(only)
+        order = [name for name in order if name in only_set]
     results: List[TargetResult] = []
     failed: set[str] = set()
 

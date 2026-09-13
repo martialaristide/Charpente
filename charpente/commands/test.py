@@ -4,7 +4,7 @@ import argparse
 import subprocess
 from typing import List
 
-from ..builder import build_target
+from ..builder import build_workspace, dependency_closure
 from ..dsl.model import Kind
 from ._common import load, toolchain_for_host
 
@@ -25,13 +25,19 @@ def execute(args: List[str]) -> int:
 
     failures = []
     for target in test_targets:
-        build_result = build_target(workspace, target, toolchain, target_os, config=parsed.config)
-        if not build_result.ok:
-            print(f"  [BUILD FAILED] {target.name}: {build_result.error}")
+        # Build the test target's dependency_closure(), not just the target
+        # itself -- see run.py's execute() for why.
+        closure = dependency_closure(workspace, target.name)
+        workspace_result = build_workspace(workspace, toolchain, target_os,
+                                           config=parsed.config, only=closure)
+        target_result = workspace_result.target(target.name)
+        if target_result is None or not target_result.ok:
+            error = target_result.error if target_result else "unknown target build failure"
+            print(f"  [BUILD FAILED] {target.name}: {error}")
             failures.append(target.name)
             continue
 
-        run_result = subprocess.run([str(build_result.output_path)], shell=False)
+        run_result = subprocess.run([str(target_result.output_path)], shell=False)
         if run_result.returncode == 0:
             print(f"  [PASS] {target.name}")
         else:

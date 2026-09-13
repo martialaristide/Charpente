@@ -5,7 +5,7 @@ import subprocess
 import sys
 from typing import List
 
-from ..builder import build_target
+from ..builder import build_workspace, dependency_closure
 from ._common import CommandError, load, resolve_target, toolchain_for_host
 
 
@@ -33,11 +33,22 @@ def execute(args: List[str]) -> int:
     target_os, toolchain = toolchain_for_host()
 
     if not parsed.no_build:
-        result = build_target(workspace, target, toolchain, target_os, config=parsed.config)
-        if not result.ok:
-            print(f"charpente: build failed: {result.error}")
+        # Build the target AND whatever it depends_on() for this config --
+        # not just the target itself. `charpente build` builds the whole
+        # workspace in dependency order, but `run` (and `package`, `test`)
+        # build one target directly; without pulling in dependencies too, a
+        # config that's never been through `charpente build` before would
+        # try to link against a dependency library that doesn't exist yet
+        # for that config.
+        closure = dependency_closure(workspace, target.name)
+        build_result = build_workspace(workspace, toolchain, target_os,
+                                       config=parsed.config, only=closure)
+        target_result = build_result.target(target.name)
+        if target_result is None or not target_result.ok:
+            error = target_result.error if target_result else "unknown target build failure"
+            print(f"charpente: build failed: {error}")
             return 1
-        output = result.output_path
+        output = target_result.output_path
     else:
         from ..builder import build_dir  # internal helper, fine to reach for within the package
         from .. import flags

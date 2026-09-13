@@ -17,7 +17,7 @@ import zipfile
 from typing import List
 
 from .. import installer
-from ..builder import build_target, build_dir
+from ..builder import build_dir, build_workspace, dependency_closure
 from ..dsl.model import OS
 from ._common import CommandError, load, resolve_target, toolchain_for_host
 
@@ -40,16 +40,23 @@ def execute(args: List[str]) -> int:
     target = resolve_target(workspace, parsed.target)
     target_os, toolchain = toolchain_for_host()
 
-    result = build_target(workspace, target, toolchain, target_os, config=parsed.config)
-    if not result.ok:
-        raise CommandError(f"Build failed, nothing to package: {result.error}")
+    # Build the target's dependency_closure(), not just the target itself --
+    # see run.py's execute() for why (a config never built via `charpente
+    # build` before would otherwise try to link against a dependency that
+    # was never built for it).
+    closure = dependency_closure(workspace, target.name)
+    build_result = build_workspace(workspace, toolchain, target_os, config=parsed.config, only=closure)
+    target_result = build_result.target(target.name)
+    if target_result is None or not target_result.ok:
+        error = target_result.error if target_result else "unknown target build failure"
+        raise CommandError(f"Build failed, nothing to package: {error}")
 
     out_dir = workspace.location / "dist"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if parsed.format == "zip":
         return _package_zip(workspace, target, parsed, out_dir)
-    return _package_installer(workspace, target, target_os, parsed, out_dir, result.output_path)
+    return _package_installer(workspace, target, target_os, parsed, out_dir, target_result.output_path)
 
 
 def _package_zip(workspace, target, parsed, out_dir) -> int:

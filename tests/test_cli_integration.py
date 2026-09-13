@@ -230,3 +230,69 @@ def test_package_installer_format_generates_a_real_platform_script(tmp_path, cap
     elif this_os == OS.MACOS:
         assert (tmp_path / "dist" / "Demo-pkg-staging" / "Demo").exists()
         assert "not found" in out
+
+
+def _write_dependent_workspace(tmp_path):
+    """app depends on + links a static library core -- deliberately never
+    built via `charpente build` first in the tests below, to catch
+    regressions of a real bug: run/package/test building a single target
+    directly (not through build_workspace()) used to skip its
+    dependencies, so a *config that had never been built before* failed
+    to link with an "undefined reference" the very first time anyone
+    other than `charpente build` touched it."""
+    (tmp_path / "core.cpp").write_text("int triple(int x) { return x * 3; }\n")
+    (tmp_path / "app.cpp").write_text(
+        "#include <cstdio>\n"
+        "int triple(int x);\n"
+        "int main() { std::printf(\"triple(4)=%d\\n\", triple(4)); return 0; }\n"
+    )
+    (tmp_path / "w.charpente").write_text("""
+from charpente import *
+with Workspace("W") as ws:
+    with Target("core") as t:
+        t.kind(Kind.STATIC_LIBRARY)
+        t.sources(["core.cpp"])
+    with Target("app") as t:
+        t.kind(Kind.EXECUTABLE)
+        t.depends_on(["core"])
+        t.links(["core"])
+        t.sources(["app.cpp"])
+""")
+
+
+@requires_compiler
+def test_run_builds_dependencies_for_a_never_before_built_config(tmp_path, capfd):
+    _write_dependent_workspace(tmp_path)
+    assert main(["run", "--target", "app", "--config", "Release"]) == 0
+    assert "triple(4)=12" in capfd.readouterr().out
+
+
+@requires_compiler
+def test_package_builds_dependencies_for_a_never_before_built_config(tmp_path):
+    _write_dependent_workspace(tmp_path)
+    assert main(["package", "--target", "app", "--config", "Release"]) == 0
+    assert list((tmp_path / "dist").glob("*.zip"))
+
+
+@requires_compiler
+def test_test_command_builds_dependencies_for_a_test_targets_own_config(tmp_path, capsys):
+    (tmp_path / "core.cpp").write_text("int triple(int x) { return x * 3; }\n")
+    (tmp_path / "t.cpp").write_text(
+        "#include <cassert>\n"
+        "int triple(int x);\n"
+        "int main() { assert(triple(4) == 12); return 0; }\n"
+    )
+    (tmp_path / "w.charpente").write_text("""
+from charpente import *
+with Workspace("W") as ws:
+    with Target("core") as t:
+        t.kind(Kind.STATIC_LIBRARY)
+        t.sources(["core.cpp"])
+    with Target("core_test") as t:
+        t.kind(Kind.TEST)
+        t.depends_on(["core"])
+        t.links(["core"])
+        t.sources(["t.cpp"])
+""")
+    assert main(["test", "--config", "Release"]) == 0
+    assert "[PASS] core_test" in capsys.readouterr().out
