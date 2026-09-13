@@ -8,6 +8,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from ..safe_name import validate as _validate_name
+
 
 class Kind(Enum):
     EXECUTABLE = "executable"
@@ -50,6 +52,14 @@ class Target:
     # never set directly from a .charpente file.
     location: Optional[Path] = None
 
+    def __post_init__(self) -> None:
+        # Validated here, at construction, rather than later wherever a
+        # builder happens to concatenate `name` into an output path: a
+        # target name that can't safely become a filename component should
+        # never exist in the first place, not just be caught before it's
+        # dangerous.
+        _validate_name(self.name, "Target name")
+
     def resolved_sources(self) -> List[Path]:
         """Expand source_patterns/exclude_patterns against `location` into a
         sorted, deduplicated list of real files. Pure and side-effect free
@@ -79,6 +89,9 @@ class Workspace:
     # Absolute directory containing the root .charpente file. Set by the
     # loader, not by DSL code.
     location: Optional[Path] = None
+
+    def __post_init__(self) -> None:
+        _validate_name(self.name, "Workspace name")
 
     def add_target(self, target: Target) -> None:
         if target.name in self.targets:
