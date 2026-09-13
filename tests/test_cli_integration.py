@@ -110,3 +110,88 @@ def test_unknown_command_prints_help_and_fails(capsys):
 def test_version_flag(capsys):
     assert main(["--version"]) == 0
     assert "charpente" in capsys.readouterr().out
+
+
+@requires_compiler
+def test_run_forwards_program_arguments_after_double_dash(tmp_path, capfd):
+    """Also confirms the "--" separator itself is NOT forwarded (a
+    genuine bug found and fixed after the CLI layer was first written --
+    argparse.REMAINDER keeps a leading "--" as a literal token unless the
+    command strips it)."""
+    src = tmp_path / "src"
+    src.mkdir()
+    cpp_lines = [
+        "#include <cstdio>",
+        "int main(int argc, char** argv) {",
+        "    for (int i = 1; i < argc; ++i) std::printf(" + '"arg[%d]=%s' + "\\n" + '"' + ", i, argv[i]);",
+        "    return 0;",
+        "}",
+        "",
+    ]
+    (src / "main.cpp").write_text("\n".join(cpp_lines))
+    (tmp_path / "w.charpente").write_text("""
+from charpente import *
+with Workspace("W") as ws:
+    with Target("echoargs") as t:
+        t.sources(["src/**/*.cpp"])
+""")
+
+    assert main(["run", "--", "--hello", "world"]) == 0
+    out = capfd.readouterr().out
+    assert "arg[1]=--hello" in out
+    assert "arg[2]=world" in out
+    assert "arg[1]=--" + "\n" not in out  # the "--" separator itself must not be forwarded
+
+
+@requires_compiler
+def test_test_command_builds_and_runs_a_passing_test(tmp_path, capsys):
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "main.cpp").write_text("int main() { return 0; }\n")
+    (tmp_path / "w.charpente").write_text("""
+from charpente import *
+with Workspace("W") as ws:
+    with Target("mytest") as t:
+        t.kind(Kind.TEST)
+        t.sources(["src/**/*.cpp"])
+""")
+
+    code = main(["test"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "[PASS] mytest" in out
+    assert "1/1 test target(s) passed." in out
+
+
+@requires_compiler
+def test_test_command_reports_a_failing_test(tmp_path, capsys):
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "main.cpp").write_text("int main() { return 1; }\n")  # non-zero exit
+    (tmp_path / "w.charpente").write_text("""
+from charpente import *
+with Workspace("W") as ws:
+    with Target("mytest") as t:
+        t.kind(Kind.TEST)
+        t.sources(["src/**/*.cpp"])
+""")
+
+    code = main(["test"])
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "[FAIL] mytest" in out
+    assert "0/1 test target(s) passed." in out
+
+
+def test_test_command_with_no_test_targets_is_a_clean_noop(tmp_path, capsys):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "main.cpp").write_text("int main() { return 0; }\n")
+    (tmp_path / "w.charpente").write_text("""
+from charpente import *
+with Workspace("W") as ws:
+    with Target("app") as t:
+        t.sources(["src/**/*.cpp"])
+""")
+
+    assert main(["test"]) == 0
+    assert "No test targets" in capsys.readouterr().out

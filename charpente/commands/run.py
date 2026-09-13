@@ -16,8 +16,17 @@ def execute(args: List[str]) -> int:
     parser.add_argument("--config", default="Debug", choices=["Debug", "Release"])
     parser.add_argument("--no-build", action="store_true", help="Skip the build step")
     parser.add_argument("program_args", nargs=argparse.REMAINDER,
-                        help="Arguments forwarded to the program")
+                        help="Arguments forwarded to the program (put -- before "
+                             "any that start with '-', e.g. `charpente run -- --foo`)")
     parsed = parser.parse_args(args)
+
+    # argparse.REMAINDER keeps a leading "--" as a literal token instead of
+    # treating it as the separator it's conventionally used as (cargo run --
+    # --foo, npm run x -- --foo): without stripping it here, `charpente run
+    # -- --foo` would pass "--" itself as the program's first argument.
+    program_args = parsed.program_args
+    if program_args and program_args[0] == "--":
+        program_args = program_args[1:]
 
     workspace = load(parsed.file)
     target = resolve_target(workspace, parsed.target)
@@ -38,5 +47,5 @@ def execute(args: List[str]) -> int:
 
     print(f"Running {output}...")
     sys.stdout.flush()  # otherwise the child's own output can print before this line does
-    completed = subprocess.run([str(output), *parsed.program_args], shell=False)
+    completed = subprocess.run([str(output), *program_args], shell=False)
     return completed.returncode
