@@ -47,7 +47,7 @@ def _needs_rebuild(source: Path, obj: Path) -> bool:
     return source.stat().st_mtime > obj.stat().st_mtime
 
 
-def _build_dir(workspace: Workspace, config: str, target: Target) -> Path:
+def build_dir(workspace: Workspace, config: str, target: Target) -> Path:
     return workspace.location / "build" / config / target.name
 
 
@@ -65,7 +65,7 @@ def build_target(
     run: RunFn = subprocess.run,
 ) -> TargetResult:
     debug = config.lower() == "debug"
-    out_dir = _build_dir(workspace, config, target)
+    out_dir = build_dir(workspace, config, target)
     obj_dir = out_dir / "obj"
     obj_dir.mkdir(parents=True, exist_ok=True)
 
