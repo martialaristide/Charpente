@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import argparse
-from typing import List
+from typing import List, Optional, Tuple
 
 from ..ai import select_provider
 from ._common import CommandError, load
@@ -15,15 +14,31 @@ _SYSTEM_PROMPT = (
 )
 
 
-def execute(args: List[str]) -> int:
-    parser = argparse.ArgumentParser(prog="charpente ask", description="Ask the AI assistant a question.")
-    parser.add_argument("question", nargs=argparse.REMAINDER, help="Your question")
-    parser.add_argument("--file", help="Path to the .charpente workspace file (for context)")
-    parsed = parser.parse_args(args)
+def _parse_args(args: List[str]) -> Tuple[Optional[str], str]:
+    """Deliberately not argparse: a question is free-form natural language
+    and can legitimately start with '-' (e.g. "--verbose doesn't print
+    anything") -- argparse.REMAINDER treats an unrecognized leading '-'
+    token as a parse error instead of passing it through, which would make
+    `charpente ask --why is this broken` crash instead of asking. The only
+    real option here is --file, pulled out manually; everything else,
+    dashes included, becomes the question text."""
+    file_arg: Optional[str] = None
+    question_parts: List[str] = []
+    i = 0
+    while i < len(args):
+        if args[i] == "--file" and i + 1 < len(args):
+            file_arg = args[i + 1]
+            i += 2
+        else:
+            question_parts.append(args[i])
+            i += 1
+    return file_arg, " ".join(question_parts).strip()
 
-    question = " ".join(parsed.question).strip()
+
+def execute(args: List[str]) -> int:
+    file_arg, question = _parse_args(args)
     if not question:
-        raise CommandError("Usage: charpente ask <question>")
+        raise CommandError("Usage: charpente ask [--file PATH] <question>")
 
     provider = select_provider()
     if not provider.is_available():
@@ -32,7 +47,7 @@ def execute(args: List[str]) -> int:
 
     context_lines = []
     try:
-        workspace = load(parsed.file)
+        workspace = load(file_arg)
         context_lines.append(f"Current workspace: {workspace.name!r}, targets: {sorted(workspace.targets)}")
     except CommandError:
         pass  # Answering without workspace context is still useful (e.g. a general question).
