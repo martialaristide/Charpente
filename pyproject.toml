@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "charpente"
+dynamic = ["version"]
+description = "Cross-platform C/C++ build system driven by a Python DSL"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Martial Aristide Barra", email = "martialaristideb02@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Build Tools",
+]
+dependencies = [
+    "colorama>=0.4.4; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+ai = ["anthropic>=0.34.0", "openai>=1.40.0"]
+dev = ["pytest>=7.0"]
+
+[project.urls]
+Source = "https://github.com/<ton-compte-github>/Charpente"
+Issues = "https://github.com/<ton-compte-github>/Charpente/issues"
+
+[project.scripts]
+charpente = "charpente.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["charpente*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "charpente._version.__version__" }
