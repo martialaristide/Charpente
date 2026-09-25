@@ -14,11 +14,9 @@ v0.1.0 workspace still loads and builds.
   `charpente.core.process`; a test fails if any other module imports
   `subprocess` or enables the shell. A missing program is now `CH2002`
   instead of a traceback.
-- **Real bug found by the new type checking:** the packaging error paths
-  (`iscc`/`dpkg-deb`/`pkgbuild` failing) would have raised a `TypeError`
-  instead of the intended message. Fixed, and `ChError` now takes its code
-  as a positional-only argument so a parameter named `code` can never
-  collide with it again.
+- `ChError` takes its code as a positional-only argument, so an error
+  parameter named `code` (e.g. a tool's exit code) can never collide with it.
+  (Strict typing caught this in the migration itself, before release.)
 - **Tooling.** `ruff`, `mypy --strict` (whole package), coverage gate at
   75 %, CI matrix on Windows/Linux/macOS x Python 3.9/3.12, an sdist+wheel
   check, and a release workflow that publishes to PyPI only from a pushed
