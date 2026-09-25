@@ -63,15 +63,28 @@ Try `charpente build --ai-diagnose` (with a provider configured — see
 [`cli-reference.md`](cli-reference.md#ai-features)) for a suggested cause
 specific to your actual error text.
 
-## A build looks stale after editing a header (`.h`/`.hpp`)
+## A build recompiles more (or less) than I expected
 
-Expected, for now: incremental builds are timestamp-based only (an object
-file newer than its `.cpp` source is skipped) — there's no per-header
-dependency tracking yet, so Charpente doesn't know that `foo.cpp` needs
-recompiling just because `foo.h` (which it `#include`s) changed. Run
-`charpente clean` and rebuild. See `charpente/builder.py`'s module
-docstring for the plan to fix this properly (`-MMD`/`-showIncludes`-based
-dependency files).
+Ask Charpente instead of guessing:
+
+```bash
+charpente why include/common.h     # what would rerun if you built now, and why
+charpente build -v                 # every command that ran, with "because: ..."
+charpente why --last src/main.cpp  # why the previous build ran (or skipped) it
+```
+
+Since v0.2.0 incremental builds track the headers each compilation read
+(`-MMD` / `/showIncludes`) and decide by file *content*, so a stale build after
+a header edit should not happen. If it does:
+
+- **A new header that shadows an old one** further along the include path is
+  not noticed (the dependency list only contains files that were read). Touch
+  the including source, or run `charpente clean`. This limit is shared with
+  ccache; see [ADR 0006](adr/0006-cles-daction-et-cache.md).
+- **A tool that writes files outside its declared outputs** cannot be tracked.
+- To rule the cache out, run `charpente build --no-cache`; to rule the
+  incremental logic out, `charpente clean`. If either changes the result,
+  please report it with the output of `charpente why <file>`.
 
 ## `iscc`/`dpkg-deb`/`pkgbuild` not found on PATH
 

@@ -8,6 +8,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from ..core import globber
 from ..errors import ChError, ChValueError
 from ..safe_name import validate as _validate_name
 
@@ -61,19 +62,25 @@ class Target:
         # dangerous.
         _validate_name(self.name, "Target name")
 
+    def source_files(self) -> List[str]:
+        """Like `resolved_sources()` but as plain, sorted path strings: what hot
+        paths (the no-op fast path) use, since building tens of thousands of
+        `Path` objects is measurably slower than the comparison they feed."""
+        if self.location is None:
+            raise ChValueError("CH1017", name=self.name)
+        root = str(self.location)
+        matched = globber.expand(root, self.source_patterns)
+        if self.exclude_patterns:
+            matched -= globber.expand(root, self.exclude_patterns)
+        return sorted(matched)
+
     def resolved_sources(self) -> List[Path]:
         """Expand source_patterns/exclude_patterns against `location` into a
         sorted, deduplicated list of real files. Pure and side-effect free
         so it can be unit tested without touching a real build."""
         if self.location is None:
             raise ChValueError("CH1017", name=self.name)
-        matched: set[Path] = set()
-        for pattern in self.source_patterns:
-            matched.update(self.location.glob(pattern))
-        excluded: set[Path] = set()
-        for pattern in self.exclude_patterns:
-            excluded.update(self.location.glob(pattern))
-        return sorted(p for p in matched - excluded if p.is_file())
+        return [Path(p) for p in self.source_files()]
 
 
 @dataclass

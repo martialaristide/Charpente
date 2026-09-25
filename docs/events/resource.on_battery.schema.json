@@ -1,0 +1,56 @@
+{
+  "$id": "https://charpente.dev/schemas/events/v1/resource.on_battery.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "id": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "parent_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "jobs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "number"
+    },
+    "type": {
+      "const": "resource.on_battery"
+    },
+    "wall_time": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "parent_id",
+    "timestamp",
+    "wall_time",
+    "session_id",
+    "type",
+    "payload"
+  ],
+  "title": "resource.on_battery",
+  "type": "object"
+}

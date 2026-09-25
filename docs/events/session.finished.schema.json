@@ -1,0 +1,65 @@
+{
+  "$id": "https://charpente.dev/schemas/events/v1/session.finished.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "id": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "parent_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "duration": {
+          "type": "number"
+        },
+        "exit_code": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ok",
+        "duration"
+      ],
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "number"
+    },
+    "type": {
+      "const": "session.finished"
+    },
+    "wall_time": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "parent_id",
+    "timestamp",
+    "wall_time",
+    "session_id",
+    "type",
+    "payload"
+  ],
+  "title": "session.finished",
+  "type": "object"
+}

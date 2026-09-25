@@ -215,3 +215,15 @@ def test_optional_fields_accept_null_in_the_schema():
     ev = b.emit("target.finished", target="t", output=None, duration=0.0, executed=0, cached=0, up_to_date=1)
     jsonschema.validate(json.loads(json.dumps(ev.to_dict())), event_schema.event_schema("target.finished"))
     b.close()
+
+
+def test_generated_event_docs_are_up_to_date():
+    import importlib.util
+    from pathlib import Path
+
+    tool = Path(__file__).resolve().parent.parent / "tools" / "gen_event_docs.py"
+    spec = importlib.util.spec_from_file_location("gen_event_docs", tool)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.main(["--check"]) == 0

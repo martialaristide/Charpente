@@ -1,0 +1,77 @@
+{
+  "$id": "https://charpente.dev/schemas/events/v1/target.finished.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "id": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "parent_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "cached": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "executed": {
+          "type": "integer"
+        },
+        "output": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target": {
+          "type": "string"
+        },
+        "up_to_date": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "target",
+        "duration",
+        "executed",
+        "cached",
+        "up_to_date"
+      ],
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "number"
+    },
+    "type": {
+      "const": "target.finished"
+    },
+    "wall_time": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "parent_id",
+    "timestamp",
+    "wall_time",
+    "session_id",
+    "type",
+    "payload"
+  ],
+  "title": "target.finished",
+  "type": "object"
+}

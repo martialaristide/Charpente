@@ -18,8 +18,11 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from . import hashing
 from .graph import path_key
+from .statcache import StatCache
 
 SCHEMA_VERSION = 2
+COMMIT_EVERY = 64
+COMMIT_INTERVAL = 0.5
 MISSING = "missing"
 
 #: A file modified less than this long before we hashed it might still be
@@ -64,6 +67,8 @@ class StateDB:
         self._files: Dict[str, Tuple[int, int, str, int]] = {}
         self._actions: Dict[str, str] = {}
         self._dirty_files: Dict[str, Tuple[int, int, str, int]] = {}
+        self._pending = 0
+        self._last_commit = time.monotonic()
         self._open()
 
     # ----------------------------------------------------------------- open
@@ -135,15 +140,22 @@ class StateDB:
             self._actions[action_id] = raw
             assert self._conn is not None
             self._conn.execute("INSERT OR REPLACE INTO actions(id, data) VALUES(?, ?)", (action_id, raw))
-            self._flush_files_locked()
-            self._conn.commit()
+            self._pending += 1
+            # Committing after every action costs milliseconds each on some
+            # systems; batch them. A crash loses at most the last batch, whose
+            # actions then look "unrecorded" and are replayed from the cache.
+            if self._pending >= COMMIT_EVERY or time.monotonic() - self._last_commit > COMMIT_INTERVAL:
+                self._flush_files_locked()
+                self._conn.commit()
+                self._pending = 0
+                self._last_commit = time.monotonic()
 
     def delete_action(self, action_id: str) -> None:
         with self._lock:
             if self._actions.pop(action_id, None) is not None:
                 assert self._conn is not None
                 self._conn.execute("DELETE FROM actions WHERE id=?", (action_id,))
-                self._conn.commit()
+                self._pending += 1
 
     def action_ids(self) -> List[str]:
         with self._lock:
@@ -169,6 +181,8 @@ class StateDB:
             if self._conn is not None:
                 self._flush_files_locked()
                 self._conn.commit()
+                self._pending = 0
+                self._last_commit = time.monotonic()
 
     def close(self) -> None:
         with self._lock:
@@ -188,9 +202,11 @@ class FileHasher:
     once; `invalidate()` must be called for files an action just produced.
     """
 
-    def __init__(self, db: Optional[StateDB] = None, clock_ns: Any = time.time_ns) -> None:
+    def __init__(self, db: Optional[StateDB] = None, clock_ns: Any = time.time_ns,
+                 stats: Optional[StatCache] = None) -> None:
         self._db = db
         self._clock_ns = clock_ns
+        self.stats = stats if stats is not None else StatCache()
         self._memo: Dict[str, str] = {}
         self._lock = threading.Lock()
         self.reads = 0  # how many files were actually read (observable in tests / benchmarks)
@@ -207,13 +223,10 @@ class FileHasher:
         return result
 
     def _compute(self, key: str, path: "str | Path") -> str:
-        try:
-            st = os.stat(path)
-        except OSError:
+        meta = self.stats.stat(os.fspath(path))
+        if meta is None:
             return MISSING
-        if not os.path.isfile(path):
-            return MISSING
-        mtime_ns, size = st.st_mtime_ns, st.st_size
+        mtime_ns, size = meta
         if self._db is not None:
             known = self._db.get_file(key)
             if known is not None:
@@ -231,9 +244,12 @@ class FileHasher:
         return digest
 
     def invalidate(self, path: "str | Path") -> None:
+        """`path` was just written (or deleted) by a build step: forget what we knew."""
+        self.stats.refresh(os.fspath(path))
         with self._lock:
             self._memo.pop(path_key(path), None)
 
     def forget_all(self) -> None:
         with self._lock:
             self._memo.clear()
+        self.stats.forget_all()

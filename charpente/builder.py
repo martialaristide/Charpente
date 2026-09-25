@@ -11,16 +11,19 @@ Studio follow a build.
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, List, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set
 
+from .core import analysis, compdb, fastpath, hashing, process
 from .core import engine as engine_mod
-from .core import process
 from .core.cache import LocalCache
 from .core.planner import Plan, plan_workspace
 from .core.planner import build_dir as _build_dir
+from .core.statcache import StatCache
 from .core.state import StateDB
+from .core.toolid import ToolIdentities
 from .dsl.model import OS, Target, Workspace
 from .errors import ChError
 from .events import EventBus
@@ -135,6 +138,67 @@ def _fold(plan: Plan, result: engine_mod.EngineResult) -> List[TargetResult]:
     return out
 
 
+def _context(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: str, scope: List[str],
+             sources: Dict[str, List[str]]) -> List[str]:
+    """Everything (other than file contents) that determines what a build does."""
+    from . import _version, flags
+
+    fam = flags.family(toolchain)
+    tools = ToolIdentities()
+    tool_keys = sorted({tools.identify(t, fam).key() for t in (
+        toolchain.c_compiler, toolchain.cxx_compiler, toolchain.archiver, toolchain.linker)})
+    parts = [_version.__version__, config, target_os.value, toolchain.name, str(workspace.root),
+             "|".join(tool_keys), "|".join(f"{k}={os.environ.get(k, '')}" for k in engine_mod.KEYED_ENV),
+             ",".join(scope)]
+    for name in scope:
+        parts.append(repr(workspace.targets[name]))
+        parts.append(hashing.digest_parts(*sources[name]))
+    return parts
+
+
+def _fast_result(stamp: fastpath.Stamp, scope: List[str], events: EventBus) -> BuildResult:
+    total = sum(int(t.get("actions", 0)) for t in stamp.targets.values())
+    events.emit("graph.analyzed", actions=total, targets=len(stamp.targets), critical_path=0.0, config="")
+    targets: List[TargetResult] = []
+    for name in scope:
+        info = stamp.targets.get(name)
+        if info is None:
+            continue
+        events.emit("target.up_to_date", target=name)
+        targets.append(TargetResult(name, ok=True, output_path=Path(str(info["output"])), skipped=True,
+                                    up_to_date=int(info.get("actions", 0))))
+    return BuildResult(ok=True, targets=targets)
+
+
+def _write_stamp(path: Path, plan: Plan, state: StateDB, context: str,
+                 sources: Dict[str, List[str]], result: engine_mod.EngineResult) -> None:
+    """After a fully successful build: remember the metadata of every file involved."""
+    if plan.errors or not result.ok:
+        return
+    names: Dict[str, None] = {}
+    for paths in sources.values():
+        for p in paths:
+            names[p] = None
+    for aid in plan.graph.actions:
+        record = state.get_action(aid)
+        if record is None:
+            return
+        for dep in record.deps:
+            names[dep] = None
+        for out in record.outputs:
+            names[out] = None
+        for inp in record.inputs:
+            names[inp] = None
+    fresh = StatCache()          # a new listing: the build just changed the directories
+    dirs = fastpath.collect(names, fresh)
+    if dirs is None:
+        return
+    targets = {name: {"output": str(plan.outputs[name]), "actions": len(plan.target_actions[name])}
+               for name in plan.outputs}
+    fastpath.write(path, fastpath.Stamp(context=context, targets=targets, dirs=dirs,
+                                        created_ns=fastpath.now_ns()))
+
+
 def build_workspace(
     workspace: Workspace,
     toolchain: Toolchain,
@@ -148,16 +212,46 @@ def build_workspace(
     bus: Optional[EventBus] = None,
     use_cache: bool = True,
     cache: Optional[LocalCache] = None,
+    write_compdb: bool = True,
+    fast_path: bool = True,
 ) -> BuildResult:
     """Builds every target in dependency order (or, with `only`, just the
     given subset -- see `dependency_closure()` for building one target plus
     what it needs). Stops at the first failure unless keep_going=True, in
     which case it skips only the targets that depend (directly or
     transitively) on a failed one. Independent work runs in parallel
-    (`jobs`, default: one per CPU)."""
+    (`jobs`, default: one per CPU).
+
+    When nothing changed since the last fully successful build, the answer
+    comes from file metadata alone (`core.fastpath`) without planning."""
     own_bus = bus is None
     events = bus or EventBus()
-    plan = plan_workspace(workspace, toolchain, target_os, config=config, only=only)
+    try:
+        return _build(workspace, toolchain, target_os, config, run, keep_going, only, jobs, events,
+                      use_cache, cache, write_compdb, fast_path)
+    finally:
+        if own_bus:
+            events.close()
+
+
+def _build(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: str, run: RunFn,
+           keep_going: bool, only: Optional[Iterable[str]], jobs: int, events: EventBus, use_cache: bool,
+           cache: Optional[LocalCache], write_compdb: bool, fast_path: bool) -> BuildResult:
+    order = workspace.build_order()                 # raises for unknown dependencies and cycles
+    wanted = set(only) if only is not None else None
+    scope = [n for n in order if wanted is None or n in wanted]
+    sources = {name: workspace.targets[name].source_files() for name in scope}
+
+    context: Optional[str] = None
+    stamp_file: Optional[Path] = None
+    if fast_path:
+        context = fastpath.context_digest(_context(workspace, toolchain, target_os, config, scope, sources))
+        stamp_file = fastpath.stamp_path(state_dir(workspace), f"{config}|{','.join(scope)}")
+        stamp = fastpath.load(stamp_file)
+        if stamp is not None and fastpath.verify(stamp, context, StatCache()):
+            return _fast_result(stamp, scope, events)
+
+    plan = plan_workspace(workspace, toolchain, target_os, config=config, only=only, sources=sources)
 
     first_error: Optional[str] = None
     for name in plan.order:
@@ -166,6 +260,8 @@ def build_workspace(
             break
 
     graph = plan.graph
+    if write_compdb and len(graph):
+        compdb.write(graph, workspace.root / "build" / "compile_commands.json")
     runnable: Optional[Set[str]] = None
     if first_error is not None and not keep_going:
         # A target that cannot even be planned stops the build, as a failed
@@ -180,10 +276,13 @@ def build_workspace(
         engine = engine_mod.Engine(state, events, cache=the_cache, runner=run, jobs=jobs,
                                    keep_going=keep_going, root=workspace.root)
         result = engine.run(graph, only=runnable)
+        for hint in analysis.hints_from_reasons({aid: r.reasons for aid, r in result.results.items()
+                                                 if r.status == engine_mod.STATUS_EXECUTED}, workspace.root):
+            events.emit("hint.emitted", code=hint.code, message=hint.message, detail=dict(hint.detail))
+        if stamp_file is not None and context is not None and runnable is None:
+            _write_stamp(stamp_file, plan, state, context, sources, result)
     finally:
         state.close()
-        if own_bus:
-            events.close()
 
     targets = _fold(plan, result)
     if first_error is not None and not keep_going:

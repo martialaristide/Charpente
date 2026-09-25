@@ -26,9 +26,18 @@ charpente build
 
 ```
 charpente build [--config Debug|Release] [--keep-going] [--ai-diagnose]
+                [-j N] [--no-cache] [-v] [--output plain|jsonl]
 ```
 
-Compiles every target in the workspace, in dependency order.
+Compiles every target in the workspace, in dependency order. Independent
+work (every source file, independent targets) runs in parallel.
+
+- `-j N` / `--jobs N`: at most N actions at once (default: one per CPU).
+- `--no-cache`: neither read nor write the [content cache](#charpente-cache).
+- `-v` / `--verbose`: show every command that runs and *why* it runs
+  (`because: header changed: include/a.h`).
+- `--output jsonl`: print one JSON event per line instead of text — for
+  scripts, editors and CI. See [`events/README.md`](events/README.md).
 
 - `--config` (default `Debug`): which configuration to build. Affects
   optimization/debug-symbol flags (`-O0 -g` / `/Od /Zi` for Debug,
@@ -41,19 +50,32 @@ Compiles every target in the workspace, in dependency order.
   output to the configured AI provider and prints its suggested cause and
   fix. Never automatic — see [AI features](#ai-features-1) below.
 
-Builds are incremental: a source file whose object is already newer than
-it is skipped. **This is timestamp-only** — there's no per-header
-dependency tracking yet, so editing a header won't by itself trigger a
-rebuild of the `.cpp` files that include it. Run `charpente clean` if a
-build looks stale after a header change.
+Builds are **exactly incremental**. Charpente records, for every
+compilation, the headers the compiler actually read (`-MMD` for
+GCC/Clang, `/showIncludes` for MSVC and clang-cl). Editing a header
+recompiles precisely the files that include it — no more, no less.
+Freshness is decided by file *content*, not timestamps: `touch`ing a file
+rebuilds nothing, and reverting an edit is served from the cache. If
+nothing changed since the last successful build, the answer comes from
+file metadata alone, in about a quarter of a second for 10 000 files.
+See [architecture](architecture.md#the-engine) and
+[ADR 0006](adr/0006-cles-daction-et-cache.md) for how, and its stated limits.
 
-Output per target:
+Warnings printed by the compiler during a successful compilation are
+shown (they used to be discarded).
+
+Output per target, then a one-line summary:
 
 ```
   [ok]         app -> build/Debug/app/app
   [up to date] otherlib
-  [FAILED]     broken: <compiler/linker error, last line>
+  [FAILED]     broken: <compiler/linker error output>
+Done in 2.1s: 3 run, 12 from cache, 40 up to date.
 ```
+
+`build/compile_commands.json` is (re)written on every build that plans
+work, so `clangd`, `clang-tidy`, CLion and VS Code understand your project
+with no extra step.
 
 ## `charpente run`
 
@@ -79,13 +101,19 @@ Builds (unless `--no-build`) then executes the target.
 ## `charpente test`
 
 ```
-charpente test [--config Debug|Release]
+charpente test [--config Debug|Release] [--retries N] [-j N] [--no-cache] [-v]
 ```
 
 Builds and runs every target declared with `.kind(Kind.TEST)`. A test
 "passes" if the program exits with code 0. Prints a `[PASS]`/`[FAIL]` line
 per test target and a summary (`N/M test target(s) passed.`); exits 0 only
-if every test passed. A workspace with no `Kind.TEST` targets prints a
+if every test passed. All test targets are built together (in parallel),
+and one that fails to build does not hide the others.
+
+`--retries N` re-runs a failing test up to N times. A test that fails and
+then passes with **no change in between** is reported `[FLAKY]` (and still
+counts as passed): it means something in it is nondeterministic, and the
+summary says so. A workspace with no `Kind.TEST` targets prints a
 note and exits 0 (not an error — most workspaces don't have tests yet).
 
 ## `charpente package`
@@ -134,6 +162,74 @@ charpente clean
 
 Removes the whole `build/` directory (every config, every target).
 Prints what it removed, or says there was nothing to clean.
+
+## `charpente why`
+
+```
+charpente why <target | file> [--config Debug|Release] [--last]
+```
+
+Explains why something would be (or was) rebuilt, without building
+anything. Give a target name, or any source, header or output file:
+
+```
+$ charpente why include/b.h
+compile:app:src/two.cpp  (Compiling two.cpp)
+  would be rebuilt:
+    - header changed: include/b.h
+```
+
+Reasons include: a changed input or header, a changed command line (with
+the flags added or removed), a different compiler version, a changed
+environment variable, a missing or hand-modified output. `--last` explains
+the previous build from the history instead of predicting the next one.
+
+## `charpente history` / `charpente diff-build`
+
+```
+charpente history [--limit N]
+charpente diff-build [A [B]]        # default: previous vs latest
+```
+
+`history` lists recent build sessions (result, duration, how many actions
+ran, came from cache, or were up to date, warning count). `diff-build`
+compares two of them: total time, actions run, **binary size changes**,
+the slowest actions that got slower, and **warnings that appeared or
+disappeared**. `A` and `B` are a session id (prefix), a number from
+`history`, `latest` or `previous`.
+
+## `charpente cache`
+
+```
+charpente cache stats | dir | clear | gc [--max-size 5GB]
+```
+
+The content cache lives in `~/.charpente/cache` (override with
+`CHARPENTE_CACHE_DIR`) and is shared by every workspace. `gc` deletes the
+least recently used files until it fits. Entries are found only by the hash
+of everything that determines their content, so a stale entry can never be
+returned.
+
+## `charpente replay`
+
+```
+charpente replay [SESSION | path/to/log.jsonl] [--output plain|jsonl]
+```
+
+Replays a past build from its event log (`build/.charpente/events/`, the
+20 most recent sessions are kept).
+
+## `charpente explain`
+
+```
+charpente explain CH3001 [--lang fr|en]
+charpente explain --list
+```
+
+Every error carries a stable code (`[CH3001]`); `explain` prints its cause,
+its fix and any extra explanation. The language follows `CHARPENTE_LANG`
+(`fr` or `en`), then the system locale. The full catalogue is in
+[`errors.md`](errors.md).
 
 ## `charpente ask`
 

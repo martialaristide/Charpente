@@ -30,6 +30,7 @@ from . import depscan, diagnostics, hashing, process
 from .actions import DEP_GNU, DEP_MSVC, Action
 from .cache import LocalCache
 from .graph import ActionGraph
+from .statcache import StatCache
 from .state import MISSING, ActionRecord, FileHasher, StateDB
 from .toolid import ToolIdentities, ToolIdentity
 
@@ -123,19 +124,28 @@ class Engine:
         self.jobs = jobs if jobs > 0 else default_jobs()
         self.keep_going = keep_going
         self.root = root
-        self.hasher = FileHasher(state)
+        self.stats = StatCache()
+        self.hasher = FileHasher(state, stats=self.stats)
+        self._env_memo: Dict[Tuple[Tuple[str, str], ...], List[Tuple[str, str]]] = {}
         # Tool identity always asks the real tool (never the injected test
         # runner): it describes the machine, and is remembered on disk.
         self.tools = ToolIdentities()
 
     # ================================================================ keys
     def _env_pairs(self, action: Action) -> List[Tuple[str, str]]:
+        """Action-specific variables plus the inherited ones that affect compilers.
+        Computed once per distinct `action.env` (the environment does not change mid-build)."""
+        cached = self._env_memo.get(action.env)
+        if cached is not None:
+            return cached
         pairs = dict(action.env)
         for name in KEYED_ENV:
             value = os.environ.get(name)
             if value is not None and name not in pairs:
                 pairs[name] = value
-        return sorted(pairs.items())
+        result = sorted(pairs.items())
+        self._env_memo[action.env] = result
+        return result
 
     def _tool(self, action: Action) -> ToolIdentity:
         family = "msvc" if action.dep_format == DEP_MSVC else "gnu"
@@ -206,12 +216,11 @@ class Engine:
 
         for out in action.outputs:
             fingerprint = rec.outputs.get(str(out))
-            try:
-                st = os.stat(out)
-            except OSError:
+            meta = self.stats.stat(str(out))
+            if meta is None:
                 reasons.append(f"output missing: {_rel(str(out), self.root)}")
                 continue
-            if fingerprint is None or [st.st_mtime_ns, st.st_size] != list(fingerprint):
+            if fingerprint is None or [meta[0], meta[1]] != list(fingerprint):
                 reasons.append(f"output modified outside the build: {_rel(str(out), self.root)}")
         return Decision(action.id, not reasons, reasons)
 
@@ -360,7 +369,7 @@ class Engine:
                 continue
             self._record(action, key1, inputs, env, tool, deps, entry.duration)
             self.bus.emit("action.cache_hit", action=action.id, target=action.target, kind=action.kind,
-                          source="local")
+                          source="local", outputs=[str(o) for o in action.outputs])
             output = "\n".join(p for p in (entry.stdout, entry.stderr) if p.strip())
             self._diagnose(action, output)
             return ActionResult(action.id, STATUS_CACHE_HIT, output=output, reasons=decision.reasons)
@@ -443,12 +452,10 @@ class Engine:
                 tool: ToolIdentity, deps: List[str], duration: float) -> None:
         outputs: Dict[str, List[int]] = {}
         for out in action.outputs:
-            try:
-                st = os.stat(out)
-                outputs[str(out)] = [st.st_mtime_ns, st.st_size]
-            except OSError:
-                pass
-            self.hasher.invalidate(out)
+            self.hasher.invalidate(out)                    # re-reads it with a real stat
+            meta = self.stats.stat(str(out))
+            if meta is not None:
+                outputs[str(out)] = [meta[0], meta[1]]
         self.state.put_action(action.id, ActionRecord(
             key=key1, argv=list(action.argv), cwd=str(action.cwd or ""), tool=tool.key(), env=env,
             inputs=inputs, deps={d: self.hasher.digest(d) for d in deps}, outputs=outputs, duration=duration,

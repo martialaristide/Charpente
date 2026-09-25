@@ -105,8 +105,12 @@ class Subscription:
         while True:
             item = self._queue.get()
             if item is None:
+                self._queue.task_done()
                 return
-            self._call(item)
+            try:
+                self._call(item)
+            finally:
+                self._queue.task_done()
 
     def deliver(self, event: Event) -> None:
         if self.sync:
@@ -126,6 +130,17 @@ class Subscription:
             except queue.Full:
                 return
             self._thread.join(timeout)
+
+    def flush(self, timeout: float) -> bool:
+        """Wait until everything queued so far has been handled. True if drained."""
+        if self._queue is None:
+            return True
+        deadline = time.monotonic() + timeout
+        while self._queue.unfinished_tasks:
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(0.001)
+        return True
 
     def unsubscribe(self) -> None:
         self.bus._remove(self)
@@ -220,6 +235,14 @@ class EventBus:
             dropped={s.name: s.dropped for s in subs if s.dropped},
             errors={s.name: list(s.errors) for s in subs if s.errors},
         )
+
+    def flush(self, timeout: float = 5.0) -> bool:
+        """Block until every asynchronous subscriber has handled the events emitted
+        so far (so output printed by the caller afterwards cannot interleave with
+        it). Returns False if a subscriber was still busy after `timeout`."""
+        with self._lock:
+            subs = list(self._subs)
+        return all(sub.flush(timeout) for sub in subs)
 
     def close(self, timeout: float = 5.0) -> BusStats:
         """Flush every asynchronous subscriber (waiting at most `timeout` each)

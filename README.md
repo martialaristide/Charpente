@@ -37,7 +37,7 @@ honestly:
 | Windows build (MSVC, clang-cl, or MinGW) | ✅ Working, tested with a real compiler |
 | Linux build (GCC or Clang) | ✅ Implemented, unit-tested; not yet run against a real Linux compiler in this environment |
 | macOS build (Apple Clang) | ✅ Implemented, unit-tested; not yet run against a real macOS compiler in this environment |
-| Incremental builds | ✅ Timestamp-based only (object newer than source ⇒ skip). **No per-header dependency tracking yet** — editing a header won't trigger a rebuild of the `.cpp` files that include it. Run `charpente clean` if a build looks stale. |
+| Incremental builds | ✅ Exact: tracks the headers each compilation read (`-MMD` / `/showIncludes`), decides by file content (not timestamps), parallel, with a content-addressed cache. Verified with a real compiler; the `/showIncludes` (MSVC/clang-cl) path is unit-tested on sample compiler output (not yet run against a real `cl.exe`). No-op build of a 10 000-file project: ~0.25 s; a *single* edit in such a project still costs ~6 s ([ADR 0010](docs/adr/0010-coeur-python-ou-rust.md)) |
 | `charpente init/build/run/clean/test/package` | ✅ Working |
 | `package` | ✅ `.zip` by default. `--format installer` generates a real Inno Setup `.iss`/.deb staging/.pkg staging and builds it if `iscc`/`dpkg-deb`/`pkgbuild` is on PATH (otherwise leaves the script/staging with the exact command to finish by hand). Generation logic is unit-tested on all three platforms; actual `iscc`/`dpkg-deb`/`pkgbuild` invocation has only been exercised where the tool happens to be installed |
 | `charpente ask` / `--ai-diagnose` | ✅ Working, fully optional (see [AI features](#ai-features)) |

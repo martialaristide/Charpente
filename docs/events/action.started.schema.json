@@ -1,0 +1,81 @@
+{
+  "$id": "https://charpente.dev/schemas/events/v1/action.started.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "id": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "parent_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "command": {
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "type": "string"
+        },
+        "reasons": {
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "target": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "target",
+        "kind"
+      ],
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "number"
+    },
+    "type": {
+      "const": "action.started"
+    },
+    "wall_time": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "parent_id",
+    "timestamp",
+    "wall_time",
+    "session_id",
+    "type",
+    "payload"
+  ],
+  "title": "action.started",
+  "type": "object"
+}

@@ -122,6 +122,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "The loader was given a path that does not exist.",
         "fix": "Check the path.",
     },
+    "CH1019": {
+        "title": "Invalid file pattern",
+        "message": "Invalid pattern {pattern!r}: '**' must be a whole path component (write src/**/*.cpp, not src/**.cpp).",
+        "cause": "'**' means 'any number of folders' and only works as a complete component between slashes.",
+        "fix": "Write \"src/**/*.cpp\" to match .cpp files in src and all its sub-folders.",
+    },
+    "CH1020": {
+        "title": "Absolute file pattern",
+        "message": "Pattern {pattern!r} is absolute: patterns in sources()/exclude() are relative to the folder of the .charpente file.",
+        "cause": "Absolute paths make a workspace impossible to move or share.",
+        "fix": "Use a path relative to the .charpente file (\"../shared/*.cpp\" is allowed).",
+    },
     # ------------------------------------------------------------------ 2xxx
     "CH2001": {
         "title": "No C/C++ compiler found",

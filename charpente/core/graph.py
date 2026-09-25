@@ -14,10 +14,22 @@ from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 from ..errors import ChValueError
 from .actions import Action
 
+_CASE_FOLD = os.name == "nt"
+
 
 def path_key(path: Union[str, Path]) -> str:
-    """Canonical dictionary key for a path (absolute, case-folded on Windows)."""
-    return os.path.normcase(os.path.abspath(str(path)))
+    """Canonical dictionary key for a path (absolute, case-folded on Windows).
+
+    Absolute paths are normalised with string operations only: `abspath` asks
+    the operating system for the current directory, which is measurable when
+    called hundreds of thousands of times."""
+    text = os.fspath(path)
+    if not os.path.isabs(text):
+        text = os.path.abspath(text)
+    text = os.path.normpath(text)
+    # `str.lower` stands in for `normcase` on Windows: same result for keys,
+    # without a system call per path (LCMapStringEx).
+    return text.lower() if _CASE_FOLD else text
 
 
 class ActionGraph:

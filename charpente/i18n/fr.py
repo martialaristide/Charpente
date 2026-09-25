@@ -116,6 +116,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "Le chargeur a reçu un chemin qui n'existe pas.",
         "fix": "Vérifiez le chemin.",
     },
+    "CH1019": {
+        "title": "Motif de fichiers invalide",
+        "message": "Motif {pattern!r} invalide : '**' doit être un composant de chemin entier (écrivez src/**/*.cpp, pas src/**.cpp).",
+        "cause": "'**' signifie « un nombre quelconque de dossiers » et ne fonctionne que comme composant complet entre deux barres obliques.",
+        "fix": "Écrivez \"src/**/*.cpp\" pour désigner les fichiers .cpp de src et de tous ses sous-dossiers.",
+    },
+    "CH1020": {
+        "title": "Motif de fichiers absolu",
+        "message": "Le motif {pattern!r} est absolu : les motifs de sources()/exclude() sont relatifs au dossier du fichier .charpente.",
+        "cause": "Des chemins absolus rendent un workspace impossible à déplacer ou à partager.",
+        "fix": "Utilisez un chemin relatif au fichier .charpente (\"../shared/*.cpp\" est permis).",
+    },
     # ------------------------------------------------------------------ 2xxx
     "CH2001": {
         "title": "Aucun compilateur C/C++ trouvé",

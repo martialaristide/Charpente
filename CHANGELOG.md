@@ -1,5 +1,49 @@
 # Changelog
 
+## v0.3.0 -- Phase P1: the engine
+
+Every v0.1.0 `.charpente` file still builds. What changed is what happens
+underneath, and a set of new commands.
+
+- **Exact incremental builds.** Editing a header now recompiles precisely the
+  files that include it (`-MMD -MF` for GCC/Clang, `/showIncludes` for MSVC and
+  clang-cl). Freshness is decided by file *content* (BLAKE3, blake2b fallback),
+  not timestamps: `touch` rebuilds nothing.
+- **Content-addressed cache** (`~/.charpente/cache`): reverting an edit, switching
+  branches or cleaning `build/` replays results instead of recompiling.
+  `charpente cache stats|gc|clear|dir`.
+- **Parallel builds**, longest chain first (`-j N`, default one per CPU).
+- **A build that has nothing to do takes ~0.25 s for 10 000 files** (was 18.7 s in
+  the first engine draft) thanks to a metadata-only fast path, directory-batched
+  file metadata and a `scandir`-based glob. See ADR 0007 and ADR 0010 (which
+  states plainly that a *single-file edit* in such a project still costs ~6 s).
+- **`charpente why <target|file>`**: what would rebuild and why (`header changed:`,
+  `command line changed: added -DX`, `tool changed`, `output missing`...);
+  `--last` explains the previous build.
+- **`charpente history`, `charpente diff-build`**: sessions, and how two builds
+  differ (time, binary sizes, new/fixed warnings). **`charpente headers`** ranks
+  headers by rebuild cost; builds print a hint when one header change recompiled
+  20+ files.
+- **Events.** The build emits typed events; `--output jsonl` prints them (schemas
+  in `docs/events/`), every session is logged to `build/.charpente/events/` and can
+  be replayed with `charpente replay`.
+- **`build/compile_commands.json`** is written for clangd, clang-tidy, CLion, VS Code.
+- `charpente test --retries N` reports `[FLAKY]` for a test that fails then passes
+  with no change in between; all test targets build together.
+- Compiler warnings from successful compilations are now shown.
+
+Fixed while redesigning (each was a real defect of v0.1.0):
+
+- two `util.cpp` in different folders shared one object file (one silently
+  overwrote the other);
+- `include_dirs(["include"])` was relative to the shell's current directory, not the
+  workspace;
+- changing a library did not relink an executable that links it;
+- an archive kept members of deleted sources.
+
+Known limits: see ADR 0006 (a header that newly shadows another on the include path
+is not detected) and ADR 0010.
+
 ## v0.2.0 -- Phase P0: foundations
 
 Nothing about how a `.charpente` file is written changes: every valid

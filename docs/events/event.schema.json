@@ -1,0 +1,2921 @@
+{
+  "$id": "https://charpente.dev/schemas/events/v1/event.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/session.started.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "argv": {
+              "type": "array"
+            },
+            "command": {
+              "type": "string"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "command",
+            "argv",
+            "cwd",
+            "version"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "session.started"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "session.started",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/session.finished.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "duration": {
+              "type": "number"
+            },
+            "exit_code": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "ok": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "ok",
+            "duration"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "session.finished"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "session.finished",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/session.interrupted.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "session.interrupted"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "session.interrupted",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/workspace.loading.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "workspace.loading"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "workspace.loading",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/workspace.loaded.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "targets": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "name",
+            "path",
+            "targets"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "workspace.loaded"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "workspace.loaded",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/workspace.trust_required.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "workspace.trust_required"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "workspace.trust_required",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/workspace.lint_warning.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "line": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "message": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path",
+            "code",
+            "message"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "workspace.lint_warning"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "workspace.lint_warning",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/graph.analyzed.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "actions": {
+              "type": "integer"
+            },
+            "config": {
+              "type": "string"
+            },
+            "critical_path": {
+              "type": "number"
+            },
+            "targets": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "actions",
+            "targets",
+            "critical_path",
+            "config"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "graph.analyzed"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "graph.analyzed",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/action.queued.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "target",
+            "kind"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "action.queued"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "action.queued",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/action.started.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "command": {
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "kind": {
+              "type": "string"
+            },
+            "reasons": {
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "target",
+            "kind"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "action.started"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "action.started",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/action.cache_hit.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "outputs": {
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "source": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "target",
+            "kind"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "action.cache_hit"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "action.cache_hit",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/action.up_to_date.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "target",
+            "kind"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "action.up_to_date"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "action.up_to_date",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/action.finished.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "duration": {
+              "type": "number"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "outputs": {
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "target",
+            "kind",
+            "duration"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "action.finished"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "action.finished",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/action.failed.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "duration": {
+              "type": "number"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "output": {
+              "type": "string"
+            },
+            "returncode": {
+              "type": "integer"
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "target",
+            "kind",
+            "returncode",
+            "duration",
+            "output"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "action.failed"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "action.failed",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/action.blocked.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "because": {
+              "type": "array"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "target",
+            "kind",
+            "because"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "action.blocked"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "action.blocked",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/action.output.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "stream": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "target",
+            "stream",
+            "text"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "action.output"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "action.output",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/target.started.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "actions": {
+              "type": "integer"
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target",
+            "actions"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "target.started"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "target.started",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/target.finished.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "cached": {
+              "type": "integer"
+            },
+            "duration": {
+              "type": "number"
+            },
+            "executed": {
+              "type": "integer"
+            },
+            "output": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target": {
+              "type": "string"
+            },
+            "up_to_date": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "target",
+            "duration",
+            "executed",
+            "cached",
+            "up_to_date"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "target.finished"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "target.finished",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/target.up_to_date.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "output": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "target.up_to_date"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "target.up_to_date",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/target.failed.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "code": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "error": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target",
+            "error"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "target.failed"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "target.failed",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/diagnostic.emitted.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "action": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "code": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "column": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "file": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "fix": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "line": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "message": {
+              "type": "string"
+            },
+            "severity": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "severity",
+            "message"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "diagnostic.emitted"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "diagnostic.emitted",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/test.started.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "test.started"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "test.started",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/test.passed.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "duration": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "test.passed"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "test.passed",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/test.failed.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "duration": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "exit_code": {
+              "type": "integer"
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target",
+            "exit_code"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "test.failed"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "test.failed",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/test.flaky_detected.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "test.flaky_detected"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "test.flaky_detected",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/gate.check_started.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "check": {
+              "type": "string"
+            },
+            "level": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "check"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "gate.check_started"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "gate.check_started",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/gate.check_passed.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "check": {
+              "type": "string"
+            },
+            "duration": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "check"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "gate.check_passed"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "gate.check_passed",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/gate.check_failed.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "check": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "check",
+            "reason"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "gate.check_failed"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "gate.check_failed",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/gate.blocked.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "gate.blocked"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "gate.blocked",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/pkg.resolving.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "constraint": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "pkg.resolving"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "pkg.resolving",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/pkg.downloading.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "received": {
+              "type": "integer"
+            },
+            "total": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "received"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "pkg.downloading"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "pkg.downloading",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/pkg.verified.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "digest": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "digest"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "pkg.verified"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "pkg.verified",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/pkg.cached.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "pkg.cached"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "pkg.cached",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/vcs.commit_created.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "message": {
+              "type": "string"
+            },
+            "sha": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "sha",
+            "message"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "vcs.commit_created"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "vcs.commit_created",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/vcs.push_done.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "branch": {
+              "type": "string"
+            },
+            "remote": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "remote",
+            "branch"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "vcs.push_done"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "vcs.push_done",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/vcs.pr_opened.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "vcs.pr_opened"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "vcs.pr_opened",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/vcs.ci_status.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "state": {
+              "type": "string"
+            },
+            "url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "state"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "vcs.ci_status"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "vcs.ci_status",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/deploy.device_found.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "device": {
+              "type": "string"
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "platform": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "platform"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "deploy.device_found"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "deploy.device_found",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/deploy.installing.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "artifact": {
+              "type": "string"
+            },
+            "device": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "artifact"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "deploy.installing"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "deploy.installing",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/deploy.launched.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "app": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "device": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "device"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "deploy.launched"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "deploy.launched",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/deploy.log.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "device": {
+              "type": "string"
+            },
+            "level": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "line": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "line"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "deploy.log"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "deploy.log",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/resource.low_disk.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "free_bytes": {
+              "type": "integer"
+            },
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path",
+            "free_bytes"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "resource.low_disk"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "resource.low_disk",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/resource.low_memory.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "free_bytes": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "free_bytes"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "resource.low_memory"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "resource.low_memory",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/resource.on_battery.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "jobs": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "resource.on_battery"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "resource.on_battery",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/hint.emitted.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "detail": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "hint.emitted"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "hint.emitted",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/bus.dropped.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "count": {
+              "type": "integer"
+            },
+            "subscriber": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "subscriber",
+            "count"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "bus.dropped"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "bus.dropped",
+      "type": "object"
+    }
+  ],
+  "title": "Charpente event"
+}

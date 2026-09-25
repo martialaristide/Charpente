@@ -7,6 +7,7 @@ from typing import List
 from ..builder import build_workspace, dependency_closure
 from ..core import process
 from ._common import CommandError, load, resolve_target, toolchain_for_host
+from ._session import Session, add_engine_args
 
 
 def execute(args: List[str]) -> int:
@@ -18,6 +19,7 @@ def execute(args: List[str]) -> int:
     parser.add_argument("program_args", nargs=argparse.REMAINDER,
                         help="Arguments forwarded to the program (put -- before "
                              "any that start with '-', e.g. `charpente run -- --foo`)")
+    add_engine_args(parser, output=False)
     parsed = parser.parse_args(args)
 
     # argparse.REMAINDER keeps a leading "--" as a literal token instead of
@@ -41,10 +43,16 @@ def execute(args: List[str]) -> int:
         # try to link against a dependency library that doesn't exist yet
         # for that config.
         closure = dependency_closure(workspace, target.name)
-        build_result = build_workspace(workspace, toolchain, target_os,
-                                       config=parsed.config, only=closure)
-        target_result = build_result.target(target.name)
-        if target_result is None or not target_result.ok:
+        with Session("run", parsed, workspace, toolchain=toolchain.name, config=parsed.config) as session:
+            build_result = build_workspace(workspace, toolchain, target_os, config=parsed.config, only=closure,
+                                           jobs=parsed.jobs, bus=session.bus, use_cache=not parsed.no_cache)
+            session.flush()
+            target_result = build_result.target(target.name)
+            ok = target_result is not None and target_result.ok
+            session.finish(ok, 0 if ok else 1)
+        if build_result.interrupted:
+            raise KeyboardInterrupt
+        if target_result is None or not target_result.ok or target_result.output_path is None:
             error = target_result.error if target_result else "unknown target build failure"
             print(f"charpente: build failed: {error}")
             return 1

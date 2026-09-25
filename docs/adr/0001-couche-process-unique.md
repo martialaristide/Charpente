@@ -8,7 +8,7 @@
   transmet jamais `shell=True`, (c) accepte une fonction `runner` injectée pour
   les tests. Un test de garde échoue si un autre fichier du paquet importe
   `subprocess` ou contient `shell=True`.
-- **Conséquences** : les capacités des modules (`process = [...]`, ADR 0006)
+- **Conséquences** : les capacités des modules (`process = [...]`, ADR 0008)
   pourront être vérifiées à un seul endroit ; le journal d'actions et les
   événements `action.*` n'ont qu'un point d'accroche.
 - **Alternatives rejetées** : un lint `ruff` (S602) seul — ne couvre pas

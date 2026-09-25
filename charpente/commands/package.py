@@ -21,6 +21,7 @@ from ..builder import build_dir, build_workspace, dependency_closure
 from ..core import process
 from ..dsl.model import OS, Target, Workspace
 from ._common import CommandError, load, resolve_target, toolchain_for_host
+from ._session import Session, add_engine_args
 
 
 def execute(args: List[str]) -> int:
@@ -35,6 +36,7 @@ def execute(args: List[str]) -> int:
     parser.add_argument("--version", default="1.0.0", help="Version string embedded in the installer")
     parser.add_argument("--maintainer", default="unknown <unknown@example.com>",
                         help="Maintainer field for a .deb package")
+    add_engine_args(parser, output=False)
     parsed = parser.parse_args(args)
 
     workspace = load(parsed.file)
@@ -46,8 +48,14 @@ def execute(args: List[str]) -> int:
     # build` before would otherwise try to link against a dependency that
     # was never built for it).
     closure = dependency_closure(workspace, target.name)
-    build_result = build_workspace(workspace, toolchain, target_os, config=parsed.config, only=closure)
-    target_result = build_result.target(target.name)
+    with Session("package", parsed, workspace, toolchain=toolchain.name, config=parsed.config) as session:
+        build_result = build_workspace(workspace, toolchain, target_os, config=parsed.config, only=closure,
+                                       jobs=parsed.jobs, bus=session.bus, use_cache=not parsed.no_cache)
+        session.flush()
+        target_result = build_result.target(target.name)
+        session.finish(target_result is not None and target_result.ok)
+    if build_result.interrupted:
+        raise KeyboardInterrupt
     if target_result is None or not target_result.ok:
         error = target_result.error if target_result else "unknown target build failure"
         raise CommandError("CH4001", detail=error)

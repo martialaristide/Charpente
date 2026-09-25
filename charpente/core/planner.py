@@ -7,6 +7,7 @@ needs to decide freshness and to cache is described in the `Action`s.
 from __future__ import annotations
 
 import hashlib
+import os
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Dict, Iterable, List, Optional, Set
@@ -49,7 +50,10 @@ def _object_path(root: Path, obj_dir: Path, source: Path, object_ext: str) -> Pa
     `util.cpp`, or two `util.cpp` in different folders, never share an object.
     """
     try:
-        rel = source.resolve().relative_to(root.resolve())
+        # `source` and `root` are both already absolute (the loader resolves the
+        # workspace directory once); avoiding Path.resolve() here matters: it is
+        # a syscall per call, and this runs once per source file.
+        rel = Path(os.path.normpath(source)).relative_to(root)
         parts = list(PurePosixPath(rel.as_posix()).parts)
     except ValueError:
         # Outside the workspace: keep it apart under a stable per-directory folder.
@@ -63,7 +67,7 @@ def _action_id(kind: str, target: str, source: Optional[Path], root: Path) -> st
     if source is None:
         return f"{kind}:{target}"
     try:
-        shown = source.resolve().relative_to(root.resolve()).as_posix()
+        shown = Path(os.path.normpath(source)).relative_to(root).as_posix()
     except ValueError:
         shown = source.as_posix()
     return f"{kind}:{target}:{shown}"
@@ -76,6 +80,7 @@ def plan_workspace(
     *,
     config: str = "Debug",
     only: Optional[Iterable[str]] = None,
+    sources: Optional[Dict[str, List[str]]] = None,
 ) -> Plan:
     """Actions for every target (or just `only`) in dependency order.
 
@@ -106,8 +111,9 @@ def plan_workspace(
             errors[name] = ChError("CH3006", targets=sorted(blocked_by))
             failed.add(name)
             continue
-        sources = target.resolved_sources()
-        if not sources:
+        target_sources = ([Path(s) for s in sources[name]] if sources is not None and name in sources
+                          else target.resolved_sources())
+        if not target_sources:
             failed.add(name)
             errors[name] = ChError("CH3001", target=target.name)
             continue
@@ -118,7 +124,7 @@ def plan_workspace(
         objects: List[Path] = []
         used: Set[Path] = set()
 
-        for source in sources:
+        for source in target_sources:
             obj = _object_path(root, obj_dir, source, object_ext)
             if obj in used:  # cannot happen for distinct sources, but never build silently wrong
                 raise ChError("CH3010", path=str(obj), first="?", second=str(source))

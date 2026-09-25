@@ -156,6 +156,22 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** Le chargeur a reçu un chemin qui n'existe pas.
 - **Correction (FR) :** Vérifiez le chemin.
 
+### CH1019 — Invalid file pattern
+*FR : Motif de fichiers invalide*
+
+- **Cause:** '**' means 'any number of folders' and only works as a complete component between slashes.
+- **Fix:** Write "src/**/*.cpp" to match .cpp files in src and all its sub-folders.
+- **Cause (FR) :** '**' signifie « un nombre quelconque de dossiers » et ne fonctionne que comme composant complet entre deux barres obliques.
+- **Correction (FR) :** Écrivez "src/**/*.cpp" pour désigner les fichiers .cpp de src et de tous ses sous-dossiers.
+
+### CH1020 — Absolute file pattern
+*FR : Motif de fichiers absolu*
+
+- **Cause:** Absolute paths make a workspace impossible to move or share.
+- **Fix:** Use a path relative to the .charpente file ("../shared/*.cpp" is allowed).
+- **Cause (FR) :** Des chemins absolus rendent un workspace impossible à déplacer ou à partager.
+- **Correction (FR) :** Utilisez un chemin relatif au fichier .charpente ("../shared/*.cpp" est permis).
+
 ## CH2xxx — Toolchains and programs
 
 ### CH2001 — No C/C++ compiler found

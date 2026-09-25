@@ -30,7 +30,7 @@ EVENT_TYPES: Dict[str, Dict[str, str]] = {
     "action.queued": {"action": "str", "target": "str", "kind": "str"},
     "action.started": {"action": "str", "target": "str", "kind": "str", "description": "str?",
                        "command": "list?", "reasons": "list?"},
-    "action.cache_hit": {"action": "str", "target": "str", "kind": "str", "source": "str?"},
+    "action.cache_hit": {"action": "str", "target": "str", "kind": "str", "source": "str?", "outputs": "list?"},
     "action.up_to_date": {"action": "str", "target": "str", "kind": "str"},
     "action.finished": {"action": "str", "target": "str", "kind": "str", "duration": "float",
                         "outputs": "list?"},
