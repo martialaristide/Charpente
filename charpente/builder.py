@@ -18,13 +18,15 @@ from typing import Dict, Iterable, List, Optional, Set
 
 from .core import analysis, compdb, fastpath, hashing, process
 from .core import engine as engine_mod
+from .core import planner as planner_mod
 from .core.cache import LocalCache
 from .core.planner import Plan, plan_workspace
 from .core.planner import build_dir as _build_dir
 from .core.statcache import StatCache
 from .core.state import StateDB
 from .core.toolid import ToolIdentities
-from .dsl.model import OS, Target, Workspace
+from .dsl import resolve
+from .dsl.model import OS, Kind, Target, Workspace
 from .errors import ChError
 from .events import EventBus
 from .toolchains import Toolchain
@@ -76,17 +78,7 @@ def dependency_closure(workspace: Workspace, target_name: str) -> Set[str]:
     asking for a target in a configuration that's never been built before
     would try to link against a dependency's library that was never built
     for that configuration either."""
-    needed: Set[str] = set()
-
-    def visit(name: str) -> None:
-        if name in needed or name not in workspace.targets:
-            return
-        needed.add(name)
-        for dep in workspace.targets[name].depends_on:
-            visit(dep)
-
-    visit(target_name)
-    return needed
+    return resolve.closure(workspace, target_name)
 
 
 def _fold(plan: Plan, result: engine_mod.EngineResult) -> List[TargetResult]:
@@ -139,7 +131,7 @@ def _fold(plan: Plan, result: engine_mod.EngineResult) -> List[TargetResult]:
 
 
 def _context(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: str, scope: List[str],
-             sources: Dict[str, List[str]]) -> List[str]:
+             sources: Dict[str, List[str]], effective: Dict[str, Target]) -> List[str]:
     """Everything (other than file contents) that determines what a build does."""
     from . import _version, flags
 
@@ -150,9 +142,12 @@ def _context(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: 
     parts = [_version.__version__, config, target_os.value, toolchain.name, str(workspace.root),
              "|".join(tool_keys), "|".join(f"{k}={os.environ.get(k, '')}" for k in engine_mod.KEYED_ENV),
              ",".join(scope)]
+    # The *effective* targets: overlays, `uses` and public settings already folded in.
+    parts.append(repr(sorted(workspace.rules.items())))
+    parts.append(repr(sorted(workspace.option_values.items())))
     for name in scope:
-        parts.append(repr(workspace.targets[name]))
-        parts.append(hashing.digest_parts(*sources[name]))
+        parts.append(repr(effective[name]))
+        parts.append(hashing.digest_parts(*sources.get(name, [])))
     return parts
 
 
@@ -237,21 +232,21 @@ def build_workspace(
 def _build(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: str, run: RunFn,
            keep_going: bool, only: Optional[Iterable[str]], jobs: int, events: EventBus, use_cache: bool,
            cache: Optional[LocalCache], write_compdb: bool, fast_path: bool) -> BuildResult:
-    order = workspace.build_order()                 # raises for unknown dependencies and cycles
-    wanted = set(only) if only is not None else None
-    scope = [n for n in order if wanted is None or n in wanted]
-    sources = {name: workspace.targets[name].source_files() for name in scope}
+    # Raises for unknown dependencies and cycles; folds `uses`, overlays and public settings.
+    scope, effective = planner_mod.effective_scope(workspace, toolchain, config, only)
+    sources = {name: effective[name].source_files() for name in scope if effective[name].kind != Kind.HEADER_ONLY}
 
     context: Optional[str] = None
     stamp_file: Optional[Path] = None
     if fast_path:
-        context = fastpath.context_digest(_context(workspace, toolchain, target_os, config, scope, sources))
+        context = fastpath.context_digest(_context(workspace, toolchain, target_os, config, scope, sources, effective))
         stamp_file = fastpath.stamp_path(state_dir(workspace), f"{config}|{','.join(scope)}")
         stamp = fastpath.load(stamp_file)
         if stamp is not None and fastpath.verify(stamp, context, StatCache()):
             return _fast_result(stamp, scope, events)
 
-    plan = plan_workspace(workspace, toolchain, target_os, config=config, only=only, sources=sources)
+    plan = plan_workspace(workspace, toolchain, target_os, config=config, only=only, sources=sources,
+                          scope=(scope, effective))
 
     first_error: Optional[str] = None
     for name in plan.order:

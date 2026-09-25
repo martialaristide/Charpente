@@ -39,7 +39,7 @@ def execute(args: List[str]) -> int:
     add_engine_args(parser, output=False)
     parsed = parser.parse_args(args)
 
-    workspace = load(parsed.file)
+    workspace = load(parsed.file, parsed.opt)
     target = resolve_target(workspace, parsed.target)
     target_os, toolchain = toolchain_for_host()
 

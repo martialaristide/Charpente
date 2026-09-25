@@ -40,6 +40,8 @@ def add_engine_args(parser: argparse.ArgumentParser, *, output: bool = True) -> 
                         help="Do not read or write the content cache")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Show every command that runs, and why")
+    parser.add_argument("--opt", action="append", default=[], metavar="NAME=VALUE",
+                        help="Set a workspace option declared with ws.option() (repeatable)")
     if output:
         parser.add_argument("--output", choices=OUTPUT_MODES, default="auto",
                             help="'auto' (default): live progress on a terminal, plain text otherwise; "

@@ -13,9 +13,11 @@ from pathlib import Path
 from typing import List, Optional, Sequence
 
 from .dsl.model import OS, Kind, Target
+from .errors import ChValueError
 from .toolchains import Toolchain
 
 _MSVC_STYLE = {"msvc", "clang-cl"}
+_SHARED = (Kind.SHARED_LIBRARY, Kind.PLUGIN)
 
 
 def family(toolchain: Toolchain) -> str:
@@ -80,7 +82,7 @@ def link_args(
 
     if fam == "msvc":
         args = [toolchain.linker, *[str(o) for o in objects], f"/Fe{output}", "/nologo"]
-        if target.kind == Kind.SHARED_LIBRARY:
+        if target.kind in _SHARED:
             args.append("/LD")
         # /LIBPATH: (and any other pure linker flag) must come after a
         # literal "/link" separator: cl.exe and clang-cl both compile-then-
@@ -99,7 +101,7 @@ def link_args(
         return args
 
     args = [toolchain.linker, *[str(o) for o in objects], "-o", str(output)]
-    if target.kind == Kind.SHARED_LIBRARY:
+    if target.kind in _SHARED:
         args.append("-shared")
     args += [f"-L{d}" for d in library_dirs]
     args += [f"-l{lib}" for lib in target.link_libraries]
@@ -120,9 +122,9 @@ def output_filename(target: Target, target_os: OS, toolchain: Toolchain) -> str:
     if target.kind == Kind.STATIC_LIBRARY:
         return f"{name}.lib" if fam == "msvc" else f"lib{name}.a"
 
-    if target.kind == Kind.SHARED_LIBRARY:
+    if target.kind in _SHARED:
         if fam == "msvc":
             return f"{name}.dll"
         return f"lib{name}.dylib" if target_os == OS.MACOS else f"lib{name}.so"
 
-    raise ValueError(f"Unhandled target kind: {target.kind}")
+    raise ChValueError("CH3007", kind=target.kind.value)

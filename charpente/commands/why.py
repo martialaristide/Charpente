@@ -46,11 +46,13 @@ def execute(args: List[str]) -> int:
     parser.add_argument("subject", help="A target name, or a source/header/output file")
     parser.add_argument("--file", help="Path to the .charpente workspace file")
     parser.add_argument("--config", default="Debug", choices=["Debug", "Release"])
+    parser.add_argument("--opt", action="append", default=[], metavar="NAME=VALUE",
+                        help="Workspace option values, as for `charpente build`")
     parser.add_argument("--last", action="store_true",
                         help="Explain the previous build instead of predicting the next one")
     parsed = parser.parse_args(args)
 
-    workspace = load(parsed.file)
+    workspace = load(parsed.file, parsed.opt)
     target_os, toolchain = toolchain_for_host()
     plan = plan_workspace(workspace, toolchain, target_os, config=parsed.config)
     base = state_dir(workspace)

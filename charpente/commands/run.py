@@ -30,7 +30,7 @@ def execute(args: List[str]) -> int:
     if program_args and program_args[0] == "--":
         program_args = program_args[1:]
 
-    workspace = load(parsed.file)
+    workspace = load(parsed.file, parsed.opt)
     target = resolve_target(workspace, parsed.target)
     target_os, toolchain = toolchain_for_host()
 

@@ -1,27 +1,51 @@
 """The public DSL surface: what a .charpente file actually calls.
 
 Design note: a .charpente file is executed as plain Python (see loader.py),
-so `Workspace`/`Target` are ordinary context managers built around a bit of
-module-level state -- there is no parser, no grammar, no magic beyond
+so `Workspace`/`Target`/`Rule` are ordinary context managers built around a bit
+of module-level state -- there is no parser, no grammar, no magic beyond
 `__enter__`/`__exit__` pushing and popping "the current thing" so nested
 calls know what they're configuring.
+
+Everything added in DSL v2 is additive: a v0.1.0 file uses none of it and
+behaves exactly as before.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
-from ..errors import ChRuntimeError
+from ..errors import ChError, ChRuntimeError, ChValueError
 from ..hooks import Event, notify
+from ..semver import Constraint
 from . import model as _model
 from .model import OS, Kind, Language
 
-__all__ = ["Workspace", "Target", "Kind", "Language", "OS", "Event", "notify", "current_workspace"]
+__all__ = ["Workspace", "Target", "Rule", "Kind", "Language", "OS", "Event", "notify", "current_workspace"]
 
 _current_workspace: Optional[_model.Workspace] = None
 _current_target: Optional[_model.Target] = None
 _pending_location: Optional[Path] = None
 _last_workspace: Optional[_model.Workspace] = None
+_option_overrides: Dict[str, str] = {}
+_PACKAGE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]*$")
+
+Strings = Union[str, Iterable[str]]
+
+
+def _as_list(value: Strings) -> List[str]:
+    """`"a"` and `["a", "b"]` both work. (A bare string used to be iterated
+    character by character -- a silent trap, now a single item.)"""
+    if isinstance(value, str):
+        return [value]
+    return [str(v) for v in value]
+
+
+def _flatten(args: "tuple[Strings, ...]") -> List[str]:
+    out: List[str] = []
+    for arg in args:
+        out.extend(_as_list(arg))
+    return out
 
 
 def current_workspace() -> Optional[_model.Workspace]:
@@ -46,6 +70,12 @@ def set_pending_location(directory: Optional[Path]) -> None:
     _pending_location = directory
 
 
+def set_option_overrides(overrides: Optional[Dict[str, str]]) -> None:
+    """`--opt name=value` values for `ws.option(...)` to pick up (loader only)."""
+    global _option_overrides
+    _option_overrides = dict(overrides or {})
+
+
 def _reset_state() -> None:
     """Clear module-level state between file loads (tests, and a loader
     that runs more than once in the same process)."""
@@ -55,12 +85,40 @@ def _reset_state() -> None:
     _last_workspace = None
 
 
+_TRUE = {"1", "true", "yes", "on"}
+_FALSE = {"0", "false", "no", "off"}
+
+
+def parse_option_value(spec: _model.OptionSpec, raw: str) -> Any:
+    """Convert a command-line string to the option's type (CH1021 if it cannot)."""
+    text = str(raw).strip()
+    if spec.kind == "bool":
+        if text.lower() in _TRUE:
+            return True
+        if text.lower() in _FALSE:
+            return False
+    elif spec.kind == "int":
+        try:
+            return int(text)
+        except ValueError:
+            pass
+    elif spec.kind == "enum":
+        if spec.choices and text in [str(c) for c in spec.choices]:
+            return text
+    else:
+        return text
+    expected = {"bool": "true or false", "int": "an integer",
+                "enum": "one of " + ", ".join(str(c) for c in (spec.choices or ()))}[spec.kind]
+    raise ChValueError("CH1021", name=spec.name, value=raw, expected=expected)
+
+
 class Workspace:
     """`with Workspace("Name") as ws: ...` -- opens a new workspace and
     makes it the target of any `Target(...)` block declared inside."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, version: str = ""):
         self._model = _model.Workspace(name=name, location=_pending_location)
+        self._model.version = version
 
     def __enter__(self) -> "Workspace":
         global _current_workspace
@@ -79,6 +137,43 @@ class Workspace:
         self._model.configurations = list(names)
         return self
 
+    def platforms(self, names: Strings) -> "Workspace":
+        """Platforms this workspace is meant to build for (`"windows-x64"`, `"android-arm64"`...)."""
+        self._model.platforms = _as_list(names)
+        return self
+
+    def requires(self, *specs: Strings) -> "Workspace":
+        """External packages: `ws.requires("fmt@^10", "glm")`. They are resolved and fetched by
+        `charpente pkg install` (never silently during a build), pinned in `charpente.lock`."""
+        for spec in _flatten(specs):
+            name, _, constraint = spec.partition("@")
+            if not _PACKAGE_RE.match(name):
+                raise ChValueError("CH1023", spec=spec)
+            Constraint.parse(constraint or "*")                 # raises CH7002 if malformed
+            if spec not in self._model.requires:
+                self._model.requires.append(spec)
+        return self
+
+    def option(self, name: str, default: Any = None, *, help: str = "",
+               choices: Optional[Iterable[Any]] = None) -> Any:
+        """Declare a typed option and return its value (the default, or the one given with
+        `--opt name=value`). Studio lists declared options and can change them."""
+        if choices is not None:
+            kind, choice_tuple = "enum", tuple(choices)
+            if default is None and choice_tuple:
+                default = choice_tuple[0]
+        elif isinstance(default, bool):
+            kind, choice_tuple = "bool", None
+        elif isinstance(default, int):
+            kind, choice_tuple = "int", None
+        else:
+            kind, choice_tuple = "string", None
+        spec = _model.OptionSpec(name=name, default=default, help=help, choices=choice_tuple, kind=kind)
+        self._model.options[name] = spec
+        value = parse_option_value(spec, _option_overrides[name]) if name in _option_overrides else default
+        self._model.option_values[name] = value
+        return value
+
     def on(self, event: Event) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Decorator: run a function when an event happens (see `charpente.hooks`)."""
         if not isinstance(event, Event):
@@ -93,6 +188,128 @@ class Workspace:
     @property
     def model(self) -> _model.Workspace:
         return self._model
+
+
+class Rule:
+    """`with Rule("gen") as r: r.command([...]); r.inputs([...]); r.outputs([...])`
+
+    A build step of your own. Declaring its inputs and outputs lets Charpente cache
+    it and run it exactly when an input changes. A target consumes it with
+    `t.rules(["gen"])`: the outputs become inputs of the target's compilations,
+    and outputs that are C/C++ files are compiled too. The command is a list of
+    arguments (never a shell string) run from the workspace folder.
+    """
+
+    def __init__(self, name: str):
+        if _current_workspace is None:
+            raise ChRuntimeError("CH1014", name=name)
+        from ..safe_name import validate
+
+        validate(name, "Rule name")
+        self._workspace = _current_workspace
+        self._model = _model.Rule(name=name)
+
+    def __enter__(self) -> "Rule":
+        return self
+
+    def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+        if exc_type is None:
+            if not self._model.argv or not self._model.outputs:
+                raise ChValueError("CH1024", name=self._model.name)
+            self._workspace.rules[self._model.name] = self._model
+
+    def command(self, argv: Iterable[str]) -> "Rule":
+        if isinstance(argv, (str, bytes)):
+            raise ChError("CH9001", command=str(argv))
+        self._model.argv = [str(a) for a in argv]
+        return self
+
+    def inputs(self, paths: Strings) -> "Rule":
+        self._model.inputs.extend(_as_list(paths))
+        return self
+
+    def outputs(self, paths: Strings) -> "Rule":
+        self._model.outputs.extend(_as_list(paths))
+        return self
+
+    def description(self, text: str) -> "Rule":
+        self._model.description = text
+        return self
+
+
+_PLATFORM_KEYS = ("android", "harmony", "ios", "wasm", "web", "xr", "embedded", "quest")
+
+
+class _Conditional:
+    """`with t.on_platform("android-*") as p: p.defines([...])`: settings that
+    only apply when the (config, platform, toolchain) condition holds."""
+
+    def __init__(self, target: _model.Target, when: Dict[str, str]):
+        self._target = target
+        self._overlay = _model.Overlay(when=dict(when))
+
+    def __enter__(self) -> "_Conditional":
+        return self
+
+    def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+        if exc_type is None:
+            self._target.overlays.append(self._overlay)
+
+    def sources(self, patterns: Strings) -> "_Conditional":
+        self._overlay.source_patterns.extend(_as_list(patterns))
+        return self
+
+    def exclude(self, patterns: Strings) -> "_Conditional":
+        self._overlay.exclude_patterns.extend(_as_list(patterns))
+        return self
+
+    def include_dirs(self, dirs: Strings) -> "_Conditional":
+        self._overlay.include_dirs.extend(_as_list(dirs))
+        return self
+
+    def public_include_dirs(self, dirs: Strings) -> "_Conditional":
+        self._overlay.public_include_dirs.extend(_as_list(dirs))
+        return self
+
+    def defines(self, macros: Strings) -> "_Conditional":
+        self._overlay.define_macros.extend(_as_list(macros))
+        return self
+
+    def public_defines(self, macros: Strings) -> "_Conditional":
+        self._overlay.public_define_macros.extend(_as_list(macros))
+        return self
+
+    def links(self, libraries: Strings) -> "_Conditional":
+        self._overlay.link_libraries.extend(_as_list(libraries))
+        return self
+
+    def compile_flags(self, flags: Strings) -> "_Conditional":
+        self._overlay.extra_compile_flags.extend(_as_list(flags))
+        return self
+
+    def link_flags(self, flags: Strings) -> "_Conditional":
+        self._overlay.extra_link_flags.extend(_as_list(flags))
+        return self
+
+    def uses(self, *names: Strings) -> "_Conditional":
+        self._overlay.uses.extend(_flatten(names))
+        return self
+
+    def depends_on(self, targets: Strings) -> "_Conditional":
+        self._overlay.depends_on.extend(_as_list(targets))
+        return self
+
+    def platform_settings(self, name: str, **settings: Any) -> "_Conditional":
+        self._overlay.platform_settings.setdefault(name, {}).update(settings)
+        return self
+
+    def __getattr__(self, name: str) -> Callable[..., "_Conditional"]:
+        # p.android(...), p.harmony(...), p.ios(...): recorded as platform settings, read by
+        # the platform modules (Android, HarmonyOS...).
+        if name in _PLATFORM_KEYS:
+            return lambda **settings: self.platform_settings(name, **settings)
+        raise AttributeError(f"{name!r} is not something a condition block can set "
+                             f"(platform settings: {', '.join(_PLATFORM_KEYS)})")
 
 
 class Target:
@@ -115,6 +332,7 @@ class Target:
             _current_workspace.add_target(self._model)
         _current_target = None
 
+    # ------------------------------------------------------------ v0.1.0 API
     def kind(self, value: Kind) -> "Target":
         self._model.kind = value
         return self
@@ -127,34 +345,117 @@ class Target:
         self._model.standard = value
         return self
 
-    def sources(self, patterns: Iterable[str]) -> "Target":
-        self._model.source_patterns.extend(patterns)
+    def sources(self, patterns: Strings) -> "Target":
+        self._model.source_patterns.extend(_as_list(patterns))
         return self
 
-    def exclude(self, patterns: Iterable[str]) -> "Target":
-        self._model.exclude_patterns.extend(patterns)
+    def exclude(self, patterns: Strings) -> "Target":
+        self._model.exclude_patterns.extend(_as_list(patterns))
         return self
 
-    def include_dirs(self, dirs: Iterable[str]) -> "Target":
-        self._model.include_dirs.extend(dirs)
+    def include_dirs(self, dirs: Strings) -> "Target":
+        self._model.include_dirs.extend(_as_list(dirs))
         return self
 
-    def defines(self, macros: Iterable[str]) -> "Target":
-        self._model.define_macros.extend(macros)
+    def defines(self, macros: Strings) -> "Target":
+        self._model.define_macros.extend(_as_list(macros))
         return self
 
-    def links(self, libraries: Iterable[str]) -> "Target":
-        self._model.link_libraries.extend(libraries)
+    def links(self, libraries: Strings) -> "Target":
+        self._model.link_libraries.extend(_as_list(libraries))
         return self
 
-    def depends_on(self, targets: Iterable[str]) -> "Target":
-        self._model.depends_on.extend(targets)
+    def depends_on(self, targets: Strings) -> "Target":
+        """Build order only. (Prefer `uses`, which also links and shares includes.)"""
+        self._model.depends_on.extend(_as_list(targets))
         return self
 
-    def compile_flags(self, flags: Iterable[str]) -> "Target":
-        self._model.extra_compile_flags.extend(flags)
+    def compile_flags(self, flags: Strings) -> "Target":
+        self._model.extra_compile_flags.extend(_as_list(flags))
         return self
 
-    def link_flags(self, flags: Iterable[str]) -> "Target":
-        self._model.extra_link_flags.extend(flags)
+    def link_flags(self, flags: Strings) -> "Target":
+        self._model.extra_link_flags.extend(_as_list(flags))
         return self
+
+    # ------------------------------------------------------------------ v2
+    def uses(self, *names: Strings) -> "Target":
+        """Build order, linking and the used targets' public settings, in one line:
+        `t.uses("engine", "glm")`. Names are workspace targets or `ws.requires` packages."""
+        self._model.uses.extend(_flatten(names))
+        return self
+
+    def uses_public(self, *names: Strings) -> "Target":
+        """Like `uses`, and whatever uses *this* target inherits them too (CMake's PUBLIC)."""
+        self._model.uses_public.extend(_flatten(names))
+        return self
+
+    def public_include_dirs(self, dirs: Strings) -> "Target":
+        """Used by this target *and* propagated to every target that uses it."""
+        self._model.public_include_dirs.extend(_as_list(dirs))
+        return self
+
+    def private_include_dirs(self, dirs: Strings) -> "Target":
+        return self.include_dirs(dirs)
+
+    def interface_include_dirs(self, dirs: Strings) -> "Target":
+        """Propagated to users, but not used by this target itself."""
+        self._model.interface_include_dirs.extend(_as_list(dirs))
+        return self
+
+    def public_defines(self, macros: Strings) -> "Target":
+        self._model.public_define_macros.extend(_as_list(macros))
+        return self
+
+    def private_defines(self, macros: Strings) -> "Target":
+        return self.defines(macros)
+
+    def interface_defines(self, macros: Strings) -> "Target":
+        self._model.interface_define_macros.extend(_as_list(macros))
+        return self
+
+    def public_compile_flags(self, flags: Strings) -> "Target":
+        self._model.public_compile_flags.extend(_as_list(flags))
+        return self
+
+    def public_links(self, libraries: Strings) -> "Target":
+        """System libraries every user of this target must also link (e.g. `ws2_32`)."""
+        self._model.public_link_libraries.extend(_as_list(libraries))
+        return self
+
+    def rules(self, names: Strings) -> "Target":
+        """Consume `Rule`s: their outputs feed this target's compilations."""
+        self._model.rules.extend(_as_list(names))
+        return self
+
+    def platforms(self, patterns: Strings) -> "Target":
+        """Only build this target for matching platforms (`"harmonyos-*"`)."""
+        self._model.platforms = _as_list(patterns)
+        return self
+
+    def assets(self, patterns: Strings) -> "Target":
+        self._model.assets.extend(_as_list(patterns))
+        return self
+
+    def shader_target(self, value: str) -> "Target":
+        self._model.shader_target = value
+        return self
+
+    def platform_settings(self, name: str, **settings: Any) -> "Target":
+        self._model.platform_settings.setdefault(name, {}).update(settings)
+        return self
+
+    def when(self, *, config: Optional[str] = None, platform: Optional[str] = None,
+             toolchain: Optional[str] = None) -> _Conditional:
+        """`with t.when(config="Release", platform="linux-*") as c: ...`"""
+        cond = {k: v for k, v in (("config", config), ("platform", platform), ("toolchain", toolchain)) if v}
+        return _Conditional(self._model, cond)
+
+    def on_config(self, pattern: str) -> _Conditional:
+        return _Conditional(self._model, {"config": pattern})
+
+    def on_platform(self, pattern: str) -> _Conditional:
+        return _Conditional(self._model, {"platform": pattern})
+
+    def on_toolchain(self, pattern: str) -> _Conditional:
+        return _Conditional(self._model, {"toolchain": pattern})

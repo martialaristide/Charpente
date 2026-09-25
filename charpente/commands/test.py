@@ -21,7 +21,7 @@ def execute(args: List[str]) -> int:
     add_engine_args(parser, output=False)
     parsed = parser.parse_args(args)
 
-    workspace = load(parsed.file)
+    workspace = load(parsed.file, parsed.opt)
     target_os, toolchain = toolchain_for_host()
 
     test_targets = [t for t in workspace.targets.values() if t.kind == Kind.TEST]

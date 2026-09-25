@@ -3,6 +3,10 @@
 Pure with respect to processes: it reads the filesystem to expand source
 globs, and computes commands, but launches nothing. Everything the engine
 needs to decide freshness and to cache is described in the `Action`s.
+
+The DSL's conveniences (`uses`, public/interface settings, overlays for a
+configuration/platform/toolchain) are resolved first (`dsl.resolve`), so the
+rest of this module -- and `flags.py` -- only ever sees plain targets.
 """
 from __future__ import annotations
 
@@ -10,16 +14,20 @@ import hashlib
 import os
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from .. import flags
-from ..dsl.model import OS, Kind, Target, Workspace
+from ..dsl import resolve
+from ..dsl.model import LIBRARY_KINDS, OS, Kind, Target, Workspace
 from ..errors import ChError
 from ..toolchains import Toolchain
-from .actions import DEP_GNU, DEP_MSVC, KIND_ARCHIVE, KIND_COMPILE, KIND_LINK, Action
+from .actions import DEP_GNU, DEP_MSVC, KIND_ARCHIVE, KIND_COMPILE, KIND_CUSTOM, KIND_LINK, Action
 from .graph import ActionGraph
 
-_LIBRARY_KINDS = (Kind.STATIC_LIBRARY, Kind.SHARED_LIBRARY)
+#: Kinds this engine builds today. The others (XR_APP, MOBILE_APP...) are
+#: accepted by the DSL and refused here, with CH3007, until their platform lands.
+_BUILDABLE = (Kind.EXECUTABLE, Kind.TEST, Kind.STATIC_LIBRARY, Kind.SHARED_LIBRARY, Kind.PLUGIN)
+_SOURCE_SUFFIXES = (".c", ".cc", ".cpp", ".cxx", ".c++")
 
 #: Makes MSVC print `Note: including file:` in English whatever the Windows
 #: display language is (the marker text is localised otherwise).
@@ -29,18 +37,44 @@ _MSVC_ENV = (("VSLANG", "1033"),)
 @dataclass
 class Plan:
     graph: ActionGraph
-    #: action ids per target, in a stable order (compile actions first, then the final one)
+    #: action ids per target, in a stable order (rule actions, compiles, then the final one)
     target_actions: Dict[str, List[str]] = field(default_factory=dict)
     #: final output file of each planned target
     outputs: Dict[str, Path] = field(default_factory=dict)
     #: targets that cannot be planned (e.g. no source files), with the reason
     errors: Dict[str, ChError] = field(default_factory=dict)
-    order: List[str] = field(default_factory=list)   # workspace build order (dependencies first)
+    order: List[str] = field(default_factory=list)   # dependencies first, `only`-filtered
     config: str = "Debug"
 
 
 def build_dir(workspace: Workspace, config: str, target: Target) -> Path:
     return workspace.root / "build" / config / target.name
+
+
+def context_for(config: str, toolchain: Toolchain, platform_name: Optional[str] = None,
+                options: Optional[Dict[str, object]] = None) -> resolve.BuildContext:
+    return resolve.BuildContext(config=config, platform=platform_name or resolve.host_platform(),
+                                toolchain=toolchain.name,
+                                options=tuple(sorted((k, str(v).lower() if isinstance(v, bool) else str(v))
+                                                     for k, v in (options or {}).items())))
+
+
+def effective_scope(workspace: Workspace, toolchain: Toolchain, config: str,
+                    only: Optional[Iterable[str]] = None,
+                    platform_name: Optional[str] = None) -> Tuple[List[str], Dict[str, Target]]:
+    """(build order restricted to the scope, effective target of everything in the
+    scope's closure). Raises the usual CH3004/CH3005 for cycles and unknown targets."""
+    ctx = context_for(config, toolchain, platform_name, workspace.option_values)
+    wanted = None if only is None else set(only)
+    names = [n for n in workspace.build_order() if wanted is None or n in wanted]
+    needed: Set[str] = set()
+    for n in names:
+        needed |= resolve.closure(workspace, n)
+    available = [n for n in workspace.build_order()
+                 if n in needed and resolve.target_available(workspace.targets[n], ctx)]
+    effective = resolve.effective_targets(workspace, available, ctx)
+    order = [n for n in resolve.topo_order(effective) if wanted is None or n in wanted]
+    return order, effective
 
 
 def _object_path(root: Path, obj_dir: Path, source: Path, object_ext: str) -> Path:
@@ -81,16 +115,14 @@ def plan_workspace(
     config: str = "Debug",
     only: Optional[Iterable[str]] = None,
     sources: Optional[Dict[str, List[str]]] = None,
+    scope: Optional[Tuple[List[str], Dict[str, Target]]] = None,
 ) -> Plan:
     """Actions for every target (or just `only`) in dependency order.
 
-    Raises the workspace's own errors for an unknown dependency or a cycle
-    (via `Workspace.build_order`). A target that cannot be planned (no source
-    files) is recorded in `Plan.errors` and contributes no actions."""
-    order = workspace.build_order()
-    if only is not None:
-        wanted = set(only)
-        order = [name for name in order if name in wanted]
+    A target that cannot be planned (no source files, a kind this engine cannot
+    build yet) is recorded in `Plan.errors` and contributes no actions; so do
+    the targets that depend on it."""
+    order, effective = scope if scope is not None else effective_scope(workspace, toolchain, config, only)
 
     debug = config.lower() == "debug"
     fam = flags.family(toolchain)
@@ -102,17 +134,48 @@ def plan_workspace(
     outputs: Dict[str, Path] = {}
     errors: Dict[str, ChError] = {}
     final_action: Dict[str, str] = {}
+    rule_actions: Dict[str, Action] = {}
+
+    def rule_action(rule_name: str, owner: str) -> Action:
+        """One action per rule, owned by the first target that names it."""
+        if rule_name not in rule_actions:
+            rule = workspace.rules.get(rule_name)
+            if rule is None:
+                raise ChError("CH3015", target=owner, rule=rule_name)
+            action = Action(
+                id=f"rule:{rule_name}", kind=KIND_CUSTOM, target=owner, argv=tuple(rule.argv),
+                outputs=tuple(root / p for p in rule.outputs), inputs=tuple(root / p for p in rule.inputs),
+                tool=rule.argv[0], description=rule.description or f"Running rule {rule_name}", cwd=root,
+            )
+            rule_actions[rule_name] = action
+            actions.append(action)
+            plan_targets.setdefault(owner, []).append(action.id)
+        return rule_actions[rule_name]
 
     failed: Set[str] = set()
     for name in order:
-        target = workspace.targets[name]
+        target = effective[name]
+        if target.kind == Kind.HEADER_ONLY:
+            continue                                    # contributes settings to its users, builds nothing
+        if target.kind not in _BUILDABLE:
+            errors[name] = ChError("CH3007", kind=target.kind.value)
+            failed.add(name)
+            continue
         blocked_by = failed.intersection(target.depends_on)
         if blocked_by:
             errors[name] = ChError("CH3006", targets=sorted(blocked_by))
             failed.add(name)
             continue
+
+        my_rules = [rule_action(r, name) for r in target.rules]
+        generated = [p for a in my_rules for p in a.outputs]
         target_sources = ([Path(s) for s in sources[name]] if sources is not None and name in sources
                           else target.resolved_sources())
+        seen_sources = {str(p) for p in target_sources}
+        for path in generated:
+            if path.suffix.lower() in _SOURCE_SUFFIXES and str(path) not in seen_sources:
+                target_sources.append(path)
+                seen_sources.add(str(path))
         if not target_sources:
             failed.add(name)
             errors[name] = ChError("CH3001", target=target.name)
@@ -120,7 +183,7 @@ def plan_workspace(
 
         out_dir = build_dir(workspace, config, target)
         obj_dir = out_dir / "obj"
-        ids: List[str] = []
+        ids: List[str] = plan_targets.setdefault(name, [])
         objects: List[Path] = []
         used: Set[Path] = set()
 
@@ -139,7 +202,7 @@ def plan_workspace(
                 target=target.name,
                 argv=tuple(argv),
                 outputs=(obj,),
-                inputs=(source,),
+                inputs=(source, *[p for p in generated if p != source]),
                 env=_MSVC_ENV if fam == "msvc" else (),
                 tool=compiler,
                 depfile=depfile,
@@ -155,15 +218,15 @@ def plan_workspace(
         extra_inputs: List[Path] = []
         after: List[str] = []
         for dep_name in target.depends_on:
-            dep = workspace.targets.get(dep_name)
+            dep = effective.get(dep_name) or workspace.targets.get(dep_name)
             if dep is None:
                 continue
             dependency_dirs.append(build_dir(workspace, config, dep))
             if dep_name in final_action:
                 after.append(final_action[dep_name])
         for lib in target.link_libraries:
-            dep = workspace.targets.get(lib)
-            if dep is not None and dep.kind in _LIBRARY_KINDS:
+            dep = effective.get(lib) or workspace.targets.get(lib)
+            if dep is not None and dep.kind in LIBRARY_KINDS and dep.kind != Kind.PLUGIN:
                 extra_inputs.append(build_dir(workspace, config, dep) / flags.output_filename(dep, target_os, toolchain))
 
         output_path = out_dir / flags.output_filename(target, target_os, toolchain)
@@ -187,7 +250,6 @@ def plan_workspace(
         actions.append(final)
         ids.append(final.id)
         final_action[name] = final.id
-        plan_targets[name] = ids
         outputs[name] = output_path
 
     return Plan(graph=ActionGraph(actions), target_actions=plan_targets, outputs=outputs,

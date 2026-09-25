@@ -172,6 +172,126 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** Des chemins absolus rendent un workspace impossible à déplacer ou à partager.
 - **Correction (FR) :** Utilisez un chemin relatif au fichier .charpente ("../shared/*.cpp" est permis).
 
+### CH1021 — Invalid option value
+*FR : Valeur d'option invalide*
+
+- **Cause:** The value given with --opt does not match the option's type or allowed choices.
+- **Fix:** Use --opt {name}=VALUE with a valid value (`charpente options` lists them).
+- **Cause (FR) :** La valeur donnée avec --opt ne correspond pas au type de l'option ni à ses choix autorisés.
+- **Correction (FR) :** Utilisez --opt {name}=VALEUR avec une valeur valide (`charpente options` les liste).
+
+### CH1022 — Unknown option
+*FR : Option inconnue*
+
+- **Cause:** --opt names an option that no `ws.option(...)` declares (a typo?).
+- **Fix:** Use one of the declared options, or declare it with ws.option("{name}", default=...).
+- **Cause (FR) :** --opt nomme une option qu'aucun `ws.option(...)` ne déclare (faute de frappe ?).
+- **Correction (FR) :** Utilisez une des options déclarées, ou déclarez-la avec ws.option("{name}", default=...).
+
+### CH1023 — Invalid package requirement
+*FR : Dépendance externe invalide*
+
+- **Cause:** The text given to ws.requires() is not a package name with an optional version constraint.
+- **Fix:** Write it as name or name@constraint (^1.2, ~1.2.3, >=1,<2).
+- **Cause (FR) :** Le texte donné à ws.requires() n'est pas un nom de paquet avec une contrainte de version optionnelle.
+- **Correction (FR) :** Écrivez nom ou nom@contrainte (^1.2, ~1.2.3, >=1,<2).
+
+### CH1024 — Incomplete rule
+*FR : Règle incomplète*
+
+- **Cause:** A Rule without a command or without declared outputs cannot be cached or scheduled.
+- **Fix:** Call r.command([...]) and r.outputs([...]).
+- **Cause (FR) :** Une Rule sans commande ou sans sorties déclarées ne peut être ni mise en cache ni ordonnancée.
+- **Correction (FR) :** Appelez r.command([...]) et r.outputs([...]).
+
+### CH1025 — Invalid charpente.toml
+*FR : charpente.toml invalide*
+
+- **Cause:** The declarative workspace file has a syntax error, an unknown key or a wrong value type.
+- **Fix:** Fix what the message names. Unknown keys are errors on purpose: a typo must not be silently ignored.
+- **Cause (FR) :** Le fichier de workspace déclaratif a une erreur de syntaxe, une clé inconnue ou un type de valeur incorrect.
+- **Correction (FR) :** Corrigez ce que le message nomme. Les clés inconnues sont des erreurs volontairement : une faute de frappe ne doit pas être ignorée en silence.
+
+### CH1101 — Syntax error in the workspace file
+*FR : Erreur de syntaxe dans le fichier de workspace*
+
+- **Cause:** The .charpente file is not valid Python.
+- **Fix:** Fix the syntax error at the reported line.
+- **Cause (FR) :** Le fichier .charpente n'est pas du Python valide.
+- **Correction (FR) :** Corrigez l'erreur de syntaxe à la ligne indiquée.
+
+### CH1102 — Suspicious file pattern
+*FR : Motif de fichiers suspect*
+
+- **Cause:** '**' must be a whole path component and patterns are relative to the .charpente file.
+- **Fix:** Write src/**/*.cpp, relative to the workspace folder.
+- **Cause (FR) :** '**' doit être un composant de chemin entier et les motifs sont relatifs au fichier .charpente.
+- **Correction (FR) :** Écrivez src/**/*.cpp, relatif au dossier du workspace.
+
+### CH1103 — depends_on names an unknown target
+*FR : depends_on nomme une cible inconnue*
+
+- **Cause:** The name is misspelled, or the target is declared elsewhere.
+- **Fix:** Fix the name or declare the target.
+- **Cause (FR) :** Le nom est mal orthographié, ou la cible est déclarée ailleurs.
+- **Correction (FR) :** Corrigez le nom ou déclarez la cible.
+
+### CH1104 — Dependency cycle in the workspace file
+*FR : Cycle de dépendances dans le fichier de workspace*
+
+- **Cause:** No build order exists.
+- **Fix:** Break the cycle by moving shared code into a third target.
+- **Cause (FR) :** Aucun ordre de build n'existe.
+- **Correction (FR) :** Cassez le cycle en déplaçant le code partagé dans une troisième cible.
+
+### CH1105 — depends_on without links
+*FR : depends_on sans links*
+
+- **Cause:** depends_on only orders the build; it does not link a library (the classic v0.1.0 trap).
+- **Fix:** Use uses("lib"), which orders, links and shares includes in one line.
+- **Cause (FR) :** depends_on ne fait qu'ordonner le build ; il ne lie pas une bibliothèque (le piège classique de la v0.1.0).
+- **Correction (FR) :** Utilisez uses("lib"), qui ordonne, lie et partage les includes en une ligne.
+
+### CH1106 — Unknown method in the DSL
+*FR : Méthode inconnue dans le DSL*
+
+- **Cause:** Usually a typo (sourcess instead of sources).
+- **Fix:** Use one of the methods documented in docs/dsl-reference.md.
+- **Cause (FR) :** Généralement une faute de frappe (sourcess au lieu de sources).
+- **Correction (FR) :** Utilisez une des méthodes documentées dans docs/dsl-reference.md.
+
+### CH1107 — Duplicate target in the file
+*FR : Cible en double dans le fichier*
+
+- **Cause:** Target names must be unique.
+- **Fix:** Rename one.
+- **Cause (FR) :** Les noms de cibles doivent être uniques.
+- **Correction (FR) :** Renommez l'une d'elles.
+
+### CH1108 — Target outside a workspace block
+*FR : Cible hors d'un bloc workspace*
+
+- **Cause:** Targets belong inside a workspace block.
+- **Fix:** Move it inside.
+- **Cause (FR) :** Les cibles se déclarent dans un bloc workspace.
+- **Correction (FR) :** Déplacez-la à l'intérieur.
+
+### CH1109 — uses names an unknown target
+*FR : uses nomme une cible inconnue*
+
+- **Cause:** Misspelled name, or a missing ws.requires(...).
+- **Fix:** Fix the name or add ws.requires("name").
+- **Cause (FR) :** Nom mal orthographié, ou ws.requires(...) manquant.
+- **Correction (FR) :** Corrigez le nom ou ajoutez ws.requires("nom").
+
+### CH1110 — Target without sources
+*FR : Cible sans sources*
+
+- **Cause:** Nothing would be compiled.
+- **Fix:** Add sources(["src/**/*.cpp"]).
+- **Cause (FR) :** Rien ne serait compilé.
+- **Correction (FR) :** Ajoutez sources(["src/**/*.cpp"]).
+
 ## CH2xxx — Toolchains and programs
 
 ### CH2001 — No C/C++ compiler found
@@ -311,6 +431,22 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Fix:** This is a bug in a module or in Charpente; report it.
 - **Cause (FR) :** Deux actions ont reçu le même identifiant.
 - **Correction (FR) :** C'est un bogue d'un module ou de Charpente ; signalez-le.
+
+### CH3014 — Used target unavailable on this platform
+*FR : Cible utilisée indisponible sur cette plateforme*
+
+- **Cause:** The dependency restricts itself with platforms([...]) to other platforms.
+- **Fix:** Guard the `uses` with on_platform(...), or widen the dependency's platforms.
+- **Cause (FR) :** La dépendance se restreint à d'autres plateformes avec platforms([...]).
+- **Correction (FR) :** Encadrez le `uses` avec on_platform(...), ou élargissez les plateformes de la dépendance.
+
+### CH3015 — Unknown rule
+*FR : Règle inconnue*
+
+- **Cause:** A target references a Rule name that no `with Rule(...)` block defines.
+- **Fix:** Declare the rule (`with Rule("name") as r: ...`) or fix the name.
+- **Cause (FR) :** Une cible référence un nom de Rule qu'aucun bloc `with Rule(...)` ne définit.
+- **Correction (FR) :** Déclarez la règle (`with Rule("nom") as r: ...`) ou corrigez le nom.
 
 ## CH4xxx — Packaging and command line
 

@@ -128,6 +128,96 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "Des chemins absolus rendent un workspace impossible à déplacer ou à partager.",
         "fix": "Utilisez un chemin relatif au fichier .charpente (\"../shared/*.cpp\" est permis).",
     },
+    "CH1021": {
+        "title": "Valeur d'option invalide",
+        "message": "Option {name!r} : {value!r} n'est pas valide (attendu : {expected}).",
+        "cause": "La valeur donnée avec --opt ne correspond pas au type de l'option ni à ses choix autorisés.",
+        "fix": "Utilisez --opt {name}=VALEUR avec une valeur valide (`charpente options` les liste).",
+    },
+    "CH1022": {
+        "title": "Option inconnue",
+        "message": "Aucune option nommée {name!r} n'est déclarée dans ce workspace. Options déclarées : {known}",
+        "cause": "--opt nomme une option qu'aucun `ws.option(...)` ne déclare (faute de frappe ?).",
+        "fix": "Utilisez une des options déclarées, ou déclarez-la avec ws.option(\"{name}\", default=...).",
+    },
+    "CH1023": {
+        "title": "Dépendance externe invalide",
+        "message": "Dépendance invalide : {spec!r} (attendu NOM ou NOM@CONTRAINTE, p. ex. fmt@^10).",
+        "cause": "Le texte donné à ws.requires() n'est pas un nom de paquet avec une contrainte de version optionnelle.",
+        "fix": "Écrivez nom ou nom@contrainte (^1.2, ~1.2.3, >=1,<2).",
+    },
+    "CH1024": {
+        "title": "Règle incomplète",
+        "message": "La règle {name!r} nécessite une commande et au moins une sortie.",
+        "cause": "Une Rule sans commande ou sans sorties déclarées ne peut être ni mise en cache ni ordonnancée.",
+        "fix": "Appelez r.command([...]) et r.outputs([...]).",
+    },
+    "CH1025": {
+        "title": "charpente.toml invalide",
+        "message": "{path} invalide : {detail}",
+        "cause": "Le fichier de workspace déclaratif a une erreur de syntaxe, une clé inconnue ou un type de valeur incorrect.",
+        "fix": "Corrigez ce que le message nomme. Les clés inconnues sont des erreurs volontairement : une faute de frappe ne doit pas être ignorée en silence.",
+    },
+    "CH1101": {
+        "title": "Erreur de syntaxe dans le fichier de workspace",
+        "message": "Le fichier de workspace a une erreur de syntaxe.",
+        "cause": "Le fichier .charpente n'est pas du Python valide.",
+        "fix": "Corrigez l'erreur de syntaxe à la ligne indiquée.",
+    },
+    "CH1102": {
+        "title": "Motif de fichiers suspect",
+        "message": "Un motif de sources()/exclude() est invalide ou absolu.",
+        "cause": "'**' doit être un composant de chemin entier et les motifs sont relatifs au fichier .charpente.",
+        "fix": "Écrivez src/**/*.cpp, relatif au dossier du workspace.",
+    },
+    "CH1103": {
+        "title": "depends_on nomme une cible inconnue",
+        "message": "depends_on référence une cible non déclarée dans le fichier.",
+        "cause": "Le nom est mal orthographié, ou la cible est déclarée ailleurs.",
+        "fix": "Corrigez le nom ou déclarez la cible.",
+    },
+    "CH1104": {
+        "title": "Cycle de dépendances dans le fichier de workspace",
+        "message": "Les cibles dépendent les unes des autres en cycle.",
+        "cause": "Aucun ordre de build n'existe.",
+        "fix": "Cassez le cycle en déplaçant le code partagé dans une troisième cible.",
+    },
+    "CH1105": {
+        "title": "depends_on sans links",
+        "message": "Une bibliothèque est dans depends_on mais jamais liée.",
+        "cause": "depends_on ne fait qu'ordonner le build ; il ne lie pas une bibliothèque (le piège classique de la v0.1.0).",
+        "fix": "Utilisez uses(\"lib\"), qui ordonne, lie et partage les includes en une ligne.",
+    },
+    "CH1106": {
+        "title": "Méthode inconnue dans le DSL",
+        "message": "Une méthode inexistante a été appelée sur une Target/Workspace/Rule.",
+        "cause": "Généralement une faute de frappe (sourcess au lieu de sources).",
+        "fix": "Utilisez une des méthodes documentées dans docs/dsl-reference.md.",
+    },
+    "CH1107": {
+        "title": "Cible en double dans le fichier",
+        "message": "Deux cibles portent le même nom.",
+        "cause": "Les noms de cibles doivent être uniques.",
+        "fix": "Renommez l'une d'elles.",
+    },
+    "CH1108": {
+        "title": "Cible hors d'un bloc workspace",
+        "message": "Target(...) est utilisé hors de `with Workspace(...)`.",
+        "cause": "Les cibles se déclarent dans un bloc workspace.",
+        "fix": "Déplacez-la à l'intérieur.",
+    },
+    "CH1109": {
+        "title": "uses nomme une cible inconnue",
+        "message": "uses(...) référence quelque chose qui n'est ni une cible ni un paquet requis.",
+        "cause": "Nom mal orthographié, ou ws.requires(...) manquant.",
+        "fix": "Corrigez le nom ou ajoutez ws.requires(\"nom\").",
+    },
+    "CH1110": {
+        "title": "Cible sans sources",
+        "message": "Une cible constructible ne déclare aucun sources().",
+        "cause": "Rien ne serait compilé.",
+        "fix": "Ajoutez sources([\"src/**/*.cpp\"]).",
+    },
     # ------------------------------------------------------------------ 2xxx
     "CH2001": {
         "title": "Aucun compilateur C/C++ trouvé",
@@ -231,6 +321,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "message": "L'action {action!r} est définie deux fois.",
         "cause": "Deux actions ont reçu le même identifiant.",
         "fix": "C'est un bogue d'un module ou de Charpente ; signalez-le.",
+    },
+    "CH3014": {
+        "title": "Cible utilisée indisponible sur cette plateforme",
+        "message": "La cible {target!r} utilise {dependency!r}, qui n'est pas disponible pour la plateforme {platform!r}.",
+        "cause": "La dépendance se restreint à d'autres plateformes avec platforms([...]).",
+        "fix": "Encadrez le `uses` avec on_platform(...), ou élargissez les plateformes de la dépendance.",
+    },
+    "CH3015": {
+        "title": "Règle inconnue",
+        "message": "La cible {target!r} utilise la règle {rule!r}, qui n'est pas déclarée.",
+        "cause": "Une cible référence un nom de Rule qu'aucun bloc `with Rule(...)` ne définit.",
+        "fix": "Déclarez la règle (`with Rule(\"nom\") as r: ...`) ou corrigez le nom.",
     },
     # ------------------------------------------------------------------ 4xxx
     "CH4001": {

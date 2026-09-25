@@ -29,6 +29,8 @@ def find_workspace_file(start_dir: Optional[Path] = None, explicit: Optional[str
         # Files only: a project's own `.charpente/` *directory* (state, hooks,
         # notify.toml, quality.toml) also matches the pattern and is not a workspace.
         matches = sorted(m for m in directory.glob("*.charpente") if m.is_file() and m.name != ".charpente")
+        if not matches and (directory / "charpente.toml").is_file():
+            return directory / "charpente.toml"       # the declarative form, when there is no .charpente file
         if len(matches) == 1:
             return matches[0]
         if len(matches) > 1:

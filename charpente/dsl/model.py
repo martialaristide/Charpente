@@ -6,7 +6,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..core import globber
 from ..errors import ChError, ChValueError
@@ -18,6 +18,20 @@ class Kind(Enum):
     STATIC_LIBRARY = "static_library"
     SHARED_LIBRARY = "shared_library"
     TEST = "test"
+    # Added with DSL v2. Each is accepted by the DSL everywhere; a kind the
+    # selected platform cannot build yet is refused when *planning* (CH3007),
+    # never silently built as something else.
+    HEADER_ONLY = "header_only"      # no build actions: only propagates includes/defines
+    PLUGIN = "plugin"                # a shared library meant to be loaded at run time
+    SHADERS = "shaders"
+    XR_APP = "xr_app"
+    MOBILE_APP = "mobile_app"
+    WEB_APP = "web_app"
+    FIRMWARE = "firmware"
+
+
+#: Kinds that produce a linkable library other targets can `uses()`.
+LIBRARY_KINDS = (Kind.STATIC_LIBRARY, Kind.SHARED_LIBRARY, Kind.PLUGIN)
 
 
 class Language(Enum):
@@ -29,6 +43,53 @@ class OS(Enum):
     WINDOWS = "windows"
     LINUX = "linux"
     MACOS = "macos"
+
+
+@dataclass
+class Overlay:
+    """Settings that apply only when a condition holds, recorded by
+    `t.on_config("Release")`, `t.on_platform("linux-*")`, `t.on_toolchain("msvc")`.
+
+    `when` maps a dimension (`config`, `platform`, `toolchain`) to an fnmatch
+    pattern; an overlay applies when every listed dimension matches."""
+
+    when: Dict[str, str] = field(default_factory=dict)
+    source_patterns: List[str] = field(default_factory=list)
+    exclude_patterns: List[str] = field(default_factory=list)
+    include_dirs: List[str] = field(default_factory=list)
+    define_macros: List[str] = field(default_factory=list)
+    link_libraries: List[str] = field(default_factory=list)
+    extra_compile_flags: List[str] = field(default_factory=list)
+    extra_link_flags: List[str] = field(default_factory=list)
+    public_include_dirs: List[str] = field(default_factory=list)
+    public_define_macros: List[str] = field(default_factory=list)
+    uses: List[str] = field(default_factory=list)
+    depends_on: List[str] = field(default_factory=list)
+    platform_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+
+
+@dataclass
+class Rule:
+    """A user-defined build step: a command with declared inputs and outputs, so
+    the engine can cache it and re-run it exactly when something changes."""
+
+    name: str
+    argv: List[str] = field(default_factory=list)
+    inputs: List[str] = field(default_factory=list)
+    outputs: List[str] = field(default_factory=list)
+    description: str = ""
+
+
+@dataclass(frozen=True)
+class OptionSpec:
+    """A workspace option declared with `ws.option(...)` (shown by Studio,
+    overridable with `--opt name=value`)."""
+
+    name: str
+    default: Any
+    help: str = ""
+    choices: Optional[Tuple[Any, ...]] = None
+    kind: str = "string"          # bool | string | enum | int
 
 
 @dataclass
@@ -50,6 +111,31 @@ class Target:
     extra_compile_flags: List[str] = field(default_factory=list)
     extra_link_flags: List[str] = field(default_factory=list)
 
+    # ---- DSL v2 (all optional; a v0.1.0 target never sets any of them) -----
+    #: `uses("dep")`: build order + link + the dependency's public settings, in one line.
+    uses: List[str] = field(default_factory=list)
+    #: `uses` that are also re-exported to whatever uses *this* target (CMake's PUBLIC).
+    uses_public: List[str] = field(default_factory=list)
+    #: Settings that propagate to dependents (public) or only to dependents (interface).
+    public_include_dirs: List[str] = field(default_factory=list)
+    interface_include_dirs: List[str] = field(default_factory=list)
+    public_define_macros: List[str] = field(default_factory=list)
+    interface_define_macros: List[str] = field(default_factory=list)
+    public_compile_flags: List[str] = field(default_factory=list)
+    public_link_libraries: List[str] = field(default_factory=list)
+    #: Names of `Rule`s whose outputs this target consumes (generated sources/headers).
+    rules: List[str] = field(default_factory=list)
+    #: Conditional settings: `on_config` / `on_platform` / `on_toolchain` blocks.
+    overlays: List["Overlay"] = field(default_factory=list)
+    #: Restrict the target to these platform patterns (None = every platform).
+    platforms: Optional[List[str]] = None
+    #: Platform-specific settings recorded by `p.android(...)`, `p.harmony(...)`... (used by P4).
+    platform_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    assets: List[str] = field(default_factory=list)
+    shader_target: str = ""
+    #: True for targets materialised from `ws.requires(...)` packages.
+    external: bool = False
+
     # Filled in by the loader once the workspace's own directory is known;
     # never set directly from a .charpente file.
     location: Optional[Path] = None
@@ -61,6 +147,15 @@ class Target:
         # never exist in the first place, not just be caught before it's
         # dangerous.
         _validate_name(self.name, "Target name")
+
+    def dependencies(self) -> List[str]:
+        """Every target this one may depend on in *any* configuration or platform:
+        `depends_on`, `uses`, and those of every overlay. A superset on purpose:
+        for ordering and closures, building slightly more is safe, too little is not."""
+        deps: List[str] = [*self.depends_on, *self.uses, *self.uses_public]
+        for overlay in self.overlays:
+            deps += [*overlay.depends_on, *overlay.uses]
+        return list(dict.fromkeys(deps))
 
     def source_files(self) -> List[str]:
         """Like `resolved_sources()` but as plain, sorted path strings: what hot
@@ -99,6 +194,16 @@ class Workspace:
     # (Event, function) pairs registered with `@ws.on(Event.X)`. Callables, so
     # excluded from repr/compare: they never take part in build keys.
     hooks: List[Any] = field(default_factory=list, repr=False, compare=False)
+    version: str = ""
+
+    # ---- DSL v2 ------------------------------------------------------------
+    rules: Dict[str, Rule] = field(default_factory=dict)
+    options: Dict[str, OptionSpec] = field(default_factory=dict)
+    option_values: Dict[str, Any] = field(default_factory=dict)
+    #: platform names this workspace targets (`ws.platforms([...])`); empty = the host only.
+    platforms: List[str] = field(default_factory=list)
+    #: `ws.requires("fmt@^10", ...)`: external packages, resolved by `charpente pkg install`.
+    requires: List[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         _validate_name(self.name, "Workspace name")
@@ -141,7 +246,7 @@ class Workspace:
                 cycle = " -> ".join(path + [name])
                 raise ChValueError("CH3004", cycle=cycle)
             visiting.add(name)
-            for dep in self.targets[name].depends_on:
+            for dep in self.targets[name].dependencies():
                 visit(dep, path + [name])
             visiting.discard(name)
             visited.add(name)

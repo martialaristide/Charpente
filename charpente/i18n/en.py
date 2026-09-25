@@ -134,6 +134,96 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "Absolute paths make a workspace impossible to move or share.",
         "fix": "Use a path relative to the .charpente file (\"../shared/*.cpp\" is allowed).",
     },
+    "CH1021": {
+        "title": "Invalid option value",
+        "message": "Option {name!r}: {value!r} is not valid (expected {expected}).",
+        "cause": "The value given with --opt does not match the option's type or allowed choices.",
+        "fix": "Use --opt {name}=VALUE with a valid value (`charpente options` lists them).",
+    },
+    "CH1022": {
+        "title": "Unknown option",
+        "message": "No option named {name!r} is declared in this workspace. Declared options: {known}",
+        "cause": "--opt names an option that no `ws.option(...)` declares (a typo?).",
+        "fix": "Use one of the declared options, or declare it with ws.option(\"{name}\", default=...).",
+    },
+    "CH1023": {
+        "title": "Invalid package requirement",
+        "message": "Not a valid package requirement: {spec!r} (expected NAME or NAME@CONSTRAINT, e.g. fmt@^10).",
+        "cause": "The text given to ws.requires() is not a package name with an optional version constraint.",
+        "fix": "Write it as name or name@constraint (^1.2, ~1.2.3, >=1,<2).",
+    },
+    "CH1024": {
+        "title": "Incomplete rule",
+        "message": "Rule {name!r} needs a command and at least one output.",
+        "cause": "A Rule without a command or without declared outputs cannot be cached or scheduled.",
+        "fix": "Call r.command([...]) and r.outputs([...]).",
+    },
+    "CH1025": {
+        "title": "Invalid charpente.toml",
+        "message": "Invalid {path}: {detail}",
+        "cause": "The declarative workspace file has a syntax error, an unknown key or a wrong value type.",
+        "fix": "Fix what the message names. Unknown keys are errors on purpose: a typo must not be silently ignored.",
+    },
+    "CH1101": {
+        "title": "Syntax error in the workspace file",
+        "message": "The workspace file has a syntax error.",
+        "cause": "The .charpente file is not valid Python.",
+        "fix": "Fix the syntax error at the reported line.",
+    },
+    "CH1102": {
+        "title": "Suspicious file pattern",
+        "message": "A sources()/exclude() pattern is invalid or absolute.",
+        "cause": "'**' must be a whole path component and patterns are relative to the .charpente file.",
+        "fix": "Write src/**/*.cpp, relative to the workspace folder.",
+    },
+    "CH1103": {
+        "title": "depends_on names an unknown target",
+        "message": "depends_on refers to a target that is not declared in the file.",
+        "cause": "The name is misspelled, or the target is declared elsewhere.",
+        "fix": "Fix the name or declare the target.",
+    },
+    "CH1104": {
+        "title": "Dependency cycle in the workspace file",
+        "message": "The targets depend on each other in a cycle.",
+        "cause": "No build order exists.",
+        "fix": "Break the cycle by moving shared code into a third target.",
+    },
+    "CH1105": {
+        "title": "depends_on without links",
+        "message": "A library is in depends_on but never linked.",
+        "cause": "depends_on only orders the build; it does not link a library (the classic v0.1.0 trap).",
+        "fix": "Use uses(\"lib\"), which orders, links and shares includes in one line.",
+    },
+    "CH1106": {
+        "title": "Unknown method in the DSL",
+        "message": "A method that does not exist was called on a Target/Workspace/Rule.",
+        "cause": "Usually a typo (sourcess instead of sources).",
+        "fix": "Use one of the methods documented in docs/dsl-reference.md.",
+    },
+    "CH1107": {
+        "title": "Duplicate target in the file",
+        "message": "Two targets have the same name.",
+        "cause": "Target names must be unique.",
+        "fix": "Rename one.",
+    },
+    "CH1108": {
+        "title": "Target outside a workspace block",
+        "message": "Target(...) is used outside `with Workspace(...)`.",
+        "cause": "Targets belong inside a workspace block.",
+        "fix": "Move it inside.",
+    },
+    "CH1109": {
+        "title": "uses names an unknown target",
+        "message": "uses(...) refers to something that is neither a target nor a required package.",
+        "cause": "Misspelled name, or a missing ws.requires(...).",
+        "fix": "Fix the name or add ws.requires(\"name\").",
+    },
+    "CH1110": {
+        "title": "Target without sources",
+        "message": "A buildable target declares no sources().",
+        "cause": "Nothing would be compiled.",
+        "fix": "Add sources([\"src/**/*.cpp\"]).",
+    },
     # ------------------------------------------------------------------ 2xxx
     "CH2001": {
         "title": "No C/C++ compiler found",
@@ -237,6 +327,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "message": "The action {action!r} is defined twice.",
         "cause": "Two actions were given the same identifier.",
         "fix": "This is a bug in a module or in Charpente; report it.",
+    },
+    "CH3014": {
+        "title": "Used target unavailable on this platform",
+        "message": "Target {target!r} uses {dependency!r}, which is not available for the platform {platform!r}.",
+        "cause": "The dependency restricts itself with platforms([...]) to other platforms.",
+        "fix": "Guard the `uses` with on_platform(...), or widen the dependency's platforms.",
+    },
+    "CH3015": {
+        "title": "Unknown rule",
+        "message": "Target {target!r} uses the rule {rule!r}, which is not declared.",
+        "cause": "A target references a Rule name that no `with Rule(...)` block defines.",
+        "fix": "Declare the rule (`with Rule(\"name\") as r: ...`) or fix the name.",
     },
     # ------------------------------------------------------------------ 4xxx
     "CH4001": {
