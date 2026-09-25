@@ -103,6 +103,42 @@ with Workspace("W") as ws:
             t.defines(["PLATFORM_WINDOWS"])
 ```
 
+## Reacting to events: `ws.on(...)` and `notify()`
+
+The build emits events (see [`events/README.md`](events/README.md)). A function
+decorated with `@ws.on(Event.X)` is called when one happens, on the event bus's
+own thread, so it can never slow down or fail the build (an exception in a hook is
+printed to stderr):
+
+```python
+from charpente import *
+
+with Workspace("Demo") as ws:
+    ...
+
+    @ws.on(Event.BUILD_FINISHED)
+    def summary(ev):
+        notify(f"{ev.targets_built} targets built in {ev.duration:.1f}s", ok=ev.ok)
+```
+
+| `Event.` | Bus event | Useful fields |
+|---|---|---|
+| `BUILD_STARTED` / `BUILD_FINISHED` | `session.started` / `session.finished` | on finish: `ok`, `duration`, `targets_built`, `targets_failed`, `actions_run`, `cache_hits`, `warnings`, `errors` |
+| `TARGET_STARTED` / `TARGET_FINISHED` / `TARGET_FAILED` | `target.*` | `target`, `executed`, `cached`, `up_to_date`, `error` |
+| `ACTION_FAILED` | `action.failed` | `action`, `returncode`, `output` |
+| `DIAGNOSTIC` | `diagnostic.emitted` | `file`, `line`, `column`, `severity`, `message` |
+| `TEST_PASSED` / `TEST_FAILED` | `test.*` | `target`, `exit_code` |
+| `HINT` | `hint.emitted` | `code`, `message` |
+| `ANY` | every event | `type`, `payload` |
+
+`notify(message, ok=True)` always prints `[notify] message` to stderr; if the
+`charpente-notify` module is enabled it also sends the message to every notifier
+whose configuration lists `events = ["notify"]`.
+
+Scripts can react too: files in `.charpente/hooks/` named after an event type
+(`session.finished.py`) get the event as JSON on standard input. They need your
+approval — see [`security.md`](security.md).
+
 ## Dependencies and linking
 
 ```python

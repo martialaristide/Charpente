@@ -16,7 +16,7 @@ SCHEMA_VERSION = 1
 
 EVENT_TYPES: Dict[str, Dict[str, str]] = {
     # -- session ------------------------------------------------------------
-    "session.started": {"command": "str", "argv": "list", "cwd": "str", "version": "str"},
+    "session.started": {"command": "str", "argv": "list", "cwd": "str", "version": "str", "config": "str?"},
     "session.finished": {"ok": "bool", "duration": "float", "exit_code": "int?"},
     "session.interrupted": {"reason": "str?"},
     # -- workspace loading --------------------------------------------------
@@ -80,6 +80,20 @@ EVENT_TYPES: Dict[str, Dict[str, str]] = {
     "hint.emitted": {"code": "str", "message": "str", "detail": "dict?"},
     "bus.dropped": {"subscriber": "str", "count": "int"},
 }
+
+#: Event types declared by installed modules (`[provides] events`). Kept apart from
+#: EVENT_TYPES so the published schemas describe only what Charpente itself emits.
+EXTENSION_EVENT_TYPES: Dict[str, Dict[str, str]] = {}
+
+
+def register_extension_event(name: str) -> None:
+    """Allow a module's own event type (free-form payload) on the bus."""
+    if "." not in name:
+        raise ValueError(f"module event {name!r} must look like 'family.name'")
+    if name in EVENT_TYPES:
+        raise ValueError(f"module event {name!r} collides with a built-in event")
+    EXTENSION_EVENT_TYPES.setdefault(name, {})
+
 
 _TYPE_NAMES = {"str", "int", "float", "bool", "list", "dict", "any"}
 

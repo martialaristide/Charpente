@@ -11,7 +11,7 @@ A field ending in `?` is optional. Adding an optional field is not a breaking ch
 
 | Event | Payload |
 |---|---|
-| `session.started` | `command: str`, `argv: list`, `cwd: str`, `version: str` |
+| `session.started` | `command: str`, `argv: list`, `cwd: str`, `version: str`, `config: str?` |
 | `session.finished` | `ok: bool`, `duration: float`, `exit_code: int?` |
 | `session.interrupted` | `reason: str?` |
 

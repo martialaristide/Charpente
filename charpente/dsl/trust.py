@@ -86,6 +86,28 @@ def trust(path: Path) -> None:
     _save_store(store)
 
 
+def ensure_trusted_digest(key: str, digest: str, *, label: str,
+                          prompt: Optional[Callable[[str], str]] = None) -> bool:
+    """Like `ensure_trusted` for content that is not a single file (a folder of hook
+    scripts): trusted once per (key, digest). Returns False -- never raises -- when
+    it cannot ask, so the caller can skip that content and go on."""
+    if _trust_all_requested():
+        return True
+    store = _load_store()
+    if store.get(key) == digest:
+        return True
+    if not _interactive() and prompt is None:
+        return False
+    ask = prompt or (lambda q: input(q))
+    print(f"\n! {label}: {key}")
+    print("  These files run as code on your machine when their event happens.")
+    if ask("  Trust and run them? [y/N] ").strip().lower() not in ("y", "yes"):
+        return False
+    store[key] = digest
+    _save_store(store)
+    return True
+
+
 def _interactive() -> bool:
     try:
         return sys.stdin.isatty() and sys.stdout.isatty()

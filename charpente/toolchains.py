@@ -90,7 +90,19 @@ _DETECTORS = {
 
 
 def detect(target_os: OS, which: WhichFn = shutil.which) -> List[Toolchain]:
-    return _DETECTORS[target_os](which)
+    """Every toolchain found, in preference order: Charpente's own providers
+    first (the v0.1.0 order), then those contributed by modules. All of them
+    are `toolchain` extensions registered through the module registry."""
+    from .modules.runtime import get_registry
+
+    found: List[Toolchain] = []
+    seen = set()
+    for extension in get_registry().all("toolchain"):
+        for toolchain in extension.obj.detect(target_os, which):
+            if toolchain.name not in seen:
+                seen.add(toolchain.name)
+                found.append(toolchain)
+    return found
 
 
 class NoToolchainFoundError(ChError):

@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.4.0 -- Phase P2: events and modules
+
+- **Modules.** Everything that is not the core is a module, through one API
+  (module API 2.0): a `charpente-module.toml` manifest, declared `[provides]`, declared
+  `[capabilities]` shown and approved at installation, guarded `ctx.process` /
+  `ctx.fs` / `ctx.net`, defensive loading, `charpente module add|list|info|remove|
+  enable|disable|approve|update|check|new|keygen|sign|trust-key|registry`. Install
+  from a folder, a `.zip`, a URL or a registry. **Capabilities are a contract, not a
+  sandbox** -- see `docs/modules.md` and `docs/security.md`.
+- **Signatures** (Ed25519, checked against the RFC 8032 vectors). No official key is
+  published yet; third-party modules need `--allow-unsigned`.
+- The six built-in **toolchains are now modules**, in the v0.1.0 preference order.
+  `charpente toolchain list`.
+- **`charpente-notify`** (bundled, off until enabled): desktop notification,
+  webhook, Discord, Slack, Telegram, e-mail; secrets only by environment-variable
+  name.
+- **Hooks**: `@ws.on(Event.BUILD_FINISHED)` and `notify()` in `.charpente` files;
+  scripts in `.charpente/hooks/` (approved by content hash, never through a shell).
+- **Output**: `--output auto|plain|rich|jsonl`; GitHub Actions annotations
+  automatically inside Actions; resumable, verified, budgeted downloads
+  (`CHARPENTE_OFFLINE=1` forbids the network).
+- **Events**: a JSON Schema for every event under `docs/events/`, generated from
+  one table and checked by a test.
+- Fixed: a project's own `.charpente/` *directory* was mistaken for a second
+  workspace file (`CH1003`) as soon as one existed.
+
 ## v0.3.0 -- Phase P1: the engine
 
 Every v0.1.0 `.charpente` file still builds. What changed is what happens

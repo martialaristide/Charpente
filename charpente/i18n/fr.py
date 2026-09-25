@@ -263,12 +263,134 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "La ligne de commande est incomplète ou mal formée.",
         "fix": "Lancez la commande avec --help.",
     },
+    "CH4006": {
+        "title": "Paquet optionnel manquant",
+        "message": "Ceci nécessite le paquet optionnel {package!r}, qui n'est pas installé.",
+        "cause": "La fonctionnalité est optionnelle et sa dépendance n'est installée que sur demande.",
+        "fix": "Installez-le avec : pip install \"charpente[{extra}]\"",
+    },
     # ------------------------------------------------------------------ 5xxx
     "CH5001": {
         "title": "Fournisseur d'IA non configuré",
         "message": "Aucun fournisseur d'IA n'est configuré.",
         "cause": "Les fonctions d'IA sont optionnelles et désactivées tant que vous n'avez pas choisi de fournisseur.",
         "fix": "Définissez ANTHROPIC_API_KEY, OPENAI_API_KEY ou CHARPENTE_AI_URL (voir docs/security.md).",
+    },
+    # ------------------------------------------------------------------ 6xxx
+    "CH6001": {
+        "title": "Échec du téléchargement",
+        "message": "Impossible de télécharger {url} : {detail}",
+        "cause": "Le serveur est injoignable, a coupé la connexion ou a refusé la requête.",
+        "fix": "Vérifiez votre connexion et réessayez : un téléchargement interrompu reprend là où il s'est arrêté. Charpente fonctionne hors ligne pour tout ce qui est déjà en cache.",
+    },
+    "CH6002": {
+        "title": "Somme de contrôle incorrecte",
+        "message": "Somme de contrôle incorrecte pour {url} : attendu {expected}, obtenu {actual}. Le fichier a été supprimé.",
+        "cause": "Le fichier téléchargé n'est pas celui qui a été publié (corruption, transfert tronqué ou falsification).",
+        "fix": "Réessayez. Si cela persiste, n'utilisez pas cette source : signalez-le à l'éditeur.",
+    },
+    "CH6003": {
+        "title": "Téléchargement au-delà de la taille autorisée",
+        "message": "{url} fait {size} octets, au-delà du budget autorisé de {budget} octets. Rien n'a été conservé.",
+        "cause": "Un budget de téléchargement (--max-download) est défini et ce fichier est plus gros.",
+        "fix": "Augmentez le budget, ou récupérez-le sur une meilleure connexion et placez-le dans le cache local ou un miroir.",
+    },
+    "CH6004": {
+        "title": "Mode hors ligne : accès réseau refusé",
+        "message": "Refus de télécharger {url} : le mode hors ligne est actif (CHARPENTE_OFFLINE=1).",
+        "cause": "Vous avez demandé à Charpente de ne pas utiliser le réseau.",
+        "fix": "Retirez CHARPENTE_OFFLINE, ou fournissez le fichier via un miroir local ou un dossier vendor.",
+    },
+    # ------------------------------------------------------------------ 7xxx
+    "CH7001": {
+        "title": "Version invalide",
+        "message": "Version invalide : {value!r} (attendu MAJEUR.MINEUR.CORRECTIF, p. ex. 1.2.0).",
+        "cause": "Le texte n'est pas une version sémantique.",
+        "fix": "Écrivez MAJEUR.MINEUR.CORRECTIF, avec éventuellement un suffixe -prerelease.",
+    },
+    "CH7002": {
+        "title": "Contrainte de version invalide",
+        "message": "Contrainte de version invalide : {value!r} (exemples : ^1.2, ~1.2.3, >=1.0,<2.0, *).",
+        "cause": "La contrainte n'a pas pu être analysée.",
+        "fix": "Utilisez ^ (compatible), ~ (niveau correctif), des opérateurs de comparaison séparés par des virgules, ou *.",
+    },
+    "CH7003": {
+        "title": "Manifeste de module invalide",
+        "message": "Manifeste de module invalide {path} : {detail}",
+        "cause": "charpente-module.toml est absent, n'est pas du TOML valide, ou il manque un champ obligatoire.",
+        "fix": "Comparez-le au manifeste de docs/modules.md ; `charpente module check CHEMIN` liste tous les problèmes.",
+    },
+    "CH7004": {
+        "title": "Le module exige une autre API de modules",
+        "message": "Le module {name} exige l'API de modules {required}, mais ce Charpente fournit {provided}.",
+        "cause": "Le module a été écrit pour une version incompatible de l'API de modules.",
+        "fix": "Mettez à jour le module (`charpente module update {name}`) ou Charpente.",
+    },
+    "CH7005": {
+        "title": "Capacité non accordée",
+        "message": "Le module {module} a tenté d'utiliser {capability}, qu'il n'a pas déclaré ou que l'utilisateur n'a pas approuvé.",
+        "cause": "Un module ne peut utiliser que ce que son manifeste déclare et que vous avez approuvé à l'installation.",
+        "fix": "Si vous faites confiance au module, ajoutez la capacité à son manifeste puis approuvez-la avec `charpente module approve {module}`.",
+    },
+    "CH7006": {
+        "title": "Module introuvable",
+        "message": "Aucun module nommé {name!r} ({where}).",
+        "cause": "Le nom n'est pas installé et n'existe dans aucun registre configuré.",
+        "fix": "`charpente module list` montre ce qui est installé ; ajoutez un registre avec `charpente module registry add URL`, ou installez depuis un dossier : `charpente module add ./mon-module`.",
+    },
+    "CH7007": {
+        "title": "Échec du contrôle d'intégrité du module",
+        "message": "Contrôle d'intégrité échoué pour {name} : {detail}",
+        "cause": "Le module téléchargé ou décompressé ne correspond pas à sa somme de contrôle ou à sa signature publiées.",
+        "fix": "Ne l'installez pas. Retéléchargez-le depuis un registre de confiance ; si cela persiste, signalez-le au mainteneur du registre.",
+    },
+    "CH7008": {
+        "title": "Extension en double",
+        "message": "Le module {module} tente d'enregistrer {kind} {name!r}, déjà fourni par {owner}.",
+        "cause": "Deux modules fournissent une extension du même nom.",
+        "fix": "Désactivez l'un d'eux (`charpente module disable NOM`) ou demandez à son auteur de la renommer.",
+    },
+    "CH7009": {
+        "title": "Échec du chargement du module",
+        "message": "Le module {name} n'a pas pu être chargé : {detail}",
+        "cause": "L'import du point d'entrée du module a levé une erreur.",
+        "fix": "Lancez `charpente module check {name}` ; si le module est le vôtre, corrigez l'erreur ci-dessus, sinon désactivez-le et signalez le problème.",
+    },
+    "CH7010": {
+        "title": "Module non signé : confirmation requise",
+        "message": "Le module {name} n'est pas signé par une clé de confiance ({detail}). Refus sans confirmation.",
+        "cause": "Seuls les modules signés par une clé de confiance s'installent sans question.",
+        "fix": "Examinez les capacités du module, puis relancez avec --allow-unsigned si vous faites confiance à sa source.",
+    },
+    "CH7011": {
+        "title": "Module déjà installé",
+        "message": "Le module {name} {version} est déjà installé.",
+        "cause": "La même version est déjà présente.",
+        "fix": "Utilisez `charpente module update {name}` ou supprimez-le d'abord.",
+    },
+    "CH7012": {
+        "title": "Registre injoignable",
+        "message": "Impossible de lire le registre de modules {registry} : {detail}",
+        "cause": "L'adresse du registre est erronée, hors ligne, ou n'est pas un index de registre valide.",
+        "fix": "Vérifiez l'adresse et votre connexion. Charpente fonctionne hors ligne avec les modules déjà installés.",
+    },
+    "CH7013": {
+        "title": "La commande du module entre en conflit avec une commande intégrée",
+        "message": "Le module {module} fournit la commande {name!r}, qui est une commande intégrée et ne peut pas être remplacée.",
+        "cause": "Un module peut ajouter des commandes mais jamais remplacer les commandes intégrées.",
+        "fix": "Demandez à l'auteur du module de renommer la commande.",
+    },
+    "CH7014": {
+        "title": "Extension non déclarée",
+        "message": "Le module {module} a enregistré l'extension {kind} {name!r}, que son manifeste ne déclare pas sous [provides] {key}.",
+        "cause": "Un module doit déclarer tout ce qu'il fournit afin de pouvoir être examiné avant d'être chargé.",
+        "fix": "Ajoutez {name!r} à la liste [provides] {key} du manifeste du module.",
+    },
+    "CH7015": {
+        "title": "Le module doit être approuvé à nouveau",
+        "message": "Le module {name} demande plus que ce que vous avez approuvé ({detail}) ; il reste désactivé jusqu'à approbation.",
+        "cause": "Une mise à jour a changé les capacités demandées par le module.",
+        "fix": "Examinez-les avec `charpente module info {name}`, puis `charpente module approve {name}`.",
     },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {

@@ -21,6 +21,12 @@
         "command": {
           "type": "string"
         },
+        "config": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "cwd": {
           "type": "string"
         },

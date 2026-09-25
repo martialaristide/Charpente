@@ -354,6 +354,14 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** La ligne de commande est incomplète ou mal formée.
 - **Correction (FR) :** Lancez la commande avec --help.
 
+### CH4006 — Optional package missing
+*FR : Paquet optionnel manquant*
+
+- **Cause:** The feature is optional and its dependency is only installed on request.
+- **Fix:** Install it with: pip install "charpente[{extra}]"
+- **Cause (FR) :** La fonctionnalité est optionnelle et sa dépendance n'est installée que sur demande.
+- **Correction (FR) :** Installez-le avec : pip install "charpente[{extra}]"
+
 ## CH5xxx — AI
 
 ### CH5001 — AI provider not configured
@@ -363,6 +371,162 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Fix:** Set ANTHROPIC_API_KEY, OPENAI_API_KEY or CHARPENTE_AI_URL (see docs/security.md).
 - **Cause (FR) :** Les fonctions d'IA sont optionnelles et désactivées tant que vous n'avez pas choisi de fournisseur.
 - **Correction (FR) :** Définissez ANTHROPIC_API_KEY, OPENAI_API_KEY ou CHARPENTE_AI_URL (voir docs/security.md).
+
+## CH6xxx — Packages and dependencies
+
+### CH6001 — Download failed
+*FR : Échec du téléchargement*
+
+- **Cause:** The server could not be reached, dropped the connection, or refused the request.
+- **Fix:** Check your connection and retry: an interrupted download resumes where it stopped. Charpente works offline for anything already in the cache.
+- **Cause (FR) :** Le serveur est injoignable, a coupé la connexion ou a refusé la requête.
+- **Correction (FR) :** Vérifiez votre connexion et réessayez : un téléchargement interrompu reprend là où il s'est arrêté. Charpente fonctionne hors ligne pour tout ce qui est déjà en cache.
+
+### CH6002 — Checksum mismatch
+*FR : Somme de contrôle incorrecte*
+
+- **Cause:** The downloaded file is not the one that was published (corruption, truncated transfer, or tampering).
+- **Fix:** Retry. If it keeps failing, do not use this source: report it to the publisher.
+- **Cause (FR) :** Le fichier téléchargé n'est pas celui qui a été publié (corruption, transfert tronqué ou falsification).
+- **Correction (FR) :** Réessayez. Si cela persiste, n'utilisez pas cette source : signalez-le à l'éditeur.
+
+### CH6003 — Download exceeds the allowed size
+*FR : Téléchargement au-delà de la taille autorisée*
+
+- **Cause:** A download budget (--max-download) was set and this file is larger.
+- **Fix:** Raise the budget, or fetch it on a better connection and place it in the local cache or a mirror.
+- **Cause (FR) :** Un budget de téléchargement (--max-download) est défini et ce fichier est plus gros.
+- **Correction (FR) :** Augmentez le budget, ou récupérez-le sur une meilleure connexion et placez-le dans le cache local ou un miroir.
+
+### CH6004 — Offline mode: network access refused
+*FR : Mode hors ligne : accès réseau refusé*
+
+- **Cause:** You asked Charpente not to use the network.
+- **Fix:** Unset CHARPENTE_OFFLINE, or provide the file through a local mirror/vendor folder.
+- **Cause (FR) :** Vous avez demandé à Charpente de ne pas utiliser le réseau.
+- **Correction (FR) :** Retirez CHARPENTE_OFFLINE, ou fournissez le fichier via un miroir local ou un dossier vendor.
+
+## CH7xxx — Modules
+
+### CH7001 — Invalid version
+*FR : Version invalide*
+
+- **Cause:** The text is not a semantic version.
+- **Fix:** Write it as MAJOR.MINOR.PATCH, optionally with a -prerelease suffix.
+- **Cause (FR) :** Le texte n'est pas une version sémantique.
+- **Correction (FR) :** Écrivez MAJEUR.MINEUR.CORRECTIF, avec éventuellement un suffixe -prerelease.
+
+### CH7002 — Invalid version constraint
+*FR : Contrainte de version invalide*
+
+- **Cause:** The constraint could not be parsed.
+- **Fix:** Use ^ (compatible), ~ (patch-level), comparison operators separated by commas, or *.
+- **Cause (FR) :** La contrainte n'a pas pu être analysée.
+- **Correction (FR) :** Utilisez ^ (compatible), ~ (niveau correctif), des opérateurs de comparaison séparés par des virgules, ou *.
+
+### CH7003 — Invalid module manifest
+*FR : Manifeste de module invalide*
+
+- **Cause:** charpente-module.toml is missing, not valid TOML, or lacks a required field.
+- **Fix:** Compare it with the manifest in docs/modules.md; `charpente module check PATH` lists every problem.
+- **Cause (FR) :** charpente-module.toml est absent, n'est pas du TOML valide, ou il manque un champ obligatoire.
+- **Correction (FR) :** Comparez-le au manifeste de docs/modules.md ; `charpente module check CHEMIN` liste tous les problèmes.
+
+### CH7004 — Module needs a different Charpente module API
+*FR : Le module exige une autre API de modules*
+
+- **Cause:** The module was written for an incompatible version of the module API.
+- **Fix:** Update the module (`charpente module update {name}`) or Charpente.
+- **Cause (FR) :** Le module a été écrit pour une version incompatible de l'API de modules.
+- **Correction (FR) :** Mettez à jour le module (`charpente module update {name}`) ou Charpente.
+
+### CH7005 — Capability not granted
+*FR : Capacité non accordée*
+
+- **Cause:** Modules can only use what their manifest declares and you approved when installing them.
+- **Fix:** If you trust the module, add the capability to its manifest, then approve it with `charpente module approve {module}`.
+- **Cause (FR) :** Un module ne peut utiliser que ce que son manifeste déclare et que vous avez approuvé à l'installation.
+- **Correction (FR) :** Si vous faites confiance au module, ajoutez la capacité à son manifeste puis approuvez-la avec `charpente module approve {module}`.
+
+### CH7006 — Module not found
+*FR : Module introuvable*
+
+- **Cause:** The name is not installed, and not present in the configured registries.
+- **Fix:** `charpente module list` shows what is installed; add a registry with `charpente module registry add URL`, or install from a folder: `charpente module add ./my-module`.
+- **Cause (FR) :** Le nom n'est pas installé et n'existe dans aucun registre configuré.
+- **Correction (FR) :** `charpente module list` montre ce qui est installé ; ajoutez un registre avec `charpente module registry add URL`, ou installez depuis un dossier : `charpente module add ./mon-module`.
+
+### CH7007 — Module integrity check failed
+*FR : Échec du contrôle d'intégrité du module*
+
+- **Cause:** The downloaded or unpacked module does not match its published checksum or signature.
+- **Fix:** Do not install it. Re-download from a trusted registry; if it persists, report it to the registry's maintainer.
+- **Cause (FR) :** Le module téléchargé ou décompressé ne correspond pas à sa somme de contrôle ou à sa signature publiées.
+- **Correction (FR) :** Ne l'installez pas. Retéléchargez-le depuis un registre de confiance ; si cela persiste, signalez-le au mainteneur du registre.
+
+### CH7008 — Duplicate extension
+*FR : Extension en double*
+
+- **Cause:** Two modules provide an extension with the same name.
+- **Fix:** Disable one of them (`charpente module disable NAME`) or ask its author to rename the extension.
+- **Cause (FR) :** Deux modules fournissent une extension du même nom.
+- **Correction (FR) :** Désactivez l'un d'eux (`charpente module disable NOM`) ou demandez à son auteur de la renommer.
+
+### CH7009 — Module failed to load
+*FR : Échec du chargement du module*
+
+- **Cause:** Importing the module's entry point raised an error.
+- **Fix:** Run `charpente module check {name}`; if the module is yours, fix the error above, otherwise disable it and report the problem.
+- **Cause (FR) :** L'import du point d'entrée du module a levé une erreur.
+- **Correction (FR) :** Lancez `charpente module check {name}` ; si le module est le vôtre, corrigez l'erreur ci-dessus, sinon désactivez-le et signalez le problème.
+
+### CH7010 — Unsigned module needs confirmation
+*FR : Module non signé : confirmation requise*
+
+- **Cause:** Only modules signed by a key you trust are installed silently.
+- **Fix:** Review the module's capabilities, then repeat with --allow-unsigned if you trust its source.
+- **Cause (FR) :** Seuls les modules signés par une clé de confiance s'installent sans question.
+- **Correction (FR) :** Examinez les capacités du module, puis relancez avec --allow-unsigned si vous faites confiance à sa source.
+
+### CH7011 — Module already installed
+*FR : Module déjà installé*
+
+- **Cause:** The same version is already present.
+- **Fix:** Use `charpente module update {name}` or remove it first.
+- **Cause (FR) :** La même version est déjà présente.
+- **Correction (FR) :** Utilisez `charpente module update {name}` ou supprimez-le d'abord.
+
+### CH7012 — Registry unreachable
+*FR : Registre injoignable*
+
+- **Cause:** The registry address is wrong, offline, or not a valid registry index.
+- **Fix:** Check the address and your connection. Charpente works offline with modules already installed.
+- **Cause (FR) :** L'adresse du registre est erronée, hors ligne, ou n'est pas un index de registre valide.
+- **Correction (FR) :** Vérifiez l'adresse et votre connexion. Charpente fonctionne hors ligne avec les modules déjà installés.
+
+### CH7013 — Module command conflicts with a built-in command
+*FR : La commande du module entre en conflit avec une commande intégrée*
+
+- **Cause:** Modules may add commands but never replace built-in ones.
+- **Fix:** Ask the module's author to rename the command.
+- **Cause (FR) :** Un module peut ajouter des commandes mais jamais remplacer les commandes intégrées.
+- **Correction (FR) :** Demandez à l'auteur du module de renommer la commande.
+
+### CH7014 — Undeclared extension
+*FR : Extension non déclarée*
+
+- **Cause:** A module must declare everything it provides so it can be reviewed before it is loaded.
+- **Fix:** Add {name!r} to the [provides] {key} list of the module's manifest.
+- **Cause (FR) :** Un module doit déclarer tout ce qu'il fournit afin de pouvoir être examiné avant d'être chargé.
+- **Correction (FR) :** Ajoutez {name!r} à la liste [provides] {key} du manifeste du module.
+
+### CH7015 — Module must be re-approved
+*FR : Le module doit être approuvé à nouveau*
+
+- **Cause:** An update changed the capabilities the module requests.
+- **Fix:** Review them with `charpente module info {name}`, then `charpente module approve {name}`.
+- **Cause (FR) :** Une mise à jour a changé les capacités demandées par le module.
+- **Correction (FR) :** Examinez-les avec `charpente module info {name}`, puis `charpente module approve {name}`.
 
 ## CH9xxx — Internal
 

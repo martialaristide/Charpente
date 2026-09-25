@@ -36,8 +36,12 @@ work (every source file, independent targets) runs in parallel.
 - `--no-cache`: neither read nor write the [content cache](#charpente-cache).
 - `-v` / `--verbose`: show every command that runs and *why* it runs
   (`because: header changed: include/a.h`).
-- `--output jsonl`: print one JSON event per line instead of text — for
-  scripts, editors and CI. See [`events/README.md`](events/README.md).
+- `--output auto|plain|rich|jsonl`: `auto` (default) shows a live progress bar on
+  an interactive terminal when the optional `rich` package is installed
+  (`pip install "charpente[rich]"`), plain text otherwise; `jsonl` prints one JSON
+  event per line for scripts, editors and CI
+  ([`events/README.md`](events/README.md)). Inside GitHub Actions, compiler
+  diagnostics are also emitted as `::error file=…,line=…::` annotations.
 
 - `--config` (default `Debug`): which configuration to build. Affects
   optimization/debug-symbol flags (`-O0 -g` / `/Od /Zi` for Debug,
@@ -218,6 +222,39 @@ charpente replay [SESSION | path/to/log.jsonl] [--output plain|jsonl]
 
 Replays a past build from its event log (`build/.charpente/events/`, the
 20 most recent sessions are kept).
+
+## `charpente headers`
+
+```
+charpente headers [--top N]
+```
+
+Ranks the project's headers by *rebuild cost*: how many compilations read each
+one and how long they took last time. Fixing the top of this list (forward
+declarations, splitting a widely included header, a precompiled header) is the
+cheapest way to speed up incremental builds. Builds also print a hint when a
+single header change recompiled 20 or more files.
+
+## `charpente toolchain list`
+
+Lists every compiler Charpente can see, its version, and which module provided
+its detector. The first is the default.
+
+## `charpente module`
+
+```
+charpente module list | info NAME | add SOURCE | remove NAME | enable NAME | disable NAME | approve NAME
+charpente module update [NAME] | check PATH | new NAME | keygen | sign PATH --key FILE | trust-key HEX
+charpente module registry add|list|remove URL
+```
+
+Everything that is not the core is a module, and modules use one API. See
+[`modules.md`](modules.md) for writing, signing and publishing them and for what
+the capability system does and does not guarantee. `SOURCE` is a folder, a `.zip`,
+an `https://…/m.zip#sha256=…` URL, or a registry name (`name` or `name@^1.2`).
+Adding a module shows what it asks for and needs your confirmation; a module not
+signed by a trusted key also needs `--allow-unsigned`; `--yes` approves the
+capabilities non-interactively.
 
 ## `charpente explain`
 

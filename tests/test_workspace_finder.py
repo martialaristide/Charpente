@@ -43,3 +43,16 @@ def test_multiple_files_in_same_dir_is_ambiguous(tmp_path):
 def test_none_found_raises_with_clear_message(tmp_path):
     with pytest.raises(WorkspaceNotFoundError):
         find_workspace_file(tmp_path)
+
+
+def test_the_project_config_directory_is_not_mistaken_for_a_workspace(tmp_path):
+    """Regression: `.charpente/` (state, hooks, notify.toml) matches `*.charpente`;
+    with a real workspace file next to it the finder used to report two candidates."""
+    (tmp_path / ".charpente").mkdir()
+    (tmp_path / ".charpente" / "notify.toml").write_text("")
+    workspace = tmp_path / "app.charpente"
+    workspace.touch()
+    assert find_workspace_file(tmp_path) == workspace
+    (tmp_path / "app.charpente").unlink()
+    with pytest.raises(WorkspaceNotFoundError):
+        find_workspace_file(tmp_path)

@@ -19,4 +19,8 @@ def _isolated_environment(monkeypatch, tmp_path_factory):
     monkeypatch.setenv("CHARPENTE_HOME", str(home))
     monkeypatch.setenv("CHARPENTE_CACHE_DIR", str(home / "cache"))
     monkeypatch.setenv("CHARPENTE_EVENTS_STRICT", "1")
+    from charpente.modules import runtime
+
+    runtime.reset()          # the module registry is built from the (per-test) config directory
     yield
+    runtime.reset()

@@ -9,13 +9,14 @@ calls know what they're configuring.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional
 
 from ..errors import ChRuntimeError
+from ..hooks import Event, notify
 from . import model as _model
 from .model import OS, Kind, Language
 
-__all__ = ["Workspace", "Target", "Kind", "Language", "OS", "current_workspace"]
+__all__ = ["Workspace", "Target", "Kind", "Language", "OS", "Event", "notify", "current_workspace"]
 
 _current_workspace: Optional[_model.Workspace] = None
 _current_target: Optional[_model.Target] = None
@@ -77,6 +78,17 @@ class Workspace:
     def configurations(self, names: Iterable[str]) -> "Workspace":
         self._model.configurations = list(names)
         return self
+
+    def on(self, event: Event) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Decorator: run a function when an event happens (see `charpente.hooks`)."""
+        if not isinstance(event, Event):
+            raise TypeError(f"ws.on() takes an Event (e.g. Event.BUILD_FINISHED), not {event!r}")
+
+        def register(function: Callable[..., Any]) -> Callable[..., Any]:
+            self._model.hooks.append((event, function))
+            return function
+
+        return register
 
     @property
     def model(self) -> _model.Workspace:

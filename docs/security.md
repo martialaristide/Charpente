@@ -77,6 +77,64 @@ they're stated rather than left to be discovered:
   configured, and with nothing able to reach the network on Charpente's
   own initiative.
 
+## Hooks run your code, so they need your approval
+
+`@ws.on(Event.X)` functions live in the `.charpente` file, which you have
+already approved. Scripts in `.charpente/hooks/` (named after an event:
+`session.finished.py`, `action.failed.sh`...) are separate files, so they are
+approved separately, by the SHA-256 of the whole folder's content: the first
+time, and again whenever any of them changes. Non-interactively (CI) they run
+only with `CHARPENTE_TRUST_ALL=1`; otherwise Charpente says they were skipped.
+Scripts are started through an explicit interpreter chosen by extension
+(`.py`, `.sh`, `.bat`, `.cmd`, `.ps1`), never a shell string, and are advisory:
+a failing hook can never fail the build.
+
+## Modules: capabilities are a contract, not a sandbox
+
+A module declares what it needs in `charpente-module.toml`:
+
+```toml
+[capabilities]
+process = ["glslangValidator"]     # programs it may start
+filesystem = "workspace"           # none | workspace | build | home
+network = false                    # or true, or a list of host names
+```
+
+At installation Charpente shows these in plain words and asks for approval;
+the approval is stored, and a later version that asks for *more* stays disabled
+until you approve again (`CH7015`). Modules reach the outside world through
+guarded services (`ctx.process`, `ctx.fs`, `ctx.net`) that check every call
+against the approved set, including path traversal and symlink escapes.
+
+**What this does not do:** a Python module runs in Charpente's own process and
+can `import subprocess` or `socket` and bypass the guards. The capability system
+makes the honest path explicit, auditable and enforced for modules that use the
+provided services; `charpente module check` warns when a module imports such
+things directly. Real trust comes from the module's **signature and author**,
+not from these checks. Install modules the way you would install any Python
+package: only from sources you trust.
+
+### Signatures
+
+`charpente module sign` signs a module folder (Ed25519, RFC 8032, verified with
+a from-scratch implementation checked against the RFC test vectors). A module is
+"signed" only if its key is in your trust store (`charpente module trust-key`) or
+among the official keys shipped with Charpente. **The official key list is empty
+today**: no signed registry has been published yet, so every third-party module is
+"unsigned" and needs `--allow-unsigned`. A signature that does not verify (a file
+was changed after signing) is refused outright, never downgraded to "unsigned".
+Installing is inert: a module's code is only imported when it is loaded.
+
+## Notifications and secrets
+
+The bundled `charpente-notify` module is **off until you enable it**, and sends
+nothing until you create `.charpente/notify.toml`. Secrets (webhook URLs, bot
+tokens, SMTP passwords) are never written in that file: it only names the
+*environment variable* that holds them (`url_env = "MY_WEBHOOK"`), and a literal
+`url = "..."` is rejected. Messages contain the machine name, configuration,
+counts and duration -- never source code or compiler output. Charpente sends no
+telemetry.
+
 ## Reporting a vulnerability
 
 Open an issue at

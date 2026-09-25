@@ -1,0 +1,17 @@
+[module]
+name = "charpente-hello"
+version = "1.0.0"
+api = "^2.0"
+license = "Apache-2.0"
+description = "Example third-party module: a command, a toolchain provider and an event"
+entry = "charpente_hello:register"
+
+[provides]
+commands = ["hello"]
+toolchains = ["example-cc"]
+events = ["hello.said"]
+
+[capabilities]
+process = []
+filesystem = "none"
+network = false

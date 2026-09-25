@@ -6,7 +6,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..core import globber
 from ..errors import ChError, ChValueError
@@ -95,6 +95,10 @@ class Workspace:
     # Absolute directory containing the root .charpente file. Set by the
     # loader, not by DSL code.
     location: Optional[Path] = None
+
+    # (Event, function) pairs registered with `@ws.on(Event.X)`. Callables, so
+    # excluded from repr/compare: they never take part in build keys.
+    hooks: List[Any] = field(default_factory=list, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         _validate_name(self.name, "Workspace name")

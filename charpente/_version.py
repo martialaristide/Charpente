@@ -2,6 +2,6 @@
 this module must be readable very early (pyproject.toml reads it by
 attribute) without triggering the rest of the package."""
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__ = "Martial Aristide Barra"
 __email__ = "martialaristideb02@gmail.com"

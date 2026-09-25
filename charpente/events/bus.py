@@ -26,7 +26,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional
 
-from .types import EVENT_TYPES, SCHEMA_VERSION, field_spec
+from .types import EVENT_TYPES, EXTENSION_EVENT_TYPES, SCHEMA_VERSION, field_spec
 
 _PY_TYPES: Dict[str, Any] = {
     "str": str, "int": int, "float": (int, float), "bool": bool,
@@ -183,6 +183,8 @@ class EventBus:
     # ----------------------------------------------------------------- emit
     def _validate(self, event_type: str, payload: Mapping[str, Any]) -> None:
         spec = EVENT_TYPES.get(event_type)
+        if spec is None:
+            spec = EXTENSION_EVENT_TYPES.get(event_type)
         if spec is None:
             raise ValueError(f"unknown event type {event_type!r}")
         for name, raw in spec.items():

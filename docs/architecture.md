@@ -36,7 +36,21 @@ charpente/
     history.py         # SQLite build history (an event subscriber)
     compdb.py          # compile_commands.json
   events/              # EventBus, the event table, JSON Schema generation (ADR 0005)
-  output/              # subscribers: terminal renderer, JSON Lines, session log
+  output/              # subscribers: plain/rich terminal, JSON Lines, session log, GitHub annotations
+  hooks.py             # @ws.on(Event.X), notify(), .charpente/hooks/ scripts
+  semver.py            # versions and constraints (^, ~, ranges)
+  modules/             # the module system (ADR 0008)
+    api.py             # module API 2.0: manifest, capabilities, extension interfaces
+    manifest.py        # charpente-module.toml parsing/validation
+    registry.py        # ExtensionRegistry: what loaded modules registered
+    capabilities.py    # guarded ctx.process / ctx.fs / ctx.net
+    store.py           # ~/.charpente/modules: installed modules, approvals, registries
+    installer.py       # add/update/remove from folder, zip, URL, registry
+    signing.py         # tree digest, Ed25519 (RFC 8032), trust store
+    loader.py, runtime.py   # defensive loading; the process-wide registry
+    builtin.py         # the six built-in toolchains, registered like any module's
+    conformance.py     # `charpente module check`
+    official/          # bundled modules (charpente-notify), off until enabled
   ai/                  # provider interface + diagnose
   commands/            # one file per command; _common.py, _session.py shared
   cli.py               # `charpente <command>` dispatch

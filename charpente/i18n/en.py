@@ -269,12 +269,134 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "The command line is incomplete or malformed.",
         "fix": "Run the command with --help.",
     },
+    "CH4006": {
+        "title": "Optional package missing",
+        "message": "This needs the optional package {package!r}, which is not installed.",
+        "cause": "The feature is optional and its dependency is only installed on request.",
+        "fix": "Install it with: pip install \"charpente[{extra}]\"",
+    },
     # ------------------------------------------------------------------ 5xxx
     "CH5001": {
         "title": "AI provider not configured",
         "message": "No AI provider is configured.",
         "cause": "AI features are optional and off until you choose a provider.",
         "fix": "Set ANTHROPIC_API_KEY, OPENAI_API_KEY or CHARPENTE_AI_URL (see docs/security.md).",
+    },
+    # ------------------------------------------------------------------ 6xxx
+    "CH6001": {
+        "title": "Download failed",
+        "message": "Could not download {url}: {detail}",
+        "cause": "The server could not be reached, dropped the connection, or refused the request.",
+        "fix": "Check your connection and retry: an interrupted download resumes where it stopped. Charpente works offline for anything already in the cache.",
+    },
+    "CH6002": {
+        "title": "Checksum mismatch",
+        "message": "Checksum mismatch for {url}: expected {expected}, got {actual}. The file was discarded.",
+        "cause": "The downloaded file is not the one that was published (corruption, truncated transfer, or tampering).",
+        "fix": "Retry. If it keeps failing, do not use this source: report it to the publisher.",
+    },
+    "CH6003": {
+        "title": "Download exceeds the allowed size",
+        "message": "{url} is {size} bytes, over the allowed budget of {budget} bytes. Nothing was kept.",
+        "cause": "A download budget (--max-download) was set and this file is larger.",
+        "fix": "Raise the budget, or fetch it on a better connection and place it in the local cache or a mirror.",
+    },
+    "CH6004": {
+        "title": "Offline mode: network access refused",
+        "message": "Refusing to download {url}: offline mode is on (CHARPENTE_OFFLINE=1).",
+        "cause": "You asked Charpente not to use the network.",
+        "fix": "Unset CHARPENTE_OFFLINE, or provide the file through a local mirror/vendor folder.",
+    },
+    # ------------------------------------------------------------------ 7xxx
+    "CH7001": {
+        "title": "Invalid version",
+        "message": "Not a valid version: {value!r} (expected MAJOR.MINOR.PATCH, e.g. 1.2.0).",
+        "cause": "The text is not a semantic version.",
+        "fix": "Write it as MAJOR.MINOR.PATCH, optionally with a -prerelease suffix.",
+    },
+    "CH7002": {
+        "title": "Invalid version constraint",
+        "message": "Not a valid version constraint: {value!r} (examples: ^1.2, ~1.2.3, >=1.0,<2.0, *).",
+        "cause": "The constraint could not be parsed.",
+        "fix": "Use ^ (compatible), ~ (patch-level), comparison operators separated by commas, or *.",
+    },
+    "CH7003": {
+        "title": "Invalid module manifest",
+        "message": "Invalid module manifest {path}: {detail}",
+        "cause": "charpente-module.toml is missing, not valid TOML, or lacks a required field.",
+        "fix": "Compare it with the manifest in docs/modules.md; `charpente module check PATH` lists every problem.",
+    },
+    "CH7004": {
+        "title": "Module needs a different Charpente module API",
+        "message": "Module {name} requires module API {required}, but this Charpente provides {provided}.",
+        "cause": "The module was written for an incompatible version of the module API.",
+        "fix": "Update the module (`charpente module update {name}`) or Charpente.",
+    },
+    "CH7005": {
+        "title": "Capability not granted",
+        "message": "Module {module} tried to use {capability}, which it did not declare or the user did not approve.",
+        "cause": "Modules can only use what their manifest declares and you approved when installing them.",
+        "fix": "If you trust the module, add the capability to its manifest, then approve it with `charpente module approve {module}`.",
+    },
+    "CH7006": {
+        "title": "Module not found",
+        "message": "No module named {name!r} ({where}).",
+        "cause": "The name is not installed, and not present in the configured registries.",
+        "fix": "`charpente module list` shows what is installed; add a registry with `charpente module registry add URL`, or install from a folder: `charpente module add ./my-module`.",
+    },
+    "CH7007": {
+        "title": "Module integrity check failed",
+        "message": "Integrity check failed for {name}: {detail}",
+        "cause": "The downloaded or unpacked module does not match its published checksum or signature.",
+        "fix": "Do not install it. Re-download from a trusted registry; if it persists, report it to the registry's maintainer.",
+    },
+    "CH7008": {
+        "title": "Duplicate extension",
+        "message": "Module {module} tries to register {kind} {name!r}, already provided by {owner}.",
+        "cause": "Two modules provide an extension with the same name.",
+        "fix": "Disable one of them (`charpente module disable NAME`) or ask its author to rename the extension.",
+    },
+    "CH7009": {
+        "title": "Module failed to load",
+        "message": "Module {name} failed to load: {detail}",
+        "cause": "Importing the module's entry point raised an error.",
+        "fix": "Run `charpente module check {name}`; if the module is yours, fix the error above, otherwise disable it and report the problem.",
+    },
+    "CH7010": {
+        "title": "Unsigned module needs confirmation",
+        "message": "Module {name} is not signed by a trusted key ({detail}). Refusing without confirmation.",
+        "cause": "Only modules signed by a key you trust are installed silently.",
+        "fix": "Review the module's capabilities, then repeat with --allow-unsigned if you trust its source.",
+    },
+    "CH7011": {
+        "title": "Module already installed",
+        "message": "Module {name} {version} is already installed.",
+        "cause": "The same version is already present.",
+        "fix": "Use `charpente module update {name}` or remove it first.",
+    },
+    "CH7012": {
+        "title": "Registry unreachable",
+        "message": "Could not read the module registry {registry}: {detail}",
+        "cause": "The registry address is wrong, offline, or not a valid registry index.",
+        "fix": "Check the address and your connection. Charpente works offline with modules already installed.",
+    },
+    "CH7013": {
+        "title": "Module command conflicts with a built-in command",
+        "message": "Module {module} provides the command {name!r}, which is a built-in command and cannot be replaced.",
+        "cause": "Modules may add commands but never replace built-in ones.",
+        "fix": "Ask the module's author to rename the command.",
+    },
+    "CH7014": {
+        "title": "Undeclared extension",
+        "message": "Module {module} registered the {kind} {name!r}, which its manifest does not declare under [provides] {key}.",
+        "cause": "A module must declare everything it provides so it can be reviewed before it is loaded.",
+        "fix": "Add {name!r} to the [provides] {key} list of the module's manifest.",
+    },
+    "CH7015": {
+        "title": "Module must be re-approved",
+        "message": "Module {name} asks for more than you approved ({detail}); it stays disabled until approved.",
+        "cause": "An update changed the capabilities the module requests.",
+        "fix": "Review them with `charpente module info {name}`, then `charpente module approve {name}`.",
     },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {
