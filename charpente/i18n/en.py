@@ -202,6 +202,30 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "A build command exited with 0 yet the expected file is missing (wrong -o, or a tool that writes elsewhere).",
         "fix": "Check the command with `charpente build -v` and the tool's documentation.",
     },
+    "CH3010": {
+        "title": "Two actions write the same file",
+        "message": "Two build actions write the same file {path}: {first} and {second}.",
+        "cause": "Two targets (or two sources) would produce an output with the same path, so one would silently overwrite the other.",
+        "fix": "Give the sources or targets distinct names, or exclude one of them.",
+    },
+    "CH3011": {
+        "title": "Ordering constraint on an unknown action",
+        "message": "Action {action!r} must run after {missing!r}, which does not exist.",
+        "cause": "An internal ordering edge points at an action that is not in the build graph.",
+        "fix": "This is a bug in a module or in Charpente; report it.",
+    },
+    "CH3012": {
+        "title": "Cycle in the action graph",
+        "message": "The build actions depend on each other in a cycle: {cycle}",
+        "cause": "An action (directly or through others) needs its own output before it can run.",
+        "fix": "Break the cycle: check generated files that are also inputs of the action producing them.",
+    },
+    "CH3013": {
+        "title": "Duplicate action",
+        "message": "The action {action!r} is defined twice.",
+        "cause": "Two actions were given the same identifier.",
+        "fix": "This is a bug in a module or in Charpente; report it.",
+    },
     # ------------------------------------------------------------------ 4xxx
     "CH4001": {
         "title": "Nothing to package",

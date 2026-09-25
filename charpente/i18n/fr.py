@@ -196,6 +196,30 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "Une commande de build s'est terminée avec 0 alors que le fichier attendu manque (mauvais -o, ou outil qui écrit ailleurs).",
         "fix": "Vérifiez la commande avec `charpente build -v` et la documentation de l'outil.",
     },
+    "CH3010": {
+        "title": "Deux actions écrivent le même fichier",
+        "message": "Deux actions de build écrivent le même fichier {path} : {first} et {second}.",
+        "cause": "Deux cibles (ou deux sources) produiraient une sortie de même chemin : l'une écraserait l'autre en silence.",
+        "fix": "Donnez des noms distincts aux sources ou aux cibles, ou excluez l'une d'elles.",
+    },
+    "CH3011": {
+        "title": "Contrainte d'ordre vers une action inconnue",
+        "message": "L'action {action!r} doit s'exécuter après {missing!r}, qui n'existe pas.",
+        "cause": "Une arête d'ordonnancement interne pointe vers une action absente du graphe de build.",
+        "fix": "C'est un bogue d'un module ou de Charpente ; signalez-le.",
+    },
+    "CH3012": {
+        "title": "Cycle dans le graphe d'actions",
+        "message": "Les actions de build dépendent les unes des autres en cycle : {cycle}",
+        "cause": "Une action (directement ou via d'autres) a besoin de sa propre sortie avant de pouvoir s'exécuter.",
+        "fix": "Cassez le cycle : vérifiez les fichiers générés qui sont aussi des entrées de l'action qui les produit.",
+    },
+    "CH3013": {
+        "title": "Action en double",
+        "message": "L'action {action!r} est définie deux fois.",
+        "cause": "Deux actions ont reçu le même identifiant.",
+        "fix": "C'est un bogue d'un module ou de Charpente ; signalez-le.",
+    },
     # ------------------------------------------------------------------ 4xxx
     "CH4001": {
         "title": "Rien à empaqueter",

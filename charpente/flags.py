@@ -10,7 +10,7 @@ gcc/g++ take the same flags as Linux gcc).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 from .dsl.model import OS, Kind, Target
 from .toolchains import Toolchain
@@ -28,7 +28,12 @@ def _optimization_flags(family_name: str, debug: bool) -> List[str]:
     return ["-g", "-O0"] if debug else ["-O2"]
 
 
-def compile_args(toolchain: Toolchain, target: Target, source: Path, obj: Path, *, debug: bool) -> List[str]:
+def compile_args(toolchain: Toolchain, target: Target, source: Path, obj: Path, *, debug: bool,
+                 depfile: Optional[Path] = None) -> List[str]:
+    """`depfile`, when given, makes the compiler report which headers it read: a
+    Makefile-style file for GNU-style compilers (`-MMD -MF`), `/showIncludes`
+    notes on stdout for MSVC-style ones. The engine uses that for exact
+    incremental builds."""
     fam = family(toolchain)
     compiler = toolchain.cxx_compiler if target.language.value == "cpp" else toolchain.c_compiler
 
@@ -36,6 +41,8 @@ def compile_args(toolchain: Toolchain, target: Target, source: Path, obj: Path, 
         std_flag = f"/std:{target.standard}"
         args = [compiler, "/c", str(source), f"/Fo{obj}", std_flag, "/nologo", "/EHsc"]
         args += _optimization_flags(fam, debug)
+        if depfile is not None:
+            args.append("/showIncludes")
         args += [f"/I{d}" for d in target.include_dirs]
         args += [f"/D{d}" for d in target.define_macros]
         args += target.extra_compile_flags
@@ -44,6 +51,8 @@ def compile_args(toolchain: Toolchain, target: Target, source: Path, obj: Path, 
     std_flag = f"-std={target.standard}"
     args = [compiler, "-c", str(source), "-o", str(obj), std_flag]
     args += _optimization_flags(fam, debug)
+    if depfile is not None:
+        args += ["-MMD", "-MF", str(depfile)]
     args += [f"-I{d}" for d in target.include_dirs]
     args += [f"-D{d}" for d in target.define_macros]
     args += target.extra_compile_flags

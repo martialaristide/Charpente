@@ -72,8 +72,10 @@ def _package_zip(workspace: Workspace, target: Target, parsed: argparse.Namespac
     target_build_dir = build_dir(workspace, parsed.config, target)
     with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for path in target_build_dir.rglob("*"):
-            if path.is_file() and path.suffix not in (".o", ".obj"):
-                zf.write(path, arcname=path.relative_to(target_build_dir))
+            rel = path.relative_to(target_build_dir)
+            # Intermediate files (objects, depfiles) live under obj/ and never ship.
+            if path.is_file() and rel.parts[0] != "obj" and path.suffix not in (".o", ".obj"):
+                zf.write(path, arcname=rel)
 
     print(f"Packaged {archive_path}")
     return 0

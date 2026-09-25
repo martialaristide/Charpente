@@ -264,6 +264,38 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** Une commande de build s'est terminée avec 0 alors que le fichier attendu manque (mauvais -o, ou outil qui écrit ailleurs).
 - **Correction (FR) :** Vérifiez la commande avec `charpente build -v` et la documentation de l'outil.
 
+### CH3010 — Two actions write the same file
+*FR : Deux actions écrivent le même fichier*
+
+- **Cause:** Two targets (or two sources) would produce an output with the same path, so one would silently overwrite the other.
+- **Fix:** Give the sources or targets distinct names, or exclude one of them.
+- **Cause (FR) :** Deux cibles (ou deux sources) produiraient une sortie de même chemin : l'une écraserait l'autre en silence.
+- **Correction (FR) :** Donnez des noms distincts aux sources ou aux cibles, ou excluez l'une d'elles.
+
+### CH3011 — Ordering constraint on an unknown action
+*FR : Contrainte d'ordre vers une action inconnue*
+
+- **Cause:** An internal ordering edge points at an action that is not in the build graph.
+- **Fix:** This is a bug in a module or in Charpente; report it.
+- **Cause (FR) :** Une arête d'ordonnancement interne pointe vers une action absente du graphe de build.
+- **Correction (FR) :** C'est un bogue d'un module ou de Charpente ; signalez-le.
+
+### CH3012 — Cycle in the action graph
+*FR : Cycle dans le graphe d'actions*
+
+- **Cause:** An action (directly or through others) needs its own output before it can run.
+- **Fix:** Break the cycle: check generated files that are also inputs of the action producing them.
+- **Cause (FR) :** Une action (directement ou via d'autres) a besoin de sa propre sortie avant de pouvoir s'exécuter.
+- **Correction (FR) :** Cassez le cycle : vérifiez les fichiers générés qui sont aussi des entrées de l'action qui les produit.
+
+### CH3013 — Duplicate action
+*FR : Action en double*
+
+- **Cause:** Two actions were given the same identifier.
+- **Fix:** This is a bug in a module or in Charpente; report it.
+- **Cause (FR) :** Deux actions ont reçu le même identifiant.
+- **Correction (FR) :** C'est un bogue d'un module ou de Charpente ; signalez-le.
+
 ## CH4xxx — Packaging and command line
 
 ### CH4001 — Nothing to package
