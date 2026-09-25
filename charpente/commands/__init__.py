@@ -1,6 +1,6 @@
 from typing import Callable, Dict, List
 
-from . import ask, build, clean, init, package, run, test
+from . import ask, build, clean, explain, init, package, run, test
 
 COMMANDS: Dict[str, Callable[[List[str]], int]] = {
     "init": init.execute,
@@ -10,6 +10,7 @@ COMMANDS: Dict[str, Callable[[List[str]], int]] = {
     "test": test.execute,
     "package": package.execute,
     "ask": ask.execute,
+    "explain": explain.execute,
 }
 
 __all__ = ["COMMANDS"]

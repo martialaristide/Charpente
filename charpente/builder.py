@@ -10,16 +10,16 @@ is a natural next step once the basics are solid.
 """
 from __future__ import annotations
 
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional, Set
+from typing import Iterable, List, Optional, Set
 
 from . import flags
-from .dsl.model import Kind, OS, Target, Workspace
+from .core import process
+from .dsl.model import OS, Target, Workspace
 from .toolchains import Toolchain
 
-RunFn = Callable[..., "subprocess.CompletedProcess"]
+RunFn = process.Runner
 
 
 @dataclass
@@ -48,14 +48,14 @@ def _needs_rebuild(source: Path, obj: Path) -> bool:
 
 
 def build_dir(workspace: Workspace, config: str, target: Target) -> Path:
-    return workspace.location / "build" / config / target.name
+    return workspace.root / "build" / config / target.name
 
 
-def _run(argv: List[str], run: RunFn) -> "subprocess.CompletedProcess":
+def _run(argv: List[str], run: RunFn) -> "process.CompletedProcess[str]":
     return run(argv, capture_output=True, text=True, shell=False)
 
 
-def _error_text(result: "subprocess.CompletedProcess") -> str:
+def _error_text(result: "process.CompletedProcess[str]") -> str:
     """Both streams, not just one: a compiler/linker can split a single
     failure across stdout and stderr (e.g. GCC's "undefined reference"
     detail lines on stderr alongside collect2's summary line also on
@@ -73,7 +73,7 @@ def build_target(
     target_os: OS,
     *,
     config: str = "Debug",
-    run: RunFn = subprocess.run,
+    run: RunFn = process.raw_run,
 ) -> TargetResult:
     debug = config.lower() == "debug"
     out_dir = build_dir(workspace, config, target)
@@ -151,7 +151,7 @@ def build_workspace(
     target_os: OS,
     *,
     config: str = "Debug",
-    run: RunFn = subprocess.run,
+    run: RunFn = process.raw_run,
     keep_going: bool = False,
     only: Optional[Iterable[str]] = None,
 ) -> BuildResult:

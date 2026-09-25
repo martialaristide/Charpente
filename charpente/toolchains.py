@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Callable, List, Optional
 
 from .dsl.model import OS
+from .errors import ChError
 
 
 @dataclass(frozen=True)
@@ -92,7 +93,7 @@ def detect(target_os: OS, which: WhichFn = shutil.which) -> List[Toolchain]:
     return _DETECTORS[target_os](which)
 
 
-class NoToolchainFoundError(RuntimeError):
+class NoToolchainFoundError(ChError):
     pass
 
 
@@ -102,12 +103,5 @@ def pick_default(target_os: OS, which: WhichFn = shutil.which) -> Toolchain:
     first"). Raises a clear, actionable error if none are installed."""
     candidates = detect(target_os, which)
     if not candidates:
-        raise NoToolchainFoundError(
-            f"No C/C++ compiler found for {target_os.value}. Install one and "
-            f"make sure it's on PATH:\n"
-            f"  windows -> Visual Studio Build Tools (cl.exe), or LLVM "
-            f"(clang-cl.exe), or MSYS2/MinGW (gcc.exe + g++.exe)\n"
-            f"  linux   -> `apt install build-essential` (gcc/g++) or clang\n"
-            f"  macos   -> `xcode-select --install` (clang via Xcode CLT)"
-        )
+        raise NoToolchainFoundError("CH2001", os=target_os.value)
     return candidates[0]

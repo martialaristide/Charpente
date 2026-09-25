@@ -5,6 +5,7 @@ from __future__ import annotations
 import platform as _platform
 
 from .dsl.model import OS
+from .errors import ChError
 
 
 def host_os() -> OS:
@@ -15,4 +16,4 @@ def host_os() -> OS:
         return OS.MACOS
     if system == "Linux":
         return OS.LINUX
-    raise RuntimeError(f"Unsupported host OS: {system!r}")
+    raise ChError("CH2003", os=system)

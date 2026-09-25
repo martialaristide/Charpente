@@ -16,17 +16,19 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Dict, Optional
+
+from ..errors import ChError
 
 TRUST_ALL_ENV = "CHARPENTE_TRUST_ALL"
 
 
-class TrustRequiredError(Exception):
+class TrustRequiredError(ChError):
     """The file isn't trusted and this session can't ask (non-interactive,
     no bypass)."""
 
 
-class TrustDeniedError(Exception):
+class TrustDeniedError(ChError):
     """The user was asked and said no."""
 
 
@@ -49,17 +51,18 @@ def _hash_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _load_store() -> dict:
+def _load_store() -> Dict[str, str]:
     p = _store_path()
     if not p.exists():
         return {}
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        data = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
+    return {str(k): str(v) for k, v in data.items()} if isinstance(data, dict) else {}
 
 
-def _save_store(store: dict) -> None:
+def _save_store(store: Dict[str, str]) -> None:
     p = _store_path()
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -90,7 +93,8 @@ def _interactive() -> bool:
         return False
 
 
-def ensure_trusted(path: Path, *, kind: str = "workspace", prompt=None) -> None:
+def ensure_trusted(path: Path, *, kind: str = "workspace",
+                   prompt: Optional[Callable[[str], str]] = None) -> None:
     """Raise if `path` cannot be run without asking, and there's nobody to
     ask. `prompt`, if given, is a callable(question: str) -> str used
     instead of `input()` (dependency injection for tests)."""
@@ -104,19 +108,12 @@ def ensure_trusted(path: Path, *, kind: str = "workspace", prompt=None) -> None:
     )
 
     if not _interactive() and prompt is None:
-        raise TrustRequiredError(
-            f"Refusing to run this {label} without confirmation: {path}\n"
-            f"  A .charpente file executes as unrestricted Python code. This "
-            f"session cannot ask for confirmation (non-interactive).\n"
-            f"  Fix: run `charpente` once interactively to approve it, or "
-            f"set {TRUST_ALL_ENV}=1 in this environment (CI) if you trust "
-            f"the source of this repository."
-        )
+        raise TrustRequiredError("CH1006", label=label, path=str(path))
 
     ask = prompt or (lambda q: input(q))
     print(f"\n! {label}: {path}")
     print("  This file will execute as unrestricted Python code (not a sandbox).")
     answer = ask("  Trust and run it? [y/N] ").strip().lower()
     if answer not in ("y", "yes"):
-        raise TrustDeniedError(f"Execution declined by user: {path}")
+        raise TrustDeniedError("CH1007", path=str(path))
     trust(path)

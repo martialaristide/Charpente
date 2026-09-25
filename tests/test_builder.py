@@ -2,10 +2,8 @@ import subprocess
 import time
 from pathlib import Path
 
-import pytest
-
 from charpente import builder
-from charpente.dsl.model import Kind, Language, OS, Target, Workspace
+from charpente.dsl.model import OS, Kind, Target, Workspace
 from charpente.toolchains import Toolchain
 
 GCC = Toolchain(name="gcc", c_compiler="gcc", cxx_compiler="g++", archiver="ar", linker="g++")

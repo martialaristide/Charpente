@@ -6,12 +6,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
+from .errors import ChError
 
-class WorkspaceNotFoundError(Exception):
+
+class WorkspaceNotFoundError(ChError):
     pass
 
 
-class AmbiguousWorkspaceError(Exception):
+class AmbiguousWorkspaceError(ChError):
     pass
 
 
@@ -19,7 +21,7 @@ def find_workspace_file(start_dir: Optional[Path] = None, explicit: Optional[str
     if explicit:
         path = Path(explicit).resolve()
         if not path.exists():
-            raise WorkspaceNotFoundError(f"No such file: {path}")
+            raise WorkspaceNotFoundError("CH1001", path=str(path))
         return path
 
     current = (start_dir or Path.cwd()).resolve()
@@ -29,10 +31,5 @@ def find_workspace_file(start_dir: Optional[Path] = None, explicit: Optional[str
             return matches[0]
         if len(matches) > 1:
             names = ", ".join(m.name for m in matches)
-            raise AmbiguousWorkspaceError(
-                f"Multiple .charpente files in {directory}: {names}. "
-                f"Use --file to pick one."
-            )
-    raise WorkspaceNotFoundError(
-        f"No .charpente file found in {current} or its parent directories."
-    )
+            raise AmbiguousWorkspaceError("CH1003", directory=str(directory), names=names)
+    raise WorkspaceNotFoundError("CH1002", directory=str(current))

@@ -9,6 +9,7 @@ from charpente.cli import main
 from charpente.platform import host_os
 from charpente.toolchains import NoToolchainFoundError, pick_default
 
+
 def _has_compiler() -> bool:
     try:
         pick_default(host_os())
@@ -204,9 +205,8 @@ def test_package_installer_format_generates_a_real_platform_script(tmp_path, cap
     when the platform tool isn't on PATH."""
     import shutil
 
-    from charpente import installer
-    from charpente.platform import host_os
     from charpente.dsl.model import OS
+    from charpente.platform import host_os
 
     monkeypatch.setattr(shutil, "which", lambda name: None)  # force the "tool not found" path
 

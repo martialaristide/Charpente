@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import argparse
-import subprocess
 from typing import List
 
 from ..builder import build_workspace, dependency_closure
+from ..core import process
 from ..dsl.model import Kind
 from ._common import load, toolchain_for_host
 
@@ -37,7 +37,7 @@ def execute(args: List[str]) -> int:
             failures.append(target.name)
             continue
 
-        run_result = subprocess.run([str(target_result.output_path)], shell=False)
+        run_result = process.run([str(target_result.output_path)], capture=False)
         if run_result.returncode == 0:
             print(f"  [PASS] {target.name}")
         else:

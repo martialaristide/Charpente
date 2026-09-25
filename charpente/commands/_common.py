@@ -5,53 +5,40 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ..dsl.loader import WorkspaceLoadError, load_workspace
-from ..dsl.model import OS, Workspace
-from ..dsl.trust import TrustDeniedError, TrustRequiredError
-from ..toolchains import NoToolchainFoundError, Toolchain, pick_default
+from ..dsl.loader import load_workspace
+from ..dsl.model import OS, Target, Workspace
+from ..errors import ChError
 from ..platform import host_os
-from ..workspace_finder import (
-    AmbiguousWorkspaceError,
-    WorkspaceNotFoundError,
-    find_workspace_file,
-)
+from ..toolchains import Toolchain, pick_default
+from ..workspace_finder import find_workspace_file
 
 
-class CommandError(Exception):
-    """Raised to abort a command with a clean one-line message -- cli.py
-    catches this at the top level and prints it without a traceback."""
+class CommandError(ChError):
+    """Raised to abort a command with a clean coded message -- cli.py catches
+    every ChError at the top level and prints it without a traceback."""
 
 
 def load(file_arg: Optional[str] = None) -> Workspace:
-    try:
-        entry = find_workspace_file(explicit=file_arg)
-    except (WorkspaceNotFoundError, AmbiguousWorkspaceError) as e:
-        raise CommandError(str(e)) from e
-    try:
-        return load_workspace(str(entry))
-    except (TrustDeniedError, TrustRequiredError, WorkspaceLoadError) as e:
-        raise CommandError(str(e)) from e
+    """Locate then load the workspace. Errors (missing file, trust refusal,
+    a failing .charpente file...) are already coded `ChError`s and propagate."""
+    entry = find_workspace_file(explicit=file_arg)
+    return load_workspace(str(entry))
 
 
 def toolchain_for_host() -> "tuple[OS, Toolchain]":
     target_os = host_os()
-    try:
-        return target_os, pick_default(target_os)
-    except NoToolchainFoundError as e:
-        raise CommandError(str(e)) from e
+    return target_os, pick_default(target_os)
 
 
-def resolve_target(workspace: Workspace, name: Optional[str]):
+def resolve_target(workspace: Workspace, name: Optional[str]) -> Target:
     if name:
         if name not in workspace.targets:
-            raise CommandError(f"No target named {name!r} in workspace {workspace.name!r}. "
-                               f"Known targets: {', '.join(sorted(workspace.targets)) or '(none)'}")
+            raise CommandError("CH1008", name=name, workspace=workspace.name,
+                               known=", ".join(sorted(workspace.targets)) or "(none)")
         return workspace.targets[name]
     if len(workspace.targets) == 1:
         return next(iter(workspace.targets.values()))
     if not workspace.targets:
-        raise CommandError(f"Workspace {workspace.name!r} has no targets to run.")
-    raise CommandError(
-        f"Workspace {workspace.name!r} has {len(workspace.targets)} targets; "
-        f"specify one with --target. Known targets: {', '.join(sorted(workspace.targets))}"
-    )
+        raise CommandError("CH1010", workspace=workspace.name)
+    raise CommandError("CH1009", workspace=workspace.name, count=len(workspace.targets),
+                       known=", ".join(sorted(workspace.targets)))

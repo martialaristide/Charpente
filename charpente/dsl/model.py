@@ -8,6 +8,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from ..errors import ChError, ChValueError
 from ..safe_name import validate as _validate_name
 
 
@@ -65,9 +66,7 @@ class Target:
         sorted, deduplicated list of real files. Pure and side-effect free
         so it can be unit tested without touching a real build."""
         if self.location is None:
-            raise ValueError(f"Target {self.name!r} has no location set; "
-                              f"resolved_sources() must run after the loader "
-                              f"attaches it.")
+            raise ChValueError("CH1017", name=self.name)
         matched: set[Path] = set()
         for pattern in self.source_patterns:
             matched.update(self.location.glob(pattern))
@@ -93,10 +92,19 @@ class Workspace:
     def __post_init__(self) -> None:
         _validate_name(self.name, "Workspace name")
 
+    @property
+    def root(self) -> Path:
+        """The workspace directory. `location` is Optional only because the
+        DSL attaches it after construction; anything that builds paths goes
+        through here so a missing location is a clear error, not a
+        `None / "build"` TypeError."""
+        if self.location is None:
+            raise ChError("CH9002", detail=f"workspace {self.name!r} has no location")
+        return self.location
+
     def add_target(self, target: Target) -> None:
         if target.name in self.targets:
-            raise ValueError(f"Target {target.name!r} is already defined in "
-                              f"workspace {self.name!r}.")
+            raise ChValueError("CH1016", name=target.name, workspace=self.name)
         self.targets[target.name] = target
 
     def build_order(self) -> List[str]:
@@ -117,12 +125,10 @@ class Workspace:
                 return
             if name not in self.targets:
                 offender = path[-1] if path else name
-                raise ValueError(
-                    f"Target {offender!r} depends on unknown target {name!r}."
-                )
+                raise ChValueError("CH3005", target=offender, dependency=name)
             if name in visiting:
                 cycle = " -> ".join(path + [name])
-                raise ValueError(f"Dependency cycle detected: {cycle}")
+                raise ChValueError("CH3004", cycle=cycle)
             visiting.add(name)
             for dep in self.targets[name].depends_on:
                 visit(dep, path + [name])

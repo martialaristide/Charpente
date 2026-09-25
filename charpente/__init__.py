@@ -4,7 +4,7 @@
 Workspace, Target, Kind, Language, OS.
 """
 from ._version import __author__, __email__, __version__
-from .dsl.api import Kind, Language, OS, Target, Workspace, current_workspace
+from .dsl.api import OS, Kind, Language, Target, Workspace, current_workspace
 
 __all__ = [
     "__version__", "__author__", "__email__",

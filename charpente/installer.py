@@ -20,7 +20,7 @@ import shutil
 from pathlib import Path
 from typing import List
 
-from .dsl.model import OS, Target, Workspace
+from .dsl.model import Target, Workspace
 
 DEFAULT_VENDOR = "com.charpente"
 

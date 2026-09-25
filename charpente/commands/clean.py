@@ -13,7 +13,7 @@ def execute(args: List[str]) -> int:
     parsed = parser.parse_args(args)
 
     workspace = load(parsed.file)
-    build_dir = workspace.location / "build"
+    build_dir = workspace.root / "build"
     if build_dir.exists():
         shutil.rmtree(build_dir)
         print(f"Removed {build_dir}")

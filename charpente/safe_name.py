@@ -11,20 +11,16 @@ from __future__ import annotations
 
 import re
 
+from .errors import ChValueError
+
 _UNSAFE_RE = re.compile(r"[\\/\x00-\x1f]")
 
 
 def validate(name: str, field: str = "name") -> str:
     if not name or not name.strip():
-        raise ValueError(f"{field} cannot be empty.")
+        raise ChValueError("CH1011", field=field)
     if ".." in name:
-        raise ValueError(
-            f"{field} {name!r} contains '..', which is not allowed (it could "
-            f"make a generated file escape the output directory)."
-        )
+        raise ChValueError("CH1012", field=field, name=name)
     if _UNSAFE_RE.search(name):
-        raise ValueError(
-            f"{field} {name!r} contains a path separator or control "
-            f"character, which is not allowed."
-        )
+        raise ChValueError("CH1013", field=field, name=name)
     return name

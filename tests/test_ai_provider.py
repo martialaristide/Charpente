@@ -63,7 +63,6 @@ def test_local_provider_speaks_openai_compatible_json(monkeypatch):
     urllib.request.urlopen with a fake that inspects what was sent and
     returns a canned OpenAI-shaped response."""
     import json
-    from io import BytesIO
 
     captured = {}
 

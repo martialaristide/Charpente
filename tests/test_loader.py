@@ -1,7 +1,7 @@
 import pytest
 
 from charpente.dsl.loader import WorkspaceLoadError, load_workspace
-from charpente.dsl.model import Kind, Language
+from charpente.dsl.model import Kind
 
 
 @pytest.fixture(autouse=True)

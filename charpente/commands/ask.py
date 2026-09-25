@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import List, Optional, Tuple
 
 from ..ai import select_provider
+from ..errors import ChError
 from ._common import CommandError, load
 
 _SYSTEM_PROMPT = (
@@ -43,7 +44,7 @@ def execute(args: List[str]) -> int:
 
     file_arg, question = _parse_args(args)
     if not question:
-        raise CommandError("Usage: charpente ask [--file PATH] <question>")
+        raise CommandError("CH4005", usage="Usage: charpente ask [--file PATH] <question>")
 
     provider = select_provider()
     if not provider.is_available():
@@ -54,7 +55,7 @@ def execute(args: List[str]) -> int:
     try:
         workspace = load(file_arg)
         context_lines.append(f"Current workspace: {workspace.name!r}, targets: {sorted(workspace.targets)}")
-    except CommandError:
+    except ChError:
         pass  # Answering without workspace context is still useful (e.g. a general question).
 
     prompt = question

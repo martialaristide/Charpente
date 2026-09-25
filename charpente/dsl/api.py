@@ -9,10 +9,11 @@ calls know what they're configuring.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional
 
+from ..errors import ChRuntimeError
 from . import model as _model
-from .model import Kind, Language, OS
+from .model import OS, Kind, Language
 
 __all__ = ["Workspace", "Target", "Kind", "Language", "OS", "current_workspace"]
 
@@ -63,15 +64,11 @@ class Workspace:
     def __enter__(self) -> "Workspace":
         global _current_workspace
         if _current_workspace is not None:
-            raise RuntimeError(
-                f"Workspace {self._model.name!r} opened while workspace "
-                f"{_current_workspace.name!r} is still open. Workspaces "
-                f"cannot be nested."
-            )
+            raise ChRuntimeError("CH1015", name=self._model.name, outer=_current_workspace.name)
         _current_workspace = self._model
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
         global _current_workspace, _last_workspace
         if exc_type is None:
             _last_workspace = self._model
@@ -92,10 +89,7 @@ class Target:
 
     def __init__(self, name: str):
         if _current_workspace is None:
-            raise RuntimeError(
-                f"Target {name!r} declared outside of any `with "
-                f"Workspace(...)` block."
-            )
+            raise ChRuntimeError("CH1014", name=name)
         self._model = _model.Target(name=name, location=_current_workspace.location)
 
     def __enter__(self) -> "Target":
@@ -103,9 +97,10 @@ class Target:
         _current_target = self._model
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
         global _current_target
-        _current_workspace.add_target(self._model)
+        if _current_workspace is not None:
+            _current_workspace.add_target(self._model)
         _current_target = None
 
     def kind(self, value: Kind) -> "Target":

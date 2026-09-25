@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Dict, List, Mapping, Optional
 
 
 class AIProvider(ABC):
@@ -88,7 +88,7 @@ class OpenAIProvider(AIProvider):
     def complete(self, prompt: str, *, system: Optional[str] = None) -> str:
         import openai
         client = openai.OpenAI(api_key=self._api_key)
-        messages = []
+        messages: List[Dict[str, str]] = []
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
@@ -128,10 +128,10 @@ class LocalProvider(AIProvider):
         )
         with urllib.request.urlopen(request, timeout=self._timeout) as response:
             data = json.loads(response.read().decode("utf-8"))
-        return data["choices"][0]["message"]["content"]
+        return str(data["choices"][0]["message"]["content"])
 
 
-def select_provider(env: Optional[dict] = None) -> AIProvider:
+def select_provider(env: Optional[Mapping[str, str]] = None) -> AIProvider:
     """Resolution order: an explicit CHARPENTE_AI_PROVIDER override, then
     whichever API key is present, then a configured local endpoint,
     then NullProvider. Never raises -- always returns something usable."""

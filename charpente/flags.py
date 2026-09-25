@@ -10,9 +10,9 @@ gcc/g++ take the same flags as Linux gcc).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
+from typing import List, Sequence
 
-from .dsl.model import Kind, OS, Target
+from .dsl.model import OS, Kind, Target
 from .toolchains import Toolchain
 
 _MSVC_STYLE = {"msvc", "clang-cl"}
@@ -56,7 +56,7 @@ def link_args(
     objects: List[Path],
     output: Path,
     *,
-    library_dirs: List[Path] = (),
+    library_dirs: Sequence[Path] = (),
 ) -> List[str]:
     """`library_dirs` are extra `-L`/`/LIBPATH:` search paths -- the builder
     passes each dependency's own build directory here, so `t.links([dep])`

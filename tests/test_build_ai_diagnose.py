@@ -1,9 +1,7 @@
-import subprocess
 
 import pytest
 
 from charpente.cli import main
-from charpente.dsl.model import Language, Target
 
 
 @pytest.fixture(autouse=True)

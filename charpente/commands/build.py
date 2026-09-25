@@ -4,7 +4,7 @@ import argparse
 from typing import List
 
 from ..builder import build_workspace
-from ._common import CommandError, load, toolchain_for_host
+from ._common import load, toolchain_for_host
 
 
 def execute(args: List[str]) -> int:

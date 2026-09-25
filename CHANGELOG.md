@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.2.0 -- Phase P0: foundations
+
+Nothing about how a `.charpente` file is written changes: every valid
+v0.1.0 workspace still loads and builds.
+
+- **Stable error codes.** Every user-facing error now carries a code
+  (`CH1001`...), a cause and a fix, in French and English
+  (`CHARPENTE_LANG=fr|en`, else the system locale). `charpente explain
+  CH3001` (or `explain --list`) prints the long form; `docs/errors.md`
+  is generated from the catalogue and checked by a test.
+- **One process layer.** All process launches go through
+  `charpente.core.process`; a test fails if any other module imports
+  `subprocess` or enables the shell. A missing program is now `CH2002`
+  instead of a traceback.
+- **Real bug found by the new type checking:** the packaging error paths
+  (`iscc`/`dpkg-deb`/`pkgbuild` failing) would have raised a `TypeError`
+  instead of the intended message. Fixed, and `ChError` now takes its code
+  as a positional-only argument so a parameter named `code` can never
+  collide with it again.
+- **Tooling.** `ruff`, `mypy --strict` (whole package), coverage gate at
+  75 %, CI matrix on Windows/Linux/macOS x Python 3.9/3.12, an sdist+wheel
+  check, and a release workflow that publishes to PyPI only from a pushed
+  `v*` tag through trusted publishing (no token stored). **Nothing has been
+  published to PyPI.**
+- `Workspace.root` replaces scattered `workspace.location / ...` (which
+  was `Optional`).
+
 ## v0.1.0 — initial release
 
 First working version. From-scratch project: no code shared with, and not

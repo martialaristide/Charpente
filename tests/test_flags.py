@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from charpente import flags
-from charpente.dsl.model import Kind, Language, OS, Target
+from charpente.dsl.model import OS, Kind, Language, Target
 from charpente.toolchains import Toolchain
 
 GCC = Toolchain(name="gcc", c_compiler="gcc", cxx_compiler="g++", archiver="ar", linker="g++")

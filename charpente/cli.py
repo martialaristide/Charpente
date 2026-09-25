@@ -8,6 +8,7 @@ from typing import List, Optional
 
 from ._version import __version__
 from .commands import COMMANDS
+from .errors import ChError
 
 
 def _print_help() -> None:
@@ -37,12 +38,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         _print_help()
         return 1
 
-    from .commands._common import CommandError
-
     try:
         return command(rest)
-    except CommandError as e:
-        print(f"charpente: {e}", file=sys.stderr)
+    except ChError as e:
+        print(f"charpente: {e.format()}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:
         print("\ncharpente: interrupted", file=sys.stderr)

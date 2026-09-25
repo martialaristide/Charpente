@@ -12,13 +12,14 @@ from __future__ import annotations
 
 import argparse
 import shutil
-import subprocess
 import zipfile
+from pathlib import Path
 from typing import List
 
 from .. import installer
 from ..builder import build_dir, build_workspace, dependency_closure
-from ..dsl.model import OS
+from ..core import process
+from ..dsl.model import OS, Target, Workspace
 from ._common import CommandError, load, resolve_target, toolchain_for_host
 
 
@@ -49,19 +50,21 @@ def execute(args: List[str]) -> int:
     target_result = build_result.target(target.name)
     if target_result is None or not target_result.ok:
         error = target_result.error if target_result else "unknown target build failure"
-        raise CommandError(f"Build failed, nothing to package: {error}")
+        raise CommandError("CH4001", detail=error)
 
-    out_dir = workspace.location / "dist"
+    out_dir = workspace.root / "dist"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if parsed.format == "zip":
         return _package_zip(workspace, target, parsed, out_dir)
+    if target_result.output_path is None:
+        raise CommandError("CH3009", path=target.name)
     return _package_installer(workspace, target, target_os, parsed, out_dir, target_result.output_path)
 
 
-def _package_zip(workspace, target, parsed, out_dir) -> int:
+def _package_zip(workspace: Workspace, target: Target, parsed: argparse.Namespace, out_dir: Path) -> int:
     archive_path = (
-        workspace.location / parsed.output if parsed.output
+        workspace.root / parsed.output if parsed.output
         else out_dir / f"{target.name}-{parsed.config}.zip"
     )
     archive_path.parent.mkdir(parents=True, exist_ok=True)
@@ -76,17 +79,19 @@ def _package_zip(workspace, target, parsed, out_dir) -> int:
     return 0
 
 
-def _package_installer(workspace, target, target_os, parsed, out_dir, exe_path) -> int:
+def _package_installer(workspace: Workspace, target: Target, target_os: OS, parsed: argparse.Namespace,
+                       out_dir: Path, exe_path: Path) -> int:
     if target_os == OS.WINDOWS:
         return _package_windows(workspace, target, parsed, out_dir, exe_path)
     if target_os == OS.LINUX:
         return _package_linux(target, parsed, out_dir, exe_path)
     if target_os == OS.MACOS:
         return _package_macos(target, parsed, out_dir, exe_path)
-    raise CommandError(f"No installer format defined for {target_os.value}.")
+    raise CommandError("CH4002", os=target_os.value)
 
 
-def _package_windows(workspace, target, parsed, out_dir, exe_path) -> int:
+def _package_windows(workspace: Workspace, target: Target, parsed: argparse.Namespace,
+                     out_dir: Path, exe_path: Path) -> int:
     script_path = out_dir / f"{target.name}-setup.iss"
     script_path.write_text(
         installer.inno_setup_script(
@@ -106,14 +111,14 @@ def _package_windows(workspace, target, parsed, out_dir, exe_path) -> int:
         )
         return 0
 
-    completed = subprocess.run(installer.iscc_args(script_path), shell=False)
+    completed = process.run(installer.iscc_args(script_path), capture=False)
     if completed.returncode != 0:
-        raise CommandError(f"iscc failed (exit code {completed.returncode}).")
+        raise CommandError("CH4003", tool="iscc", code=completed.returncode)
     print(f"Built installer: {out_dir / (target.name + '-setup.exe')}")
     return 0
 
 
-def _package_linux(target, parsed, out_dir, exe_path) -> int:
+def _package_linux(target: Target, parsed: argparse.Namespace, out_dir: Path, exe_path: Path) -> int:
     staging = out_dir / f"{target.name}-deb-staging"
     if staging.exists():
         shutil.rmtree(staging)
@@ -131,14 +136,14 @@ def _package_linux(target, parsed, out_dir, exe_path) -> int:
         )
         return 0
 
-    completed = subprocess.run(installer.dpkg_deb_args(staging, output_path), shell=False)
+    completed = process.run(installer.dpkg_deb_args(staging, output_path), capture=False)
     if completed.returncode != 0:
-        raise CommandError(f"dpkg-deb failed (exit code {completed.returncode}).")
+        raise CommandError("CH4003", tool="dpkg-deb", code=completed.returncode)
     print(f"Built package: {output_path}")
     return 0
 
 
-def _package_macos(target, parsed, out_dir, exe_path) -> int:
+def _package_macos(target: Target, parsed: argparse.Namespace, out_dir: Path, exe_path: Path) -> int:
     staging = out_dir / f"{target.name}-pkg-staging"
     if staging.exists():
         shutil.rmtree(staging)
@@ -156,10 +161,10 @@ def _package_macos(target, parsed, out_dir, exe_path) -> int:
         )
         return 0
 
-    completed = subprocess.run(
-        installer.pkgbuild_args(staging, output_path, target, version=parsed.version), shell=False
+    completed = process.run(
+        installer.pkgbuild_args(staging, output_path, target, version=parsed.version), capture=False
     )
     if completed.returncode != 0:
-        raise CommandError(f"pkgbuild failed (exit code {completed.returncode}).")
+        raise CommandError("CH4003", tool="pkgbuild", code=completed.returncode)
     print(f"Built package: {output_path}")
     return 0

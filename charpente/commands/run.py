@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
 from typing import List
 
 from ..builder import build_workspace, dependency_closure
+from ..core import process
 from ._common import CommandError, load, resolve_target, toolchain_for_host
 
 
@@ -50,13 +50,13 @@ def execute(args: List[str]) -> int:
             return 1
         output = target_result.output_path
     else:
-        from ..builder import build_dir  # internal helper, fine to reach for within the package
         from .. import flags
+        from ..builder import build_dir  # internal helper, fine to reach for within the package
         output = build_dir(workspace, parsed.config, target) / flags.output_filename(target, target_os, toolchain)
         if not output.exists():
-            raise CommandError(f"{output} does not exist. Build first (drop --no-build).")
+            raise CommandError("CH4004", path=str(output))
 
     print(f"Running {output}...")
     sys.stdout.flush()  # otherwise the child's own output can print before this line does
-    completed = subprocess.run([str(output), *program_args], shell=False)
+    completed = process.run([str(output), *program_args], capture=False)
     return completed.returncode
