@@ -40,6 +40,11 @@ work (every source file, independent targets) runs in parallel.
 - `--sanitize KINDS` (`address,undefined`) and `--coverage`: instrumented flavours with their own build directory; refused (CH8011) when the
   toolchain cannot really build them.
 - `--no-cache`: neither read nor write the [content cache](#charpente-cache).
+- `--reproducible`: build so the output does not depend on the folder or the time of the build (own build directory `build/<Config>-repro`); see
+  [reproducible-and-budgets.md](reproducible-and-budgets.md) and `charpente verify-reproducible`.
+- `--eco`: build gently (halve the parallel jobs; `CHARPENTE_ECO=auto` does it only on battery or a hot machine). Memory and disk are always
+  checked. See [resources.md](resources.md).
+- `--no-budget`: skip the budgets declared with `ws.budget()` / `t.budget()`; an exceeded budget otherwise fails the build (CH8024).
 - `-v` / `--verbose`: show every command that runs and *why* it runs
   (`because: header changed: include/a.h`).
 - `--output auto|plain|rich|jsonl`: `auto` (default) shows a live progress bar on
@@ -212,6 +217,8 @@ disappeared**. `A` and `B` are a session id (prefix), a number from
 
 ```
 charpente cache stats | dir | clear | gc [--max-size 5GB]
+charpente cache serve [--dir D] [--host H] [--port P] [--token-env VAR] [--readonly] [--max-blob SIZE]
+charpente cache remote
 ```
 
 The content cache lives in `~/.charpente/cache` (override with
@@ -219,6 +226,9 @@ The content cache lives in `~/.charpente/cache` (override with
 least recently used files until it fits. Entries are found only by the hash
 of everything that determines their content, so a stale entry can never be
 returned.
+
+`serve` runs a **shared cache** for a team or CI over HTTP and `remote` shows the one this machine uses (`CHARPENTE_REMOTE_CACHE`); see
+[shared-cache.md](shared-cache.md) for the setup and the threat model.
 
 ## `charpente replay`
 
@@ -277,7 +287,7 @@ registry). It only runs when you ask; a build never downloads.
 ```
 charpente package --format apk --platform android-arm64,android-x64 [--config Debug|Release]
                    [--keystore FILE --key-alias NAME]
-charpente deploy   [--platform android-x64] [--device SERIAL] [--no-launch]
+charpente deploy   [--platform android-x64] [--device SERIAL|all] [--no-launch] [--logs [--log-seconds N] [--log-filter TEXT]]
 ```
 
 `package --format apk` builds a `Kind.MOBILE_APP` target for each listed ABI, then links the manifest
@@ -285,7 +295,8 @@ charpente deploy   [--platform android-x64] [--device SERIAL] [--no-launch]
 Debug builds use the standard Android debug key; a release build without `--keystore` warns that the
 APK is debug-signed. The release key's password is read from `$CHARPENTE_KEYSTORE_PASSWORD`, never from
 the command line. `deploy` does the same, then `adb install -r` and starts the app on the one connected
-device or emulator. See [android.md](android.md).
+device or emulator. `--device all` builds one APK for every connected device's ABIs and installs it on all of them in parallel, and
+`--logs` merges their logs into one tagged stream ([multi-device.md](multi-device.md)). See [android.md](android.md).
 
 ## `charpente check`, `hooks`, `status`, `commit`, `push`, `pr`
 
@@ -326,6 +337,22 @@ folder from a template (`charpente init --list`); `charpente kit list|show|add` 
 ## `charpente studio`, `debug`, `debug-adapter`, `fix`, `ai`
 
 `charpente studio` opens the workspace UI in your browser ([studio.md](studio.md)). `charpente debug [TARGET] [-- ARGS]` builds a target and debugs it in gdb/lldb; `charpente debug-adapter` is the DAP server editors use; `charpente debug --list` shows the debuggers found ([debugging.md](debugging.md)). `charpente fix` proposes a fix for a failing build as a diff you approve; `charpente ai tests|migrate|status` write tests (only if they pass), draft a `.charpente` from CMake, and explain the rules ([ai.md](ai.md)). All AI commands show what they send first (`--show-context`, `--dry-run`, `--yes`).
+
+## `charpente verify-reproducible`, `import cmake`, `generate`
+
+`charpente verify-reproducible [--config C] [--platform P] [--keep] [--json]` builds the project twice in different folders and compares the outputs byte for byte ([reproducible-and-budgets.md](reproducible-and-budgets.md)).
+`charpente import cmake [FOLDER] [--out F] [--force] [--build-dir D] [--cmake PATH] [--cmake-arg ARG] [--print]` writes a `.charpente` from a CMake project, asking CMake itself.
+`charpente generate [compile-commands|ninja|cmake|vs|xcode] [--out D] [--force] [--list]` writes project files for other tools; `xcode` is not implemented ([import-and-generate.md](import-and-generate.md)).
+
+## `charpente dev`, `docs`
+
+`charpente dev [--target T] [--hot-dir D] [--poll S] [--cycles N] [--no-initial-build]` rebuilds when files change and publishes plugin builds for hot reload (experimental, [hot-reload.md](hot-reload.md)).
+`charpente docs [--out D] [--doxygen]` writes Markdown API pages from doc comments and the target graph ([api-docs.md](api-docs.md)).
+
+## `charpente setup`, `self`
+
+`charpente setup [--yes] [--lang en|fr]` is the guided first run; `charpente self uninstall [--only GROUP] [--keys] [--yes]` removes what Charpente stores on the machine (a dry run without `--yes`).
+See [setup-and-uninstall.md](setup-and-uninstall.md).
 
 ## `charpente doctor`
 

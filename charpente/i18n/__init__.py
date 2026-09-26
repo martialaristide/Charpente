@@ -28,6 +28,11 @@ def current_lang() -> str:
     explicit = os.environ.get(LANG_ENV, "").strip().lower()
     if explicit[:2] in SUPPORTED:
         return explicit[:2]
+    from .. import settings
+
+    chosen = settings.get("lang")                     # what `charpente setup` remembered
+    if chosen:
+        return chosen
     for var in ("LC_ALL", "LC_MESSAGES", "LANG", "LANGUAGE"):
         value = os.environ.get(var, "").strip().lower()
         if value[:2] in SUPPORTED:

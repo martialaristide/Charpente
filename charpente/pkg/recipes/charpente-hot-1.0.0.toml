@@ -1,0 +1,23 @@
+# Charpente recipe -- data only, nothing here is executed.
+# Code written for Charpente and shipped inside it: no download. `python tools/sync_kit_digests.py` keeps sha256 in step.
+[package]
+name = "charpente-hot"
+version = "1.0.0"
+license = "Apache-2.0"
+description = "Host side of hot reload for Kind.PLUGIN targets (charpente_hot.h): load, reload and swap a shared library while the program runs (experimental)"
+homepage = "https://github.com/martialaristide/Charpente"
+purl = ""
+
+[source]
+url = "charpente://hot"
+sha256 = "6548f8fd540249f6fc7100d0c2742f274d3b2a61839a5e539b5fbe21efd7c31e"
+strip_prefix = ""
+
+[build]
+type = "header_only"
+language = "c"
+include_dirs = ["include"]
+keep = ["include/*.h"]
+
+[dependencies]
+requires = []

@@ -41,7 +41,7 @@ def execute(args: List[str]) -> int:
     with Session("test", parsed, workspace, toolchain=toolchain.name, config=parsed.config) as session:
         built = build_workspace(workspace, toolchain, target_os, config=parsed.config, only=needed,
                                 keep_going=True, jobs=parsed.jobs, bus=session.bus,
-                                use_cache=not parsed.no_cache)
+                                use_cache=not parsed.no_cache, eco=getattr(parsed, "eco", False))
         session.flush()
         if built.interrupted:
             raise KeyboardInterrupt

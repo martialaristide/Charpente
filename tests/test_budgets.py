@@ -146,3 +146,14 @@ def test_budget_events_are_in_the_machine_output(tmp_path, monkeypatch, capsys):
 def test_the_budget_events_have_published_schemas():
     schema = json.loads((Path(__file__).resolve().parents[1] / "docs" / "events" / "budget.exceeded.schema.json").read_text(encoding="utf-8"))
     assert set(schema["properties"]["payload"]["required"]) == {"scope", "kind", "limit", "actual"}
+
+
+@pytest.mark.skipif(not HAVE_COMPILER, reason="needs a C++ compiler")
+def test_a_size_budget_that_cannot_be_measured_is_said_not_silently_skipped(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("CHARPENTE_TRUST_ALL", "1")
+    extra = '        app.budget(size="50MB")\n    with Target("headers") as h:\n        h.kind(Kind.HEADER_ONLY)\n        h.budget(size="1KB")\n'
+    monkeypatch.chdir(project(tmp_path, ("", extra)))
+    assert main(["build"]) == 0
+    captured = capsys.readouterr()
+    assert "[budget ok] app: size" in captured.out
+    assert "[budget skipped] headers" in captured.err and "no output file to measure" in captured.err

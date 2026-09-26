@@ -23,8 +23,8 @@ folder, shows what the server says, and asks it to build, run, test and check.
 cd vscode-charpente
 npm install
 npm test                      # compile + 26 tests
-npm run package               # writes charpente-0.12.0.vsix
-code --install-extension charpente-0.12.0.vsix
+npm run package               # writes charpente-0.13.0.vsix
+code --install-extension charpente-0.13.0.vsix
 ```
 
 `code --install-extension` is a normal, reversible install that **you** run; nothing in this repository installs the extension for you or publishes it

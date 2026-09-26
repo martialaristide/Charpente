@@ -51,6 +51,10 @@ def check_budgets(session: Session, workspace: object, result: BuildResult) -> i
         if not session.machine:
             print(f"  [{'budget ok' if finding.ok else 'OVER BUDGET'}] {finding.describe()}")
     session.flush()
+    if not session.machine:
+        for name, target in workspace.targets.items():  # type: ignore[attr-defined]
+            if "size" in target.budgets and name not in outputs:
+                print(f"  [budget skipped] {name}: its size budget was not checked: the target produced no output file to measure in this run", file=sys.stderr)
     if exceeded and not session.machine:
         from ..errors import ChError
 
@@ -79,7 +83,7 @@ def execute(args: List[str]) -> int:
         session.say(f"Building {workspace.name} ({parsed.config}, {toolchain.name})...")
         result = build_workspace(workspace, toolchain, target_os, config=parsed.config,
                                  keep_going=parsed.keep_going, jobs=parsed.jobs, bus=session.bus,
-                                 use_cache=not parsed.no_cache)
+                                 use_cache=not parsed.no_cache, eco=parsed.eco)
         print_result_lines(session, result, ai_diagnose=parsed.ai_diagnose, toolchain_name=toolchain.name)
         code = 130 if result.interrupted else (0 if result.ok else 1)
         if result.ok and not parsed.no_budget:

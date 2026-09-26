@@ -72,6 +72,9 @@ EVENT_TYPES: Dict[str, Dict[str, str]] = {
     "deploy.installing": {"device": "str", "artifact": "str"},
     "deploy.launched": {"device": "str", "app": "str?"},
     "deploy.log": {"device": "str", "level": "str?", "line": "str"},
+    # -- development loop ---------------------------------------------------
+    "dev.rebuilt": {"changed": "list", "ok": "bool", "duration": "float"},
+    "dev.plugin_published": {"target": "str", "generation": "int", "path": "str"},
     # -- budgets ------------------------------------------------------------
     "budget.checked": {"scope": "str", "kind": "str", "limit": "float", "actual": "float"},
     "budget.exceeded": {"scope": "str", "kind": "str", "limit": "float", "actual": "float"},

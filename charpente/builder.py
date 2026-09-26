@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
 
-from . import cross
+from . import cross, resources
 from .core import analysis, compdb, fastpath, hashing, process
 from .core import engine as engine_mod
 from .core import planner as planner_mod
@@ -226,6 +226,7 @@ def build_workspace(
     cache: Optional[LocalCache] = None,
     write_compdb: bool = True,
     fast_path: bool = True,
+    eco: bool = False,
 ) -> BuildResult:
     """Builds every target in dependency order (or, with `only`, just the
     given subset -- see `dependency_closure()` for building one target plus
@@ -240,7 +241,7 @@ def build_workspace(
     events = bus or EventBus()
     try:
         return _build(workspace, toolchain, target_os, config, run, keep_going, only, jobs, events,
-                      use_cache, cache, write_compdb, fast_path)
+                      use_cache, cache, write_compdb, fast_path, eco)
     finally:
         if own_bus:
             events.close()
@@ -248,7 +249,7 @@ def build_workspace(
 
 def _build(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: str, run: RunFn,
            keep_going: bool, only: Optional[Iterable[str]], jobs: int, events: EventBus, use_cache: bool,
-           cache: Optional[LocalCache], write_compdb: bool, fast_path: bool) -> BuildResult:
+           cache: Optional[LocalCache], write_compdb: bool, fast_path: bool, eco: bool = False) -> BuildResult:
     # Raises for unknown dependencies and cycles; folds `uses`, overlays and public settings.
     scope, effective = planner_mod.effective_scope(workspace, toolchain, config, only)
     sources = {name: effective[name].source_files() for name in scope if effective[name].kind != Kind.HEADER_ONLY}
@@ -285,6 +286,12 @@ def _build(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: st
     state = StateDB(state_dir(workspace) / "state.db")
     try:
         the_cache = cache if cache is not None else (open_cache() if use_cache else None)
+        resource_plan = resources.plan_jobs(jobs, os.cpu_count() or 1, resources.sample(workspace.root / "build"), eco=resources.eco_mode(eco), build_dir=str(workspace.root / "build"))
+        for kind, payload in resource_plan.events:
+            events.emit(kind, **payload)
+        for note in resource_plan.notes:
+            events.emit("hint.emitted", code="resource", message=note)
+        jobs = resource_plan.jobs
         engine = engine_mod.Engine(state, events, cache=the_cache, runner=run, jobs=jobs, keep_going=keep_going, root=workspace.root,
                                    relocatable=toolchain.variant == "repro" or os.environ.get("CHARPENTE_CACHE_RELOCATABLE") == "1")
         result = engine.run(graph, only=runnable)

@@ -2629,6 +2629,132 @@
       "type": "object"
     },
     {
+      "$id": "https://charpente.dev/schemas/events/v1/dev.rebuilt.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "changed": {
+              "type": "array"
+            },
+            "duration": {
+              "type": "number"
+            },
+            "ok": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "changed",
+            "ok",
+            "duration"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "dev.rebuilt"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "dev.rebuilt",
+      "type": "object"
+    },
+    {
+      "$id": "https://charpente.dev/schemas/events/v1/dev.plugin_published.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "parent_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "payload": {
+          "additionalProperties": true,
+          "properties": {
+            "generation": {
+              "type": "integer"
+            },
+            "path": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "target",
+            "generation",
+            "path"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "const": "dev.plugin_published"
+        },
+        "wall_time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "parent_id",
+        "timestamp",
+        "wall_time",
+        "session_id",
+        "type",
+        "payload"
+      ],
+      "title": "dev.plugin_published",
+      "type": "object"
+    },
+    {
       "$id": "https://charpente.dev/schemas/events/v1/budget.checked.json",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {

@@ -69,7 +69,7 @@ def test_size_limits_and_read_only(tmp_path):
     small.start()
     try:
         assert http_call(small, "PUT", f"/cas/{digest_of(b'x' * 50).replace(':', '-')}", b"x" * 50)[0] == 413
-        assert http_call(small, "PUT", f"/ac/k", b'{"a": 1}')[0] == 201
+        assert http_call(small, "PUT", "/ac/k", b'{"a": 1}')[0] == 201
     finally:
         small.shutdown()
     mirror = CacheServer(tmp_path / "m", readonly=True)

@@ -13,7 +13,7 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def _isolated_environment(monkeypatch, tmp_path_factory):
+def _isolated_environment(monkeypatch, tmp_path_factory, request):
     home = tmp_path_factory.mktemp("charpente-home")
     monkeypatch.setenv("CHARPENTE_LANG", "en")
     monkeypatch.setenv("CHARPENTE_HOME", str(home))
@@ -22,5 +22,11 @@ def _isolated_environment(monkeypatch, tmp_path_factory):
     from charpente.modules import runtime
 
     runtime.reset()          # the module registry is built from the (per-test) config directory
+    if request.module.__name__.rpartition(".")[2] != "test_resources":
+        # How much memory the machine has free must not change what a build reports (test_resources measures the real machine on purpose).
+        from charpente import resources
+
+        healthy = resources.Sample(on_battery=False, free_memory=1 << 40, free_disk=1 << 40, temperature=40.0)
+        monkeypatch.setattr(resources, "sample", lambda build_dir: healthy)
     yield
     runtime.reset()

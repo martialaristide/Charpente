@@ -39,22 +39,20 @@ verified; see [docs/platforms.md](docs/platforms.md).
 
 ## Status
 
-This is a young, from-scratch project — not a fork or a rename of any
-prior build tool, no code shared with one. What's implemented today,
-honestly:
+Charpente is a young, from-scratch project (version **0.13, alpha**) — not a fork or a rename of any prior build tool, no code shared with one. It is a build **engine**
+(exact incremental builds, a content-addressed cache that can be shared by a team, reproducible builds), a **package manager** and curated **kits**, and a **studio** (a local web app, a VS Code extension,
+a build server, debugging). What is verified and what is not is written per feature in [docs/stability.md](docs/stability.md); in short:
 
-| Area | State |
-|---|---|
-| DSL (Workspace/Target, dependency resolution, `.charpente` loading) | ✅ Working, tested |
-| Windows build (MSVC, clang-cl, or MinGW) | ✅ Working, tested with a real compiler |
-| Linux build (GCC or Clang) | ✅ Implemented, unit-tested; not yet run against a real Linux compiler in this environment |
-| macOS build (Apple Clang) | ✅ Implemented, unit-tested; not yet run against a real macOS compiler in this environment |
-| Incremental builds | ✅ Exact: tracks the headers each compilation read (`-MMD` / `/showIncludes`), decides by file content (not timestamps), parallel, with a content-addressed cache. Verified with a real compiler; the `/showIncludes` (MSVC/clang-cl) path is unit-tested on sample compiler output (not yet run against a real `cl.exe`). No-op build of a 10 000-file project: ~0.25 s; a *single* edit in such a project still costs ~6 s ([ADR 0010](docs/adr/0010-coeur-python-ou-rust.md)) |
-| `charpente init/build/run/clean/test/package` | ✅ Working |
-| `package` | ✅ `.zip` by default. `--format installer` generates a real Inno Setup `.iss`/.deb staging/.pkg staging and builds it if `iscc`/`dpkg-deb`/`pkgbuild` is on PATH (otherwise leaves the script/staging with the exact command to finish by hand). Generation logic is unit-tested on all three platforms; actual `iscc`/`dpkg-deb`/`pkgbuild` invocation has only been exercised where the tool happens to be installed |
-| `charpente ask` / `--ai-diagnose` | ✅ Working, fully optional (see [AI features](#ai-features)) |
-| Precompiled headers, C++20 modules, shared library exports on Windows (`__declspec`), cross-compilation | ❌ Not yet |
-| Mobile/web/console targets (Android, iOS, WASM, ...) | ❌ Not yet — desktop only for now |
+- **Verified for real, on one machine (Windows 10, MinGW-w64)**: builds and cache, reproducible builds, budgets, cross builds with zig (mostly *built*, not *executed*), Android (a real emulator), the Studio in a real
+  browser (Edge), clangd and gdb, CMake import, Ninja/CMake generation, hot reload, the shared cache.
+- **Tested but not against the real thing**: Visual Studio projects, multi-device deploy (simulated devices), the AI assistant (no real provider was ever called), the VS Code extension (not loaded in a live VS Code).
+- **Not done**: remote execution, an Xcode project, a compiled desktop app and installers, precompiled headers and C++20 modules.
+- **Never verified on Linux or macOS**, and there is no CI yet: that is why the version is `0.x` and nothing is called stable.
+
+## Where to start
+
+`charpente setup` checks your machine and offers what is missing; then `charpente init hello --template console`, `cd hello`, `charpente build`, `charpente run --target hello`. The
+[guide](docs/guide.md) ([en français](docs/guide.fr.md)) walks through everything else.
 
 ## Installation
 
@@ -74,7 +72,8 @@ charpente --version
 
 (Not yet published to PyPI — `pip install charpente` isn't available until
 it is. Installing from a clone with `pip install -e .` is the supported
-path today.)
+path today. The package itself builds and passes `twine check`; see
+[docs/setup-and-uninstall.md](docs/setup-and-uninstall.md), which also covers `charpente setup` and `charpente self uninstall`.)
 
 ## Quickstart
 
@@ -245,6 +244,13 @@ This README is the overview. For more depth:
   module, for anyone reading the code or contributing.
 - [`docs/troubleshooting.md`](docs/troubleshooting.md) — common error
   messages, organized so you can search this page for the exact text you're seeing.
+- [`docs/guide.md`](docs/guide.md) / [`docs/guide.fr.md`](docs/guide.fr.md) — the complete guide, in English and French.
+- [`docs/stability.md`](docs/stability.md) — what is verified, tested, experimental or not done.
+- Engine: [shared cache](docs/shared-cache.md), [reproducible builds and budgets](docs/reproducible-and-budgets.md), [resources and eco mode](docs/resources.md),
+  [import and generate](docs/import-and-generate.md), [hot reload](docs/hot-reload.md), [API docs](docs/api-docs.md), [multi-device deploy](docs/multi-device.md).
+- Platforms and tools: [platforms](docs/platforms.md), [Android](docs/android.md), [packages](docs/packages.md), [kits](docs/kits.md), [templates](docs/templates.md),
+  [quality gate](docs/quality.md), [Git and releases](docs/git.md), [server](docs/serve.md), [Studio](docs/studio.md), [VS Code](docs/vscode.md), [debugging](docs/debugging.md), [AI](docs/ai.md).
+- Errors: [`docs/errors.md`](docs/errors.md) (generated from the catalogue; `charpente explain CHxxxx`).
 
 ## Development
 

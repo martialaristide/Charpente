@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.13.0 -- Phase P9: reproducible builds, shared cache, interoperability, dev loop, first run
+
+- **Reproducible builds**: `--reproducible` (own build folder; paths mapped to `/src`, fixed clock, no linker timestamp/build-id, deterministic archives; GNU-style toolchains, MSVC is refused) and
+  `charpente verify-reproducible` (two folders, byte-for-byte comparison, likely causes when they differ).
+- **Shared cache**: `charpente cache serve` and `CHARPENTE_REMOTE_CACHE` (HTTP, content-addressed; loopback by default, token from the environment, HMAC-signed entries, digests re-checked on both sides, fail-open,
+  unsafe set-ups refused with CH8028); cache keys are relocatable with the reproducible flavour. `charpente cache remote` shows the state. **No TLS in the server**: put it behind a TLS proxy ([docs/shared-cache.md](docs/shared-cache.md)).
+- **Budgets**: `ws.budget(build_time=, total_size=)`, `t.budget(size=)`; an exceeded budget fails the build (CH8024); `--no-budget`; a size budget that cannot be measured is reported, not skipped silently.
+- **Interoperability**: `charpente import cmake` (through CMake's File API; untranslatable parts are reported), `charpente generate compile-commands|ninja|cmake|vs` (verified with clangd, Ninja, CMake; the Visual Studio
+  output is **not** verified in Visual Studio; Xcode is not implemented).
+- **Dev loop**: `charpente dev` (rebuild on change) and **hot reload** for `Kind.PLUGIN` targets with the header-only `charpente_hot.h` (`charpente-hot` recipe, shipped inside Charpente); experimental.
+  `charpente docs` (Markdown API pages from doc comments, Mermaid/SVG target graph, optional Doxygen).
+- **Resources**: memory and disk are watched (`resource.low_memory`, `resource.low_disk`), `--eco` / `CHARPENTE_ECO` for battery and heat; an interrupted build resumes without redoing finished work (verified by killing a real build).
+- **Devices**: `charpente deploy --device all` builds one APK for every connected device's ABIs, installs in parallel (one failure does not stop the others), `--logs` merges every device's log into one tagged stream. Devices in the tests are simulated.
+- **First run and removal**: `charpente setup` (guided; asks before every download; never accepts a licence for you), remembered language (`~/.charpente/settings.json`, `CHARPENTE_LANG` still wins),
+  `charpente self uninstall` (dry run unless `--yes`; signing keys only with `--keys`; links are never followed). The package builds and passes `twine check` and installs in a clean virtual environment; **nothing was uploaded to PyPI**.
+- New error codes CH1026, CH8024-CH8028; new events `budget.*`, `resource.*`, `dev.*`, `deploy.device_found/installing/launched/log`; ADR 0019; guides in English and French; [docs/stability.md](docs/stability.md) lists what is verified.
+- **Fixed (found by these tests)**: a change saved while `charpente dev`'s first build ran was lost; `dev` output was not flushed when piped; the engine tests depended on the machine's free memory (now pinned in `tests/conftest.py`);
+  `verify-reproducible` could not find outputs from `target.finished` (now read from the action events).
+- **Not done**: remote execution (REAPI) and hybrid execution ([ADR 0019](docs/adr/0019-reproductibilite-cache-partage.md) says why), an Xcode project, a run on real phones for `--device all`, TLS in the cache server, MSVC reproducibility (`/Brepro`),
+  and anything on Linux or macOS. The version stays 0.x: there is no CI.
+
 ## v0.12.0 -- Phase P8: Studio, debugging, AI assistance
 
 - **`charpente studio`**: a workspace UI served locally (French/English, light/dark): file explorer, targets, options (saved in `.charpente/options.toml`), package search/add/remove, an editor

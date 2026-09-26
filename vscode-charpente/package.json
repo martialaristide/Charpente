@@ -2,7 +2,7 @@
   "name": "charpente",
   "displayName": "Charpente",
   "description": "Build, run, test and check C/C++ projects with Charpente: targets view, diagnostics, tasks, status bar, compile_commands.json for clangd.",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "publisher": "charpente",
   "license": "Apache-2.0",
   "repository": {

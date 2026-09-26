@@ -38,7 +38,7 @@ def _firmware(parsed: argparse.Namespace) -> Tuple[Workspace, Target, Toolchain,
     with Session("build", parsed, workspace, toolchain=toolchain.name, config=parsed.config) as session:
         result = build_workspace(workspace, toolchain, target_os, config=parsed.config,
                                  only=dependency_closure(workspace, target.name), jobs=parsed.jobs,
-                                 bus=session.bus, use_cache=not parsed.no_cache)
+                                 bus=session.bus, use_cache=not parsed.no_cache, eco=getattr(parsed, "eco", False))
         session.flush()
         built = result.target(target.name)
         ok = built is not None and built.ok
