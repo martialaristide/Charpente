@@ -87,7 +87,7 @@ def _windows_status() -> Tuple[Optional[bool], Optional[int]]:
                     ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong), ("ullTotalVirtual", ctypes.c_ulonglong),
                     ("ullAvailVirtual", ctypes.c_ulonglong), ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
 
-    kernel = ctypes.windll.kernel32
+    kernel = ctypes.windll.kernel32                       # type: ignore[attr-defined,unused-ignore]   # only exists on Windows
     power = PowerStatus()
     on_battery: Optional[bool] = None
     if kernel.GetSystemPowerStatus(ctypes.byref(power)):
