@@ -8,75 +8,15 @@ restored after each key, so an interrupted program never leaves a raw terminal b
 from __future__ import annotations
 
 import os
-import re
 import shutil
 import sys
-import unicodedata
 from dataclasses import dataclass
 from typing import Callable, List, Mapping, Optional, Sequence, TextIO
 
-_ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
-_TOKEN = re.compile(r"(\x1b\[[0-9;?]*[A-Za-z])|(.)", re.DOTALL)
+from ..ui.term import clip, enable_windows_vt, pad, strip_ansi, truncate_middle, visible_len
 
 
-# ---------------------------------------------------------------------- measuring text
-def strip_ansi(text: str) -> str:
-    return _ANSI.sub("", text)
-
-
-def char_width(char: str) -> int:
-    if unicodedata.combining(char):
-        return 0
-    return 2 if unicodedata.east_asian_width(char) in ("W", "F") else 1
-
-
-def visible_len(text: str) -> int:
-    """Columns the text takes on screen (colour codes take none; wide characters take two)."""
-    return sum(char_width(c) for c in strip_ansi(text))
-
-
-def pad(text: str, width: int) -> str:
-    return text + " " * max(0, width - visible_len(text))
-
-
-def clip(text: str, width: int, ellipsis: str = "") -> str:
-    """Cut `text` to at most `width` columns, keeping colour codes intact (and resetting them if the cut falls inside a coloured run)."""
-    if width <= 0:
-        return ""
-    if visible_len(text) <= width:
-        return text
-    room = width - visible_len(ellipsis)
-    out: List[str] = []
-    used = 0
-    coloured = False
-    for match in _TOKEN.finditer(text):
-        code, char = match.group(1), match.group(2)
-        if code:
-            out.append(code)
-            coloured = code != "\x1b[0m"
-            continue
-        w = char_width(char)
-        if used + w > room:
-            break
-        out.append(char)
-        used += w
-    out.append(ellipsis)
-    if coloured:
-        out.append("\x1b[0m")
-    return "".join(out)
-
-
-def truncate_middle(text: str, width: int, ellipsis: str = "...") -> str:
-    """A long path shortened in the middle: the start and the end are what people recognise. Plain text only."""
-    if visible_len(text) <= width:
-        return text
-    if width <= visible_len(ellipsis) + 2:
-        return text[: max(0, width)]
-    keep = width - len(ellipsis)
-    head = (keep + 1) // 2
-    return text[:head] + ellipsis + text[len(text) - (keep - head):]
-
-
+# text measurement lives in ui.term (shared with the banner and the build lines); re-exported here for the menu
 # ---------------------------------------------------------------------- what the terminal can do
 @dataclass(frozen=True)
 class Caps:
@@ -119,23 +59,6 @@ def _can_encode(stream: Optional[TextIO], text: str) -> bool:
     except (UnicodeEncodeError, LookupError):
         return False
     return True
-
-
-def enable_windows_vt() -> bool:
-    """Ask the Windows console to understand ANSI sequences (Windows 10 and later). False when it cannot."""
-    if sys.platform != "win32":
-        return False
-    try:
-        import ctypes
-
-        kernel = ctypes.windll.kernel32                     # type: ignore[attr-defined,unused-ignore]
-        handle = kernel.GetStdHandle(-11)
-        mode = ctypes.c_uint32()
-        if not kernel.GetConsoleMode(handle, ctypes.byref(mode)):
-            return False
-        return bool(kernel.SetConsoleMode(handle, mode.value | 0x0004))    # ENABLE_VIRTUAL_TERMINAL_PROCESSING
-    except Exception:
-        return False
 
 
 def detect(stdin: Optional[TextIO] = None, stdout: Optional[TextIO] = None, env: Optional[Mapping[str, str]] = None, *,
@@ -300,3 +223,7 @@ def native_keys() -> Optional[Keys]:
         return PosixKeys()
     except ImportError:
         return None
+
+
+__all__ = ["ASCII_GLYPHS", "UNICODE_GLYPHS", "Caps", "Glyphs", "Keys", "PosixKeys", "Style", "WindowsKeys", "box", "clip", "decode_posix", "decode_windows", "detect",
+           "enable_windows_vt", "glyphs_for", "native_keys", "pad", "strip_ansi", "truncate_middle", "visible_len"]
