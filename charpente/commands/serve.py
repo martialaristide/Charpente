@@ -15,7 +15,7 @@ from ..serve import ServerState, StdioServer, make_dispatcher
 from ..serve.bsp import bsp_connection_details
 from ..serve.rpc import PARSE_ERROR, Dispatcher, RpcError
 from ..serve.ws import Connection, HttpHandler, WebSocketServer
-from ._common import find_root
+from ._common import find_root, wait_until_interrupted
 
 
 def install_bsp(root: Path) -> Path:
@@ -82,11 +82,14 @@ def wait_for_parent(server: WebSocketServer) -> None:
         stop.set()
 
     threading.Thread(target=watch_stdin, daemon=True, name="stdin-watch").start()
-    try:
-        stop.wait()
-    except KeyboardInterrupt:
-        pass
+    interrupted = not wait_until_interrupted(stop)
     server.shutdown()
+    if interrupted:
+        # The stdin watcher is blocked in a read that cannot be interrupted; letting the interpreter shut down while it holds stdin's lock is a fatal error
+        # on Windows ("could not acquire lock ... at interpreter shutdown"). Everything is closed by now, so leave directly.
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)
 
 
 def _serve_websocket(state: ServerState, port: int) -> int:

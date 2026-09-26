@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import threading
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -164,3 +165,18 @@ def resolve_target(workspace: Workspace, name: Optional[str]) -> Target:
     if not own:
         raise CommandError("CH1010", workspace=workspace.name)
     raise CommandError("CH1009", workspace=workspace.name, count=len(own), known=", ".join(sorted(own)))
+
+
+def wait_until_interrupted(stop: "threading.Event | None" = None, tick: float = 0.25) -> bool:
+    """Block until `stop` is set (returns True) or the user presses Ctrl+C (returns False).
+
+    A plain `Event.wait()` cannot be interrupted on Windows: Ctrl+C is only noticed when the wait ends, which for a server that runs forever is never. Waiting
+    in short slices returns control to Python often enough for the interrupt to be delivered everywhere.
+    """
+    stop = stop if stop is not None else threading.Event()
+    try:
+        while not stop.wait(tick):
+            pass
+    except KeyboardInterrupt:
+        return False
+    return True

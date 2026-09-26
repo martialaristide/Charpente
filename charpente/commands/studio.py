@@ -15,7 +15,7 @@ from ..errors import ChError
 from ..serve import ServerState
 from ..serve.rpc import RpcError
 from ..serve.webapp import WEB_DIR, make_http_handler
-from ._common import CommandError, find_root
+from ._common import CommandError, find_root, wait_until_interrupted
 from .serve import make_ws_server
 
 
@@ -59,9 +59,7 @@ def execute(args: List[str]) -> int:
               "Press Ctrl+C to stop.", flush=True)
     if not parsed.no_browser:
         threading.Thread(target=webbrowser.open, args=(url,), daemon=True).start()
-    try:
-        threading.Event().wait()
-    except KeyboardInterrupt:
-        print("\nStopping Studio.")
+    wait_until_interrupted()                                 # Ctrl+C ends it (a bare Event().wait() ignores Ctrl+C on Windows)
+    print("\nStopping Studio.", flush=True)
     server.shutdown()                                        # type: ignore[attr-defined]
     return 0

@@ -7,6 +7,7 @@ output, every line tagged with its device, until Ctrl+C (or `--log-seconds`).
 from __future__ import annotations
 
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
@@ -120,8 +121,17 @@ class LogMerger:
         self.finished.set()
 
     def wait(self, seconds: Optional[float] = None) -> bool:
-        """True when every log ended by itself; False when `seconds` passed first."""
-        return self.finished.wait(seconds)
+        """True when every log ended by itself; False when `seconds` passed first.
+
+        Waits in short slices: one long `Event.wait()` cannot be interrupted by Ctrl+C on Windows.
+        """
+        deadline = None if seconds is None else time.monotonic() + seconds
+        while True:
+            left = None if deadline is None else deadline - time.monotonic()
+            if left is not None and left <= 0:
+                return self.finished.is_set()
+            if self.finished.wait(0.25 if left is None else min(0.25, left)):
+                return True
 
 
 def tag(serial: str, width: int = 0) -> str:
