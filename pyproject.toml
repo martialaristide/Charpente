@@ -46,6 +46,8 @@ dev = [
     "textual>=0.60",
     "build",
     "twine",
+    "pywinpty>=2.0; sys_platform == 'win32'",
+    "pyte>=0.8",
 ]
 
 [project.urls]

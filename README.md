@@ -51,7 +51,7 @@ a build server, debugging). What is verified and what is not is written per feat
 
 ## Where to start
 
-`charpente setup` checks your machine and offers what is missing; then `charpente init hello --template console`, `cd hello`, `charpente build`, `charpente run --target hello`. The
+Just type `charpente` in a terminal: a guided menu ([docs/console.md](docs/console.md)) creates, builds, runs and tests projects without you having to know the commands, and shows the command behind every choice. `charpente setup` checks your machine and offers what is missing; then `charpente init hello --template console`, `cd hello`, `charpente build`, `charpente run --target hello`. The
 [guide](docs/guide.md) ([en français](docs/guide.fr.md)) walks through everything else.
 
 ## Installation

@@ -39,6 +39,15 @@ def _print_help() -> None:
 def main(argv: Optional[List[str]] = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
 
+    if not argv:
+        from . import console
+
+        if console.wanted(True):                         # a person at a terminal gets the guided menu; scripts and pipes keep the plain help
+            try:
+                return console.run()
+            except ChError as e:
+                print(f"charpente: {e.format()}", file=sys.stderr)
+                return 1
     if not argv or argv[0] in ("-h", "--help"):
         _print_help()
         return 0 if argv else 1

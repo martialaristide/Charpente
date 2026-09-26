@@ -10,6 +10,12 @@ The first time any command loads a `.charpente` file whose exact content
 hasn't been approved before, you're asked to confirm — see
 [`security.md`](security.md).
 
+## `charpente` alone, and `charpente menu`
+
+In a terminal, `charpente` with no command opens a guided menu: create a project from a template, build, run, test, package, choose another platform, explain an error, Git, cache, all by choosing
+from lists, with the equivalent command shown before it runs. `charpente menu` opens it explicitly (also with piped input, by typing numbers). When the output is not a terminal, or with
+`CHARPENTE_CONSOLE=off`, a bare `charpente` prints the plain help as before. See [console.md](console.md).
+
 ## `charpente init NAME [--dir DIR]`
 
 Scaffolds `NAME.charpente` and `src/main.cpp` (a minimal "Hello, world"

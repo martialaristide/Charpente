@@ -24,6 +24,8 @@ See [setup-and-uninstall.md](setup-and-uninstall.md). Charpente asks before ever
 
 ## 3. Your first project
 
+Prefer to be guided? Type `charpente` alone in a terminal: a menu creates the project, builds and runs it, and shows the command behind each choice ([console.md](console.md)). The same steps by hand:
+
 ```bash
 charpente init hello --template console
 cd hello

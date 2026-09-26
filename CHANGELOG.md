@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased -- the console interface
+
+- **`charpente` alone in a terminal opens a guided menu** (`charpente menu` opens it explicitly): create a project from a template, open one, build, run, test, rebuild on change, choose a target platform, package, quality check, explain an error, Git, cache and cleaning, Studio, language. Every choice shows the command it runs. Arrow keys, shortcuts and Esc on a terminal; numbers and Enter everywhere else (pipes, `CHARPENTE_CONSOLE=plain`). English and French. Scripts and pipes keep the plain help; `CHARPENTE_CONSOLE=off` restores it in a terminal. See [docs/console.md](docs/console.md).
+- Tested with 96 automated tests, a real project created/built/run through the menu, and a **real Windows pseudo-console (ConPTY)**, which found and fixed one defect (Ctrl+C at a text question was reported as end of input on Windows and closed the program). The POSIX key reader was **not run** on Linux or macOS.
+- The dashboard honours `CHARPENTE_TRUST_ALL` and never runs an unapproved project file. Dev extras: `pywinpty` and `pyte` (for the terminal test).
+
 ## v0.13.0 -- Phase P9: reproducible builds, shared cache, interoperability, dev loop, first run
 
 - **Reproducible builds**: `--reproducible` (own build folder; paths mapped to `/src`, fixed clock, no linker timestamp/build-id, deterministic archives; GNU-style toolchains, MSVC is refused) and

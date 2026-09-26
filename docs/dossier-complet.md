@@ -293,6 +293,7 @@ Sans `--file`, Charpente cherche le seul `.charpente` du dossier courant puis de
 | Commande | Ce qu'elle fait |
 |---|---|
 | `charpente setup [--yes] [--lang en\|fr]` | Premier lancement guidé : propose ce qui manque, demande avant chaque téléchargement, n'accepte jamais de licence pour vous, mémorise la langue |
+| `charpente` (seul) · `charpente menu` | **Ajout après la 0.13.0** : menu guidé dans le terminal (créer, construire, lancer, tester, plateforme, diagnostic, Git, cache), avec la commande équivalente affichée avant chaque action. Flèches, raccourcis, Échap ; numéros + Entrée sans terminal interactif. `CHARPENTE_CONSOLE=off` rend l'aide simple. Voir `docs/console.md` |
 | `charpente self uninstall [--only GROUPE] [--keys] [--yes]` | Retire ce que Charpente stocke (cache, chaînes d'outils, paquets, modules, keystore de debug Android, confiance, préférences). **Essai à blanc sans `--yes`** ; les **clés de signature** ne sont retirées qu'avec `--keys` ; les projets ne sont jamais touchés |
 
 ---
@@ -573,6 +574,7 @@ bench/  examples/  .github/workflows/  (tests.yml, release.yml)
 | `CHARPENTE_OFFLINE` | Aucun téléchargement |
 | `CHARPENTE_DEBUG=1` | Trace complète en cas d'erreur interne |
 | `CHARPENTE_ECO` | `on`, `auto` ou `off` (mode éco) |
+| `CHARPENTE_CONSOLE` | `off` : un `charpente` seul affiche l'aide simple ; `plain` : menu sans flèches ni couleurs |
 | `CHARPENTE_REMOTE_CACHE`, `_TOKEN`, `_MODE` (`readonly`), `_INSECURE`, `CHARPENTE_CACHE_SIGNING_KEY`, `CHARPENTE_CACHE_RELOCATABLE` | Cache partagé |
 | `CHARPENTE_CACHE_SERVER_TOKEN` (ou la variable nommée par `--token-env`) | Jeton du serveur de cache |
 | `CHARPENTE_AI_PROVIDER`, `_MODEL`, `_URL`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | IA (optionnelle) |

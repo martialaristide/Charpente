@@ -20,6 +20,11 @@ hardware, licence or time. Nothing here is promised by the documentation elsewhe
 
 - Branch coverage and HTML reports, MSVC support in the warnings/sanitizer/coverage checks, more release artifacts (installers, AAB/IPA), a token vault via `charpente auth`.
 
+## Console interface
+
+- Run the menu in a real Linux and macOS terminal (the POSIX key reader is unit-tested but was never run), and in the older Windows console host.
+- Search inside long lists (templates, platforms), a recent-projects list, mouse support, a build-progress view inside the menu instead of the plain command output.
+
 ## Engine and interoperability (P9)
 
 - **Remote execution (REAPI) and hybrid local/remote execution**: needs gRPC/protobuf, an executor to test against, and *hermetic* actions (every input declared; today the compiler discovers headers at run time). See ADR 0019.

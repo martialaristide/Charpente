@@ -25,6 +25,8 @@ Voir [setup-and-uninstall.md](setup-and-uninstall.md). Charpente demande avant c
 
 ## 3. Votre premier projet
 
+Vous préférez être guidé ? Tapez `charpente` seul dans un terminal : un menu crée le projet, le construit et le lance, et affiche la commande derrière chaque choix ([console.md](console.md), en anglais). Les mêmes étapes à la main :
+
 ```bash
 charpente init hello --template console
 cd hello
