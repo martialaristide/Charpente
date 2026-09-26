@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased -- the console interface
+## Unreleased -- the console interface, and Ctrl+C
+
+- **Fixed: Ctrl+C did not stop `charpente studio` on Windows** (nor `serve --ws`, nor `deploy --logs`). They waited on a single `Event.wait()`, which Windows cannot interrupt; they now
+  wait in short slices (`wait_until_interrupted`). `serve --ws` also no longer ends with a fatal "could not acquire lock ... at interpreter shutdown" error after Ctrl+C. Checked by delivering a
+  real Ctrl+C console event to the real commands (Studio with and without a browser connected, `serve --ws`, `cache serve`, `dev`) and by `tests/test_ctrl_c.py`, which fails on the old code.
+  Not checked on Linux or macOS (where `Event.wait()` is interruptible anyway).
 
 - **`charpente` alone in a terminal opens a guided menu** (`charpente menu` opens it explicitly): create a project from a template, open one, build, run, test, rebuild on change, choose a target platform, package, quality check, explain an error, Git, cache and cleaning, Studio, language. Every choice shows the command it runs. Arrow keys, shortcuts and Esc on a terminal; numbers and Enter everywhere else (pipes, `CHARPENTE_CONSOLE=plain`). English and French. Scripts and pipes keep the plain help; `CHARPENTE_CONSOLE=off` restores it in a terminal. See [docs/console.md](docs/console.md).
 - Tested with 96 automated tests, a real project created/built/run through the menu, and a **real Windows pseudo-console (ConPTY)**, which found and fixed one defect (Ctrl+C at a text question was reported as end of input on Windows and closed the program). The POSIX key reader was **not run** on Linux or macOS.
