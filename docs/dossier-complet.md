@@ -575,6 +575,11 @@ bench/  examples/  .github/workflows/  (tests.yml, release.yml)
 | `CHARPENTE_DEBUG=1` | Trace complète en cas d'erreur interne |
 | `CHARPENTE_ECO` | `on`, `auto` ou `off` (mode éco) |
 | `CHARPENTE_CONSOLE` | `off` : un `charpente` seul affiche l'aide simple ; `plain` : menu sans flèches ni couleurs |
+| `CHARPENTE_THEME` | Thème de la bannière et des lignes de build : `bois` (défaut), `neon`, `foret`, `ocean` |
+| `CHARPENTE_NO_BANNER=1` | Pas de bannière |
+| `CHARPENTE_COLOR` | `auto`, `always`, `never` (`NO_COLOR` l'emporte sur tout ; `FORCE_COLOR` 1/2/3 = 16/256/24 bits) |
+| `CHARPENTE_ASCII=1` | Dessin en ASCII seulement |
+| `CHARPENTE_SYMBOLS` | `modern` ou `safe` : jeu de symboles (détecté par défaut : `safe` sur une console Windows classique) |
 | `CHARPENTE_REMOTE_CACHE`, `_TOKEN`, `_MODE` (`readonly`), `_INSECURE`, `CHARPENTE_CACHE_SIGNING_KEY`, `CHARPENTE_CACHE_RELOCATABLE` | Cache partagé |
 | `CHARPENTE_CACHE_SERVER_TOKEN` (ou la variable nommée par `--token-env`) | Jeton du serveur de cache |
 | `CHARPENTE_AI_PROVIDER`, `_MODEL`, `_URL`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | IA (optionnelle) |

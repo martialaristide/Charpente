@@ -227,3 +227,17 @@ def test_the_windows_switch_is_a_no_op_elsewhere():
         assert term.enable_windows_vt() is False
     else:
         assert term.enable_windows_vt() in (True, False)                              # never raises, whether or not there is a console
+
+
+# ---------------------------------------------------------------------- which symbols the font probably has
+@pytest.mark.parametrize("env,platform,expected", [
+    ({}, "linux", True), ({}, "darwin", True), ({}, "win32", False),                                   # a classic Windows console: no TERM, no WT_SESSION
+    ({"WT_SESSION": "x"}, "win32", True), ({"TERM_PROGRAM": "vscode"}, "win32", True), ({"TERM": "xterm-256color"}, "win32", True),
+    ({"ConEmuANSI": "ON"}, "win32", True), ({"CHARPENTE_SYMBOLS": "modern"}, "win32", True), ({"CHARPENTE_SYMBOLS": "safe"}, "linux", False),
+    ({"CHARPENTE_SYMBOLS": "SAFE"}, "linux", False), ({"CHARPENTE_SYMBOLS": "nonsense"}, "win32", False), ({"CHARPENTE_SYMBOLS": "nonsense"}, "linux", True)])
+def test_the_symbol_set_follows_the_terminal_and_can_be_overridden(env, platform, expected):
+    assert caps(env, platform=platform).modern is expected
+
+
+def test_the_default_caps_assume_a_modern_font():
+    assert Caps().modern is True

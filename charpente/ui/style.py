@@ -4,6 +4,7 @@ Nothing here writes to the screen or reads the terminal; `StyledRenderer` (rende
 ellipsis), so a long path or message can never wrap and break the layout, and every symbol has an ASCII form for terminals that cannot draw:
 
     ▸ stage title          ✔ target built          ◆ served by the cache       ▲ warning       ✘ failure
+    ► √ ♦ ▲ ×  on a classic Windows console (its font has no ✔ ✘ ◆), with ▬ for the bar and a square-cornered box;
     [ok]/[=]/[!]/[x] and > in ASCII;  ━ and ─ in the progress bar become = and -;  the result box is drawn with + - | instead of ╭ ─ ╮ │ ╰ ╯
 """
 from __future__ import annotations
@@ -40,11 +41,15 @@ class Symbols:
 
 
 UNICODE_SYMBOLS = Symbols("▸", "✔", "◆", "▲", "✘", "│", "━", "─", "…", ("╭", "╮", "╰", "╯", "─", "│"))
+#: for a classic Windows console font: every symbol below is in the WGL4 set that Consolas and Lucida Console have (✔ ✘ ◆ ╭ ━ are not)
+SAFE_SYMBOLS = Symbols("►", "√", "♦", "▲", "×", "│", "▬", "─", "…", ("┌", "┐", "└", "┘", "─", "│"))
 ASCII_SYMBOLS = Symbols(">", "[ok]", "[=]", "[!]", "[x]", "|", "=", "-", "...", ("+", "+", "+", "+", "-", "|"))
 
 
 def symbols_for(caps: Caps) -> Symbols:
-    return UNICODE_SYMBOLS if caps.unicode else ASCII_SYMBOLS
+    if not caps.unicode:
+        return ASCII_SYMBOLS
+    return UNICODE_SYMBOLS if caps.modern else SAFE_SYMBOLS
 
 
 def format_duration(seconds: float, lang: Optional[str] = None) -> str:

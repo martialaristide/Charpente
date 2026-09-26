@@ -50,6 +50,12 @@ with Workspace("hello") as ws:
 
 Everything you can write is in [dsl-reference.md](dsl-reference.md); a step-by-step walk is [tutorial.md](tutorial.md).
 
+### How the console looks
+
+An interactive `charpente build` prints a banner (once), then the stages, one line per target (`✔` built, `◆` up to date or served by the cache, `▲` warnings, `✘` failure), a progress bar and a
+result box. Four themes (`CHARPENTE_THEME`: `bois`, `neon`, `foret`, `ocean`), `NO_COLOR` for no colour, `CHARPENTE_ASCII=1` for an ASCII drawing, `CHARPENTE_NO_BANNER=1` for no banner; nothing
+changes for scripts (`--output plain` / `jsonl`, redirected output, CI). `python -m charpente.ui` shows it. Details, adaptations and screenshots: [console.md](console.md).
+
 ## 4. Day to day
 
 | I want to... | Command |

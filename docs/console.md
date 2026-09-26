@@ -77,3 +77,88 @@ characters, ASCII frames are used. `NO_COLOR` turns colours off. On Windows the 
   (Windows reports Ctrl+C at a prompt as end of input, which closed the program), now fixed and tested.
 * **Not verified**: the POSIX key reader (Linux, macOS) was written from the terminal specification and its decoding is unit-tested, but it was never run in a real Linux or macOS terminal; other Windows terminals than
   ConPTY-based ones (old `conhost` with legacy rendering); very small terminals by eye (checked by the tests only).
+
+
+# The look of the console: banner and build lines
+
+Since the console style (`charpente/ui/`), an interactive `charpente build` looks like this: a banner (once), then the stages of the build, one line per target, a progress
+bar and a result box. What is drawn adapts to the terminal; nothing changes for programs.
+
+![charpente build in cmd.exe, 100 columns](img/console/cmd-build-100-columns.png)
+
+```
+  ▸ Loading the workspace
+  workspace CasqueDemo │ config Debug │ platform linux-x64 │ tools gcc 13.2
+
+  ▸ Building
+  ✔ engine          build/Debug/engine/libengine.a  2.4 s
+  ◆ shaders         up to date
+  ✔ app             build/Debug/app/app  1.1 s
+  ▲ app: 2 warnings, see charpente build -v
+  ✘ engine_tests    src/tests.cpp:9: undefined reference to 'f' [CH3003]
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━── 38/40
+
+  ╭─ Result ──────────────────────────────╮
+  │  targets  3 succeeded, 1 failed       │
+  │  cache    11 actions out of 40        │
+  │  duration 4.2 s                       │
+  │  next     charpente why engine_tests  │
+  ╰───────────────────────────────────────╯
+```
+
+## When you see it
+
+* The **banner** is shown once per process, on a terminal, for `build`, `run`, `test`, `package`, `deploy`, `dev`, `init`, `setup`, `studio` and the menu (`charpente` alone, where it is on
+  the first screen only, and only if the window is tall enough). Never for `--version`, `--help`, `explain`, `serve`, `debug-adapter`, `shell --print-env`, anything with `--json`, with
+  `--output plain` or `--output jsonl`, when the output is not a terminal, in CI (`CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, `BUILDKITE`, `TF_BUILD`, `JENKINS_URL`, `TEAMCITY_VERSION`) or
+  with `CHARPENTE_NO_BANNER=1`.
+* The **styled build lines** replace the plain lines for `build`, `dev` and `deploy` with `--output auto` (the default) on a terminal. `run`, `test` and `package` keep their own lines.
+  `--output plain`, `--output jsonl` and `--output rich` are unchanged, byte for byte (tests compare them with references recorded before this work). `-v` gives the plain, detailed output.
+* `python -m charpente.ui` shows the banner and a made-up build, to judge the look without building anything (`--theme`, `--lang`, `--color`, `--ascii`, `--symbols`, `--width`, `--ok`).
+
+## Themes and settings
+
+| Variable | Effect |
+|---|---|
+| `CHARPENTE_THEME` | `bois` (default: gold to brown, turquoise frame), `neon` (pink), `foret` (greens, gold frame), `ocean` (blues, orange frame). An unknown name gives the default. |
+| `CHARPENTE_NO_BANNER=1` | No banner. |
+| `CHARPENTE_COLOR` | `auto` (default), `always` (colours even into a file), `never`. |
+| `CHARPENTE_ASCII=1` | Draw with ASCII only (`+ = \|`, `[ok] [=] [!] [x]`); the logo is drawn with `#`. |
+| `CHARPENTE_SYMBOLS` | `modern` or `safe`: which symbols to use (see below). Detected when not set. |
+| `NO_COLOR` | No colour and no escape sequence at all; it beats every other setting, including `FORCE_COLOR`. |
+| `FORCE_COLOR` | `1`, `2`, `3` force 16, 256, 24-bit colour; any other non-empty value forces what the terminal supports; `0` is ignored. |
+
+The language is the usual one (`CHARPENTE_LANG`, the remembered setting, `LANG`).
+
+## How it adapts
+
+| Situation | What you get |
+|---|---|
+| 80 columns or more, Unicode | The full logo, with the widest inner margin (3, 2 or 1 space) that fits: 84 columns or more for margin 3, 80 for margin 1 |
+| Narrower | A compact frame: `C H A R P E N T E` and the subtitle, clipped to the width (one column is always left free: writing in the last column makes some Windows consoles wrap early) |
+| Encoding that cannot write the drawing characters, or `CHARPENTE_ASCII=1` | ASCII frame and symbols, accents folded (`Systeme`) |
+| `NO_COLOR`, `CHARPENTE_COLOR=never`, `TERM=dumb` | No escape sequence |
+| `COLORTERM=truecolor`, Windows Terminal (`WT_SESSION`), VS Code, iTerm, a Windows 10 console with ANSI processing on | 24-bit colour |
+| `TERM` containing `256` | The nearest of the 256 colours |
+| Anything else | The nearest of the 16 basic colours |
+| `FORCE_COLOR`, `CHARPENTE_COLOR=always` | Colour even when the output is not a terminal |
+| A classic Windows console (`cmd.exe`, PowerShell in the console host: no `WT_SESSION`, `TERM_PROGRAM` or `TERM`) | The **safe symbols** `► √ ♦ ▲ ×`, a `▬` progress bar and a square-cornered box: the default console font has no `✔ ✘ ◆`, which showed as empty boxes in a real window (see the screenshots) |
+
+On Windows the console is asked to switch ANSI processing on (`ENABLE_VIRTUAL_TERMINAL_PROCESSING`, through `ctypes`, without starting a process); if it refuses there is no colour.
+
+Any display problem (a closed output, an encoding that cannot write a character, a width of 0 or 10,000 columns) gives a plainer picture; it never fails a build.
+
+## Screenshots (real windows, Windows 10)
+
+| Case | Capture |
+|---|---|
+| `cmd.exe`, 100 columns: the demonstration | ![](img/console/cmd-demo-100-columns.png) |
+| `cmd.exe`, 60 columns: the compact banner | ![](img/console/cmd-build-60-columns-compact.png) |
+| `cmd.exe`, `NO_COLOR=1` | ![](img/console/cmd-build-no-color.png) |
+| `cmd.exe`, `CHARPENTE_ASCII=1` | ![](img/console/cmd-build-ascii.png) |
+| Windows PowerShell 5.1 (console host), a real build | ![](img/console/powershell-build-100-columns.png) |
+
+Redirected to a file (`charpente build > out.txt`) the output is the plain text as before: no banner, no escape sequence.
+
+**Not verified**: Windows Terminal and PowerShell 7 (neither is installed on the development machine), Linux and macOS terminals, other fonts than the console default. The 24-bit, 256-colour and
+16-colour paths, and the symbol choice, are covered by unit tests only outside Windows.

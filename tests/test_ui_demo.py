@@ -24,7 +24,7 @@ def screen(text):
 
 
 def test_the_default_demo_matches_the_design():
-    text = show("--color", "never", "--lang", "fr", "--width", "100")
+    text = show("--color", "never", "--lang", "fr", "--width", "100", "--symbols", "modern")
     lines = screen(text)
     assert lines[0].startswith("╔") and "██████╗" in text and "Système de build C/C++ multiplateforme" in text
     assert "  ✔ moteur        build/Debug/moteur/libmoteur.a  2,4 s" in lines
@@ -63,7 +63,7 @@ def test_a_narrow_terminal_gets_the_compact_banner_and_no_line_overflows():
 
 
 def test_the_banner_can_be_left_out():
-    text = show("--no-banner", "--color", "never")
+    text = show("--no-banner", "--color", "never", "--symbols", "modern")
     assert "╔" not in text and "▸ " in text
 
 
@@ -85,3 +85,10 @@ def test_it_runs_as_a_module():
     result = subprocess.run([sys.executable, "-m", "charpente.ui", "--delay", "0", "--color", "never", "--width", "100", "--lang", "en"], capture_output=True, encoding="utf-8",
                             errors="replace", timeout=120, stdin=subprocess.DEVNULL, env=None)
     assert result.returncode == 0 and "Result" in result.stdout and "tests_moteur" in result.stdout
+
+
+def test_the_safe_symbols_of_a_classic_windows_console_can_be_shown():
+    text = show("--color", "never", "--lang", "fr", "--width", "100", "--symbols", "safe")
+    assert "  √ moteur" in text and "  ♦ shaders" in text and "  × tests_moteur" in text and "  ▲ app" in text and "  ► Construction" in text
+    assert "✔" not in text and "✘" not in text and "◆" not in text and "▸" not in text and "╭" not in text and "▬" in text
+    assert "┌─ Résultat" in text

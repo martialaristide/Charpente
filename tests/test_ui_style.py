@@ -5,7 +5,7 @@ import pytest
 
 from charpente.i18n import ui as words
 from charpente.ui import banner
-from charpente.ui.style import ASCII_SYMBOLS, UNICODE_SYMBOLS, Style, format_duration
+from charpente.ui.style import ASCII_SYMBOLS, SAFE_SYMBOLS, UNICODE_SYMBOLS, Style, format_duration, symbols_for
 from charpente.ui.term import BASIC, EXTENDED, NONE, TRUE, Caps, strip_ansi, visible_len
 
 ALL_DEPTHS = (NONE, BASIC, EXTENDED, TRUE)
@@ -207,3 +207,26 @@ def test_the_language_defaults_to_the_current_one(monkeypatch):
     assert words.t("stage.building") == "Construction"
     monkeypatch.setenv("CHARPENTE_LANG", "en")
     assert words.t("stage.building") == "Building"
+
+
+# ---------------------------------------------------------------------- the safe symbols of a classic console font
+def test_the_symbol_set_is_chosen_from_the_capabilities():
+    assert symbols_for(Caps(unicode=True, modern=True)) is UNICODE_SYMBOLS
+    assert symbols_for(Caps(unicode=True, modern=False)) is SAFE_SYMBOLS
+    assert symbols_for(Caps(unicode=False, modern=True)) is ASCII_SYMBOLS and symbols_for(Caps(unicode=False, modern=False)) is ASCII_SYMBOLS
+
+
+def test_the_safe_symbols_avoid_the_glyphs_a_console_font_lacks():
+    lacking = set("✔✘◆▸━╭╮╰╯")                                                                     # Consolas and Lucida Console have none of these
+    got = sample(Style(Caps(tty=True, unicode=True, modern=False, width=100), lang="fr"))
+    assert not (lacking & set("".join(got)))
+    assert got[3].startswith("  √ moteur") and got[4].startswith("  ♦ shaders") and got[6].startswith("  ▲ app") and got[7].startswith("  × tests_moteur") and got[0].startswith("  ► ")
+    assert "▬" in got[9] and got[10].startswith("  ┌─ Résultat") and got[-1].startswith("  └")
+    assert len({visible_len(x) for x in got[10:]}) == 1                                             # the box is still a rectangle
+    allowed = set("►√♦▲×│▬─…┌┐└┘éèàçÉ")                                                              # every non-ASCII character used is in the WGL4 set
+    assert {c for c in "".join(got) if ord(c) > 127} <= allowed
+
+
+def test_the_safe_look_still_has_a_distinct_bar_without_colour():
+    line = Style(Caps(tty=True, unicode=True, modern=False, width=100)).progress(20, 40, width=20)
+    assert line.count("▬") == 10 and line.count("─") == 10

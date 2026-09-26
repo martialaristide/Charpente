@@ -50,7 +50,7 @@ def test_all_lines_of_the_banner_have_the_same_visible_width(depth, theme, lang)
         text = banner.render_banner(caps(depth, width), banner.THEMES[theme], lang, "0.13.0")
         widths = {visible_len(line) for line in lines(text)}
         assert len(widths) == 1, (width, widths)
-        assert widths.pop() <= width
+        assert widths.pop() <= max(1, width - 1) or width < 8                              # the last column stays free
 
 
 def test_the_full_logo_fits_in_80_columns_and_uses_the_widest_margin_that_fits():
@@ -63,8 +63,8 @@ def test_the_full_logo_fits_in_80_columns_and_uses_the_widest_margin_that_fits()
     assert "█" in "".join(at_80) and "Multi-platform C/C++ Build System v1.0.0" in "\n".join(at_80)
 
 
-def test_the_target_layout_matches_the_specification_at_83_columns():
-    text = banner.render_banner(caps(width=83), lang="fr", version="0.13.0")
+def test_the_target_layout_matches_the_specification_at_84_columns():
+    text = banner.render_banner(caps(width=84), lang="fr", version="0.13.0")            # 83 wide plus the free last column
     got = lines(text)
     assert got[0] == "╔" + "═" * 81 + "╗" and got[-1] == "╚" + "═" * 81 + "╝"
     assert got[1] == "║" + " " * 81 + "║" and got[8] == got[1] and got[11] == got[1]
@@ -75,7 +75,7 @@ def test_the_target_layout_matches_the_specification_at_83_columns():
 
 
 def test_a_narrow_terminal_gets_a_compact_frame_that_never_overflows():
-    for width in range(1, 79):
+    for width in range(1, 80):
         text = banner.render_banner(caps(width=width), lang="fr", version="0.13.0")
         assert all(visible_len(x) <= width for x in lines(text)), width
         assert len({visible_len(x) for x in lines(text)}) == 1

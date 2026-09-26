@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased -- the console interface, and Ctrl+C
+## Unreleased -- console style, the console menu, and Ctrl+C
+
+- **A new look for the console** ([docs/console.md](docs/console.md)): a block-letter banner with a shadow in a double frame (once, on a terminal, for the interactive commands), and a styled
+  build display (stages, one line per target, warnings, a progress bar, a rounded result box) for `build`, `dev` and `deploy` with `--output auto`. Four themes (`CHARPENTE_THEME`), `NO_COLOR`,
+  `FORCE_COLOR`, `CHARPENTE_COLOR`, `CHARPENTE_ASCII`, `CHARPENTE_NO_BANNER`, `CHARPENTE_SYMBOLS`; 24-bit / 256 / 16 colours; ASCII and compact looks; English and French; `python -m charpente.ui`
+  shows it. `--output plain`, `jsonl` and `rich` are unchanged (references recorded before the work, compared by tests). `--output auto` on a terminal no longer uses `rich` (use `--output rich`).
+- **Found by looking at real windows**: the default `cmd.exe` font has no `✔ ✘ ◆` (they showed as empty boxes), so a classic Windows console gets safe symbols (`► √ ♦ ▲ ×`).
+- Verified in real `cmd.exe` and Windows PowerShell 5.1 windows (100 and 60 columns, `NO_COLOR`, ASCII, redirected to a file). **Not verified**: Windows Terminal, PowerShell 7, Linux, macOS.
+- Also: the type-check of `resources.py` on Linux/macOS (`mypy --platform linux` reported `ctypes.windll`), and the pseudo-terminal tests now run in their own process (they made a later test hang).
 
 - **Fixed: Ctrl+C did not stop `charpente studio` on Windows** (nor `serve --ws`, nor `deploy --logs`). They waited on a single `Event.wait()`, which Windows cannot interrupt; they now
   wait in short slices (`wait_until_interrupted`). `serve --ws` also no longer ends with a fatal "could not acquire lock ... at interpreter shutdown" error after Ctrl+C. Checked by delivering a

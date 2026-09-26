@@ -6,7 +6,7 @@ from a theme (`CHARPENTE_THEME`): a vertical gradient over the blocks, a darker 
 Every function that decides something is pure: `render_banner` takes the terminal's capabilities and returns a string, `should_show_banner` takes the situation and returns a
 boolean. Only `print_banner` writes, once per process, and it can never fail a build: whatever goes wrong while printing is swallowed.
 
-How it adapts (see docs/console.md): the full logo needs 79 columns (inner margin 1) and uses the widest margin, 3, 2 or 1, that fits; a narrower terminal gets a compact
+How it adapts (see docs/console.md): the full logo needs 80 columns (inner margin 1: the frame is 79 wide and the last column is left free) and uses the widest margin, 3, 2 or 1, that fits; a narrower terminal gets a compact
 frame; without Unicode (or with `CHARPENTE_ASCII=1`) the logo is drawn with `# = | +`; without colour there is no escape sequence at all.
 """
 from __future__ import annotations
@@ -151,7 +151,8 @@ def render_banner(caps: Caps, theme: Optional[Theme] = None, lang: Optional[str]
     sub, comp = subtitle(lang, version), components(lang)
     if not caps.unicode:
         sub, comp = fold_ascii(sub), fold_ascii(comp)
-    margin = choose_margin(caps.width)
+    available = max(1, caps.width - 1)                   # the last column is never written: writing there makes some Windows consoles wrap early
+    margin = choose_margin(available)
     frame = DOUBLE if caps.unicode else PLAIN
     tl, horizontal, tr, vertical, bl, br = frame
 
@@ -159,7 +160,7 @@ def render_banner(caps: Caps, theme: Optional[Theme] = None, lang: Optional[str]
         return paint(caps, char, theme.frame)
 
     if margin is None:
-        return _compact(caps, theme, frame, sub, version)
+        return _compact(caps, theme, frame, sub, version, available)
     inner = LOGO_WIDTH + 2 * margin
     lines = [edge(tl + horizontal * inner + tr)]
 
@@ -177,15 +178,15 @@ def render_banner(caps: Caps, theme: Optional[Theme] = None, lang: Optional[str]
     return "\n".join(lines)
 
 
-def _compact(caps: Caps, theme: Theme, frame: Sequence[str], sub: str, version: str) -> str:
+def _compact(caps: Caps, theme: Theme, frame: Sequence[str], sub: str, version: str, available: int) -> str:
     """The banner for a terminal too narrow for the logo: the name spaced out and the subtitle, in a frame no wider than the terminal."""
     tl, horizontal, tr, vertical, bl, br = frame
     name = words.t("banner.compact.name", None)
     ellipsis = "…" if caps.unicode else "..."
     need = max(visible_len(name), visible_len(sub)) + 2
-    width = min(caps.width, need + 2)
+    width = min(available, need + 2)
     if width < 8:                                        # too narrow even for a frame: one clipped line
-        return clip(f"CHARPENTE v{version}", max(1, caps.width))
+        return clip(f"CHARPENTE v{version}", available)
     inner = width - 2
     text_width = inner - 2
 

@@ -11,7 +11,9 @@ Environment, in order of authority:
 * otherwise colour needs a terminal and `TERM` other than `dumb`;
 * depth: 24-bit for `COLORTERM=truecolor|24bit`, Windows Terminal (`WT_SESSION`), VS Code, iTerm and a Windows 10 console with ANSI processing on; 256 colours when
   `TERM` contains `256`; else the 16 basic colours;
-* `CHARPENTE_ASCII=1` (or an encoding that cannot write the drawing characters) selects the ASCII look.
+* `CHARPENTE_ASCII=1` (or an encoding that cannot write the drawing characters) selects the ASCII look;
+* symbols: a classic Windows console (`cmd.exe`, PowerShell in the console host: no `WT_SESSION`, `TERM_PROGRAM` or `TERM`) has a font without ✔ ✘ ◆, which would show as empty
+  boxes, so it gets the "safe" symbols every console font has; `CHARPENTE_SYMBOLS=modern` or `safe` overrides the choice.
 """
 from __future__ import annotations
 
@@ -121,6 +123,7 @@ class Caps:
     unicode: bool = True
     width: int = DEFAULT_WIDTH
     ci: bool = False
+    modern: bool = True          # False: the terminal's font is probably a classic console font, so use symbols every such font has
 
     @property
     def colored(self) -> bool:
@@ -157,6 +160,17 @@ def _is_tty(stream: Optional[TextIO]) -> bool:
         return bool(stream is not None and stream.isatty())
     except (AttributeError, ValueError, OSError):        # closed stream, no isatty
         return False
+
+
+MODERN_HINTS = ("WT_SESSION", "TERM_PROGRAM", "TERM", "ConEmuANSI", "ANSICON")
+
+
+def _modern(env: Mapping[str, str], windows: bool) -> bool:
+    """Whether the terminal probably has a font with ✔ ✘ ◆: everywhere except a classic Windows console. `CHARPENTE_SYMBOLS` decides when it is set."""
+    choice = env.get("CHARPENTE_SYMBOLS", "").strip().lower()
+    if choice in ("modern", "safe"):
+        return choice == "modern"
+    return not windows or any(env.get(name) for name in MODERN_HINTS)
 
 
 def _forced_depth(value: str) -> Optional[str]:
@@ -200,7 +214,7 @@ def detect(env: Optional[Mapping[str, str]] = None, stream: Optional[TextIO] = N
                 usable = windows_ansi                            # ...and if it refuses, plain text (even when forced)
             if usable and (tty or forced_on) and (forced_on or env.get("TERM", "") != "dumb"):
                 color = forced if forced in (BASIC, EXTENDED, TRUE) else _depth(env, windows_ansi)
-        return Caps(tty=tty, color=color, unicode=unicode, width=_width(size), ci=ci)
+        return Caps(tty=tty, color=color, unicode=unicode, width=_width(size), ci=ci, modern=_modern(env, windows))
     except Exception:                                    # whatever went wrong, show the plainest picture rather than fail
         return Caps()
 

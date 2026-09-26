@@ -51,6 +51,13 @@ with Workspace("hello") as ws:
 
 Tout ce qu'on peut y écrire est dans [dsl-reference.md](dsl-reference.md) ; un pas-à-pas est dans [tutorial.md](tutorial.md).
 
+### L'affichage de la console
+
+Un `charpente build` interactif affiche une bannière (une seule fois), puis les étapes, une ligne par cible (`✔` construite, `◆` à jour ou servie par le cache, `▲` avertissements, `✘` échec), une barre
+de progression et un encadré « Résultat ». Quatre thèmes (`CHARPENTE_THEME` : `bois`, `neon`, `foret`, `ocean`), `NO_COLOR` pour supprimer toute couleur, `CHARPENTE_ASCII=1` pour un dessin en ASCII,
+`CHARPENTE_NO_BANNER=1` pour supprimer la bannière ; rien ne change pour les scripts (`--output plain` / `jsonl`, sortie redirigée, CI). `python -m charpente.ui` en montre le rendu.
+Détails, adaptations et captures : [console.md](console.md) (en anglais).
+
 ## 4. Au quotidien
 
 | Je veux... | Commande |

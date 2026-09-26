@@ -41,6 +41,7 @@ The *platform* support tiers (1, 2, 3) are a separate thing and are described in
 | Kits | Recipes and templates | Verified | each recipe compiled; see [kits.md](kits.md) |
 | Packaging | PyPI package | Built, `twine check` passes | **never uploaded** |
 | Setup | `charpente setup`, `self uninstall` | Verified on Windows | junction/symlink handling checked on Windows |
+| Console style | Banner and styled build lines ([console.md](console.md)) | Verified in real `cmd.exe` and PowerShell 5.1 windows | Windows Terminal, PowerShell 7, Linux, macOS not run; plain/jsonl output pinned by tests |
 | Console | `charpente` alone / `charpente menu` ([console.md](console.md)) | Verified on Windows (ConPTY) | arrow-key input in a real Windows pseudo-console; the POSIX key reader was never run on Linux/macOS |
 
 ## What "not stable" means for you

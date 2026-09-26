@@ -1,6 +1,6 @@
 # Plan — nouvelle identité visuelle de la console (bannière et lignes de build)
 
-Statut : **proposé, en attente d'accord** (aucun code écrit). Cahier des charges : `PROMPT_CLAUDE_CODE_console_charpente.md` + capture de référence.
+Statut : **réalisé** (décisions prises : police du cahier des charges ; style des lignes pour build/dev/deploy + bannière partout ; grande bannière au premier écran du menu ; correctif Linux à part). Voir l'ADR 0020 et `docs/console.md`. Le §8 et le §9 sont conservés tels que proposés. Cahier des charges : `PROMPT_CLAUDE_CODE_console_charpente.md` + capture de référence.
 
 ## 1. Mesures de référence (avant tout changement, dépôt propre au commit `a958352`)
 

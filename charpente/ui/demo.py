@@ -64,6 +64,7 @@ def run(argv: Optional[Sequence[str]] = None, out: Optional[TextIO] = None, env:
     parser.add_argument("--lang", choices=["en", "fr"], help="Language (default: the current one)")
     parser.add_argument("--color", choices=["auto", "always", "never"], help="Force colours on or off (default: auto)")
     parser.add_argument("--ascii", action="store_true", help="Draw with ASCII characters only")
+    parser.add_argument("--symbols", choices=["modern", "safe"], help="Symbols for a modern terminal font, or the safe ones of a classic Windows console (default: detected)")
     parser.add_argument("--width", type=int, help="Pretend the terminal is this many columns wide")
     parser.add_argument("--fail", action="store_true", help="End with a failing target (the default, as in the design); use --ok for a clean build")
     parser.add_argument("--ok", action="store_true", help="A build without failure")
@@ -79,9 +80,11 @@ def run(argv: Optional[Sequence[str]] = None, out: Optional[TextIO] = None, env:
         environment["CHARPENTE_COLOR"] = args.color
     if args.ascii:
         environment["CHARPENTE_ASCII"] = "1"
+    if args.symbols:
+        environment["CHARPENTE_SYMBOLS"] = args.symbols
     caps = detect(environment, out)
     if args.width and args.width > 0:
-        caps = Caps(tty=caps.tty, color=caps.color, unicode=caps.unicode, width=min(args.width, 1000), ci=caps.ci)
+        caps = Caps(tty=caps.tty, color=caps.color, unicode=caps.unicode, width=min(args.width, 1000), ci=caps.ci, modern=caps.modern)
     theme = banner.theme_named(environment.get("CHARPENTE_THEME"))
     if not args.no_banner:
         banner.print_banner(out, caps=caps, env=environment, theme=theme, lang=args.lang, version=None, force=True)
