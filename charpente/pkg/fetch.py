@@ -40,15 +40,16 @@ def _inside(base: Path, target: Path) -> bool:
     return _dest(os.path.normpath(str(base)), os.path.relpath(str(target), str(base))) is not None
 
 
-def extract(archive: Path, destination: Path, strip_prefix: str = "") -> None:
-    """Unpack `archive` into `destination` (created; must not exist)."""
+def extract(archive: Path, destination: Path, strip_prefix: str = "", keep_exec: bool = False) -> None:
+    """Unpack `archive` into `destination` (created; must not exist). `keep_exec` keeps the
+    executable bit of files (toolchains need it; source packages never do)."""
     if destination.exists():
         raise ChError("CH6012", archive=archive.name, detail=f"{destination} already exists")
     tmp = destination.with_name(destination.name + ".x")
     shutil.rmtree(_long(str(tmp)), ignore_errors=True)
     tmp.mkdir(parents=True)
     try:
-        _extract_into(archive, tmp)
+        _extract_into(archive, tmp, keep_exec)
         top = tmp / strip_prefix if strip_prefix else tmp
         if strip_prefix and not top.is_dir():
             raise ChError("CH6012", archive=archive.name,
@@ -61,7 +62,7 @@ def extract(archive: Path, destination: Path, strip_prefix: str = "") -> None:
         shutil.rmtree(_long(str(tmp)), ignore_errors=True)
 
 
-def _extract_into(archive: Path, tmp: Path) -> None:
+def _extract_into(archive: Path, tmp: Path, keep_exec: bool = False) -> None:
     base = os.path.normpath(str(tmp))
     name = archive.name.lower()
     try:
@@ -77,6 +78,8 @@ def _extract_into(archive: Path, tmp: Path) -> None:
                     os.makedirs(_long(os.path.dirname(dest)), exist_ok=True)
                     with zf.open(info) as src, open(_long(dest), "wb") as out:
                         shutil.copyfileobj(src, out)
+                    if keep_exec and (info.external_attr >> 16) & 0o111:
+                        os.chmod(_long(dest), 0o755)
             return
         with tarfile.open(archive) as tf:
             for member in tf:
@@ -98,6 +101,8 @@ def _extract_into(archive: Path, tmp: Path) -> None:
                         continue
                     with source, open(_long(dest), "wb") as out:
                         shutil.copyfileobj(source, out)
+                    if keep_exec and member.mode & 0o111:
+                        os.chmod(_long(dest), 0o755)
                 # devices, FIFOs and anything else are ignored
     except (tarfile.TarError, zipfile.BadZipFile, EOFError) as exc:
         raise ChError("CH6012", archive=archive.name, detail=f"cannot be read: {exc}") from exc

@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.6.0 -- Phase P4a: platforms and cross-compilation
+
+Native builds are unchanged.
+
+- **`--platform OS-ARCH`** on `build`, `run`, `test`, `package`, and **`--toolchain NAME`**. Twenty-three
+  platforms are described with support tiers; `charpente platforms` shows the tier and whether this machine
+  can build each one; `charpente doctor` reports the environment and what is missing.
+- **Cross-compilation through zig** (`charpente toolchain install zig`, SHA-256 verified, no admin rights):
+  Linux (x64/arm64/riscv64), Windows arm64, macOS (x64/arm64), FreeBSD, NetBSD, WASI. **Emscripten**
+  (`toolchain install emsdk`) for browser WebAssembly. Each platform has its own build directory and action
+  records; the content cache is shared.
+- `charpente run` runs WASI programs through wasmtime or Node, Emscripten output through Node, and refuses
+  binaries it cannot run (CH8004).
+- Assembly (`.s`/`.S`) and Objective-C (`.m`/`.mm`) sources; output names for every target OS.
+- Fixed: MinGW shared libraries were named `libX.so` on Windows (now `X.dll`); a tool failing silently now says
+  which tool and which exit code instead of "build failed".
+- New error codes CH8001-CH8005. Not done (documented): C++20 modules, shaders, musl selection, MSVC
+  cross-arch, running foreign binaries under emulators; cross-built binaries other than WebAssembly were
+  format-checked, not executed.
 ## v0.5.0 -- Phase P3: DSL v2 and packages
 
 Every v0.1.0 workspace builds identically (the original tests pass unchanged).

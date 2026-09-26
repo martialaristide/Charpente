@@ -660,9 +660,9 @@ def test_builtin_toolchain_preference_order_is_unchanged():
     from charpente import toolchains
 
     everything = lambda n: f"C:/bin/{n}"          # noqa: E731
-    assert [t.name for t in toolchains.detect(OS.WINDOWS, everything)] == ["msvc", "clang-cl", "mingw"]
-    assert [t.name for t in toolchains.detect(OS.LINUX, everything)] == ["gcc", "clang"]
-    assert [t.name for t in toolchains.detect(OS.MACOS, everything)] == ["apple-clang"]
+    assert [t.name for t in toolchains.detect(OS.WINDOWS, everything)] == ["msvc", "clang-cl", "mingw", "zig", "emscripten"]   # cross compilers always last
+    assert [t.name for t in toolchains.detect(OS.LINUX, everything)] == ["gcc", "clang", "zig", "emscripten"]
+    assert [t.name for t in toolchains.detect(OS.MACOS, everything)] == ["apple-clang", "zig", "emscripten"]
 
 
 # ================================================================ conformance

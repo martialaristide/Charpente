@@ -20,7 +20,8 @@ from .. import installer
 from ..builder import build_dir, build_workspace, dependency_closure
 from ..core import process
 from ..dsl.model import OS, Target, Workspace
-from ._common import CommandError, load, resolve_target, toolchain_for_host
+from ..toolchains import Toolchain
+from ._common import CommandError, load, resolve_target, toolchain_for
 from ._session import Session, add_engine_args
 
 
@@ -41,7 +42,7 @@ def execute(args: List[str]) -> int:
 
     workspace = load(parsed.file, parsed.opt)
     target = resolve_target(workspace, parsed.target)
-    target_os, toolchain = toolchain_for_host()
+    target_os, toolchain = toolchain_for(parsed)
 
     # Build the target's dependency_closure(), not just the target itself --
     # see run.py's execute() for why (a config never built via `charpente
@@ -64,20 +65,23 @@ def execute(args: List[str]) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if parsed.format == "zip":
-        return _package_zip(workspace, target, parsed, out_dir)
+        return _package_zip(workspace, target, parsed, out_dir, toolchain)
     if target_result.output_path is None:
         raise CommandError("CH3009", path=target.name)
+    if toolchain.target:        # installers are built by the platform's own tools, on that platform
+        raise CommandError("CH4002", os=toolchain.target)
     return _package_installer(workspace, target, target_os, parsed, out_dir, target_result.output_path)
 
 
-def _package_zip(workspace: Workspace, target: Target, parsed: argparse.Namespace, out_dir: Path) -> int:
+def _package_zip(workspace: Workspace, target: Target, parsed: argparse.Namespace, out_dir: Path,
+                 toolchain: Toolchain) -> int:
     archive_path = (
         workspace.root / parsed.output if parsed.output
-        else out_dir / f"{target.name}-{parsed.config}.zip"
+        else out_dir / (f"{target.name}-{parsed.config}" + (f"-{toolchain.target}" if toolchain.target else "") + ".zip")
     )
     archive_path.parent.mkdir(parents=True, exist_ok=True)
 
-    target_build_dir = build_dir(workspace, parsed.config, target)
+    target_build_dir = build_dir(workspace, parsed.config, target, toolchain)
     with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for path in target_build_dir.rglob("*"):
             rel = path.relative_to(target_build_dir)

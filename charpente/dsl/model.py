@@ -40,9 +40,21 @@ class Language(Enum):
 
 
 class OS(Enum):
+    """The operating system a build *targets* (usually the host's; different when cross-compiling)."""
+
     WINDOWS = "windows"
     LINUX = "linux"
     MACOS = "macos"
+    ANDROID = "android"
+    IOS = "ios"
+    VISIONOS = "visionos"
+    OHOS = "ohos"
+    WASM = "wasm"            # WebAssembly in a browser/Node, via Emscripten
+    WASI = "wasi"            # WebAssembly outside a browser
+    FREEBSD = "freebsd"
+    OPENBSD = "openbsd"
+    NETBSD = "netbsd"
+    BAREMETAL = "baremetal"
 
 
 @dataclass

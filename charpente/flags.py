@@ -18,10 +18,19 @@ from .toolchains import Toolchain
 
 _MSVC_STYLE = {"msvc", "clang-cl"}
 _SHARED = (Kind.SHARED_LIBRARY, Kind.PLUGIN)
+_ASSEMBLY_SUFFIXES = (".s",)          # `.S` is the same suffix once lower-cased: the driver decides on the real name
+_OBJC_SUFFIXES = (".m", ".mm")
+_EXECUTABLE_SUFFIX = {OS.WINDOWS: ".exe", OS.WASI: ".wasm", OS.WASM: ".js", OS.BAREMETAL: ".elf"}
+_NO_SHARED_LIBRARIES = (OS.WASM, OS.WASI, OS.BAREMETAL)
 
 
 def family(toolchain: Toolchain) -> str:
     return "msvc" if toolchain.name in _MSVC_STYLE else "gnu"
+
+
+def _driver_args(toolchain: Toolchain, target: Target) -> List[str]:
+    """What follows the compiler executable for drivers that need it (`zig cc -target ...`)."""
+    return list(toolchain.cxx_args if target.language.value == "cpp" else toolchain.c_args)
 
 
 def _optimization_flags(family_name: str, debug: bool) -> List[str]:
@@ -37,11 +46,14 @@ def compile_args(toolchain: Toolchain, target: Target, source: Path, obj: Path, 
     notes on stdout for MSVC-style ones. The engine uses that for exact
     incremental builds."""
     fam = family(toolchain)
+    suffix = source.suffix.lower()
+    if suffix in _ASSEMBLY_SUFFIXES + _OBJC_SUFFIXES:
+        return _other_language_args(toolchain, target, source, obj, suffix, debug, depfile)
     compiler = toolchain.cxx_compiler if target.language.value == "cpp" else toolchain.c_compiler
 
     if fam == "msvc":
         std_flag = f"/std:{target.standard}"
-        args = [compiler, "/c", str(source), f"/Fo{obj}", std_flag, "/nologo", "/EHsc"]
+        args = [compiler, *_driver_args(toolchain, target), "/c", str(source), f"/Fo{obj}", std_flag, "/nologo", "/EHsc"]
         args += _optimization_flags(fam, debug)
         if depfile is not None:
             args.append("/showIncludes")
@@ -51,8 +63,29 @@ def compile_args(toolchain: Toolchain, target: Target, source: Path, obj: Path, 
         return args
 
     std_flag = f"-std={target.standard}"
-    args = [compiler, "-c", str(source), "-o", str(obj), std_flag]
+    args = [compiler, *_driver_args(toolchain, target), "-c", str(source), "-o", str(obj), std_flag]
     args += _optimization_flags(fam, debug)
+    if depfile is not None:
+        args += ["-MMD", "-MF", str(depfile)]
+    args += [f"-I{d}" for d in target.include_dirs]
+    args += [f"-D{d}" for d in target.define_macros]
+    args += target.extra_compile_flags
+    return args
+
+
+def _other_language_args(toolchain: Toolchain, target: Target, source: Path, obj: Path, suffix: str,
+                         debug: bool, depfile: Optional[Path]) -> List[str]:
+    """Assembly (`.s`, `.S`) and Objective-C (`.m`, `.mm`) go through the GNU-style compiler driver, which
+    picks the language from the suffix. MSVC-style toolchains have no such driver: refuse, do not guess."""
+    if family(toolchain) == "msvc":
+        raise ChValueError("CH3007", kind=f"{suffix} sources with {toolchain.name}")
+    plus = suffix == ".mm"
+    compiler = toolchain.cxx_compiler if plus else toolchain.c_compiler
+    driver = toolchain.cxx_args if plus else toolchain.c_args
+    args = [compiler, *driver, "-c", str(source), "-o", str(obj)]
+    if plus and target.language.value == "cpp":
+        args.append(f"-std={target.standard}")
+    args += _optimization_flags("gnu", debug)
     if depfile is not None:
         args += ["-MMD", "-MF", str(depfile)]
     args += [f"-I{d}" for d in target.include_dirs]
@@ -77,11 +110,11 @@ def link_args(
 
     if target.kind == Kind.STATIC_LIBRARY:
         if fam == "msvc":
-            return [toolchain.archiver, f"/OUT:{output}", "/nologo", *[str(o) for o in objects]]
-        return [toolchain.archiver, "rcs", str(output), *[str(o) for o in objects]]
+            return [toolchain.archiver, *toolchain.ar_args, f"/OUT:{output}", "/nologo", *[str(o) for o in objects]]
+        return [toolchain.archiver, *toolchain.ar_args, "rcs", str(output), *[str(o) for o in objects]]
 
     if fam == "msvc":
-        args = [toolchain.linker, *[str(o) for o in objects], f"/Fe{output}", "/nologo"]
+        args = [toolchain.linker, *toolchain.ld_args, *[str(o) for o in objects], f"/Fe{output}", "/nologo"]
         if target.kind in _SHARED:
             args.append("/LD")
         # /LIBPATH: (and any other pure linker flag) must come after a
@@ -100,13 +133,21 @@ def link_args(
         args += [f"{lib}.lib" for lib in target.link_libraries]
         return args
 
-    args = [toolchain.linker, *[str(o) for o in objects], "-o", str(output)]
+    args = [toolchain.linker, *toolchain.ld_args, *[str(o) for o in objects], "-o", str(output)]
     if target.kind in _SHARED:
         args.append("-shared")
     args += [f"-L{d}" for d in library_dirs]
     args += [f"-l{lib}" for lib in target.link_libraries]
     args += target.extra_link_flags
     return args
+
+
+def side_outputs(target: Target, target_os: OS, output: Path) -> List[Path]:
+    """Files the link step writes next to its main output: Emscripten's `app.js` comes with `app.wasm`.
+    They are declared so the cache stores and restores them with the rest."""
+    if target_os == OS.WASM and target.kind in (Kind.EXECUTABLE, Kind.TEST):
+        return [output.with_suffix(".wasm")]
+    return []
 
 
 def output_filename(target: Target, target_os: OS, toolchain: Toolchain) -> str:
@@ -117,14 +158,16 @@ def output_filename(target: Target, target_os: OS, toolchain: Toolchain) -> str:
     name = target.name
 
     if target.kind in (Kind.EXECUTABLE, Kind.TEST):
-        return f"{name}.exe" if target_os == OS.WINDOWS else name
+        return name + _EXECUTABLE_SUFFIX.get(target_os, "")
 
     if target.kind == Kind.STATIC_LIBRARY:
         return f"{name}.lib" if fam == "msvc" else f"lib{name}.a"
 
     if target.kind in _SHARED:
-        if fam == "msvc":
+        if target_os in _NO_SHARED_LIBRARIES:
+            raise ChValueError("CH3007", kind=f"{target.kind.value} (not available for {target_os.value})")
+        if target_os == OS.WINDOWS:
             return f"{name}.dll"
-        return f"lib{name}.dylib" if target_os == OS.MACOS else f"lib{name}.so"
+        return f"lib{name}.dylib" if target_os in (OS.MACOS, OS.IOS, OS.VISIONOS) else f"lib{name}.so"
 
     raise ChValueError("CH3007", kind=target.kind.value)

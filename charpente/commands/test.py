@@ -7,7 +7,7 @@ from typing import List, Set
 from ..builder import build_workspace, dependency_closure
 from ..core import process
 from ..dsl.model import Kind
-from ._common import load, toolchain_for_host
+from ._common import load, program_argv, toolchain_for
 from ._session import Session, add_engine_args
 
 
@@ -22,7 +22,7 @@ def execute(args: List[str]) -> int:
     parsed = parser.parse_args(args)
 
     workspace = load(parsed.file, parsed.opt)
-    target_os, toolchain = toolchain_for_host()
+    target_os, toolchain = toolchain_for(parsed)
 
     test_targets = [t for t in workspace.targets.values() if t.kind == Kind.TEST]
     if not test_targets:
@@ -56,7 +56,7 @@ def execute(args: List[str]) -> int:
 
             session.bus.emit("test.started", target=target.name)
             begin = time.monotonic()
-            code = process.run([str(target_result.output_path)], capture=False).returncode
+            code = process.run(program_argv(toolchain, target_result.output_path), capture=False).returncode
             attempts = 0
             while code != 0 and attempts < parsed.retries:
                 attempts += 1

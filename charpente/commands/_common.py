@@ -3,6 +3,7 @@ error handling. Kept out of cli.py so each command stays a small, focused
 `execute(args) -> int` function that commands/__init__.py can register."""
 from __future__ import annotations
 
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -61,6 +62,30 @@ def _lint_before_running(entry: Path) -> None:
     for issue in [i for i in issues if i.severity == "warning" or i.code != "CH1101"][:8]:
         print(f"charpente: {issue.severity} [{issue.code}] {entry.name}:{issue.line}: {issue.message}",
               file=sys.stderr)
+
+
+def toolchain_for(parsed: argparse.Namespace) -> "tuple[OS, Toolchain]":
+    """(target OS, toolchain) for `--platform` / `--toolchain` (native build when neither is given)."""
+    from .. import cross
+
+    target_os, toolchain = cross.select(getattr(parsed, "platform", None), getattr(parsed, "toolchain", None))
+    if toolchain.target:
+        from .. import platforms
+
+        warning = platforms.warning_for(platforms.get(toolchain.target))
+        if warning:
+            print(f"charpente: warning: {warning}", file=sys.stderr)
+    return target_os, toolchain
+
+
+def program_argv(toolchain: Toolchain, output: "Path | str", args: "List[str] | None" = None) -> List[str]:
+    """The command that runs a built program: directly when it is native, through the platform's
+    runtime (wasmtime, node) when it is not, or CH8004 when this machine cannot run it."""
+    if not toolchain.target:
+        return [str(output), *(args or [])]
+    from .. import platforms, runners
+
+    return runners.command(str(output), toolchain.target, platforms.host(), program_args=list(args or []))
 
 
 def toolchain_for_host() -> "tuple[OS, Toolchain]":

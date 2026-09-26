@@ -23,7 +23,7 @@ FAMILIES = {
     "5": "AI",
     "6": "Packages and dependencies",
     "7": "Modules",
-    "8": "Quality gate and Git",
+    "8": "Platforms, quality gate and Git",
     "9": "Internal",
 }
 

@@ -344,7 +344,7 @@ CATALOG: Dict[str, Dict[str, str]] = {
     "CH4002": {
         "title": "Aucun format d'installeur pour ce système",
         "message": "Aucun format d'installeur défini pour {os}.",
-        "cause": "--format installer existe pour Windows, Linux et macOS seulement.",
+        "cause": "Les installeurs existent pour Windows, Linux et macOS et se construisent sur ce système ; une cible compilée en croisé se livre en zip.",
         "fix": "Utilisez --format zip.",
     },
     "CH4003": {
@@ -553,6 +553,37 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "message": "Le module {name} demande plus que ce que vous avez approuvé ({detail}) ; il reste désactivé jusqu'à approbation.",
         "cause": "Une mise à jour a changé les capacités demandées par le module.",
         "fix": "Examinez-les avec `charpente module info {name}`, puis `charpente module approve {name}`.",
+    },
+    # ------------------------------------------------------------------ 8xxx
+    "CH8001": {
+        "title": "Plateforme inconnue",
+        "message": "Plateforme {name!r} inconnue. Plateformes connues : {known}",
+        "cause": "Ce nom n'est pas une plateforme connue de Charpente (faute de frappe, ou plateforme fournie par un module).",
+        "fix": "`charpente platforms` les liste, avec leur niveau de support.",
+    },
+    "CH8002": {
+        "title": "Aucune toolchain ne peut construire cette plateforme ici",
+        "message": "Aucune toolchain installée ne peut construire {platform} depuis cette machine. {hint}",
+        "cause": "La compilation croisée exige une toolchain qui cible la plateforme (ou une machine native de ce type).",
+        "fix": "Voyez l'indication ; `charpente toolchain list` montre ce qui est installé et `charpente platforms` ce dont chaque plateforme a besoin.",
+    },
+    "CH8003": {
+        "title": "Toolchain introuvable",
+        "message": "Aucune toolchain nommée {name!r} n'est installée. Disponibles : {available}",
+        "cause": "--toolchain nomme une toolchain qui n'a pas été détectée.",
+        "fix": "`charpente toolchain list`, ou installez-en une avec `charpente toolchain install NOM@VERSION`.",
+    },
+    "CH8004": {
+        "title": "Impossible d'exécuter un binaire d'une autre plateforme",
+        "message": "{artifact} a été construit pour {platform}, que cette machine ne sait pas exécuter.",
+        "cause": "`run` lance le programme sur cette machine ; un binaire compilé pour une autre plateforme a besoin de son propre environnement d'exécution ou d'un appareil.",
+        "fix": "Copiez-le sur la cible et lancez-le avec les outils de la plateforme ; les programmes WebAssembly s'exécutent ici si wasmtime ou Node.js 20+ est installé.",
+    },
+    "CH8005": {
+        "title": "Échec de l'installation de la toolchain",
+        "message": "Impossible d'installer ou de retirer {name} : {detail}",
+        "cause": "La toolchain est inconnue, la version n'existe pas pour cette machine, ou le dossier n'a pas pu être modifié.",
+        "fix": "`charpente toolchain list` montre ce qui est installé ; les versions sont listées sur la page de téléchargement de l'éditeur.",
     },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {

@@ -350,7 +350,7 @@ CATALOG: Dict[str, Dict[str, str]] = {
     "CH4002": {
         "title": "No installer format for this system",
         "message": "No installer format defined for {os}.",
-        "cause": "--format installer exists for Windows, Linux and macOS only.",
+        "cause": "Installers exist for Windows, Linux and macOS, and are built on that system; a cross-compiled target is packaged as a zip.",
         "fix": "Use --format zip.",
     },
     "CH4003": {
@@ -559,6 +559,37 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "message": "Module {name} asks for more than you approved ({detail}); it stays disabled until approved.",
         "cause": "An update changed the capabilities the module requests.",
         "fix": "Review them with `charpente module info {name}`, then `charpente module approve {name}`.",
+    },
+    # ------------------------------------------------------------------ 8xxx
+    "CH8001": {
+        "title": "Unknown platform",
+        "message": "Unknown platform {name!r}. Known platforms: {known}",
+        "cause": "The name is not a platform Charpente knows (a typo, or a platform that needs a module).",
+        "fix": "Use `charpente platforms` to list them, with their support tier.",
+    },
+    "CH8002": {
+        "title": "No toolchain can build this platform here",
+        "message": "No installed toolchain can build {platform} from this machine. {hint}",
+        "cause": "Cross-compiling needs a toolchain that targets the platform (or a native machine of that kind).",
+        "fix": "See the hint; `charpente toolchain list` shows what is installed and `charpente platforms` what each platform needs.",
+    },
+    "CH8003": {
+        "title": "Toolchain not found",
+        "message": "No toolchain named {name!r} is installed. Available: {available}",
+        "cause": "--toolchain names a toolchain that was not detected.",
+        "fix": "`charpente toolchain list`, or install one with `charpente toolchain install NAME@VERSION`.",
+    },
+    "CH8004": {
+        "title": "Cannot run a binary for another platform",
+        "message": "{artifact} was built for {platform}, which this machine cannot run.",
+        "cause": "`run` starts the program on this machine; a cross-compiled binary needs its own runtime or device.",
+        "fix": "Copy it to the target and run it there with the platform's own tools; WebAssembly programs run here if wasmtime or Node.js 20+ is installed.",
+    },
+    "CH8005": {
+        "title": "Toolchain installation failed",
+        "message": "Cannot install or remove {name}: {detail}",
+        "cause": "The toolchain is unknown, the version does not exist for this machine, or the directory could not be changed.",
+        "fix": "`charpente toolchain list` shows what is installed; versions are listed on the vendor's download page.",
     },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {

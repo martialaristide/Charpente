@@ -6,7 +6,7 @@ from typing import List
 
 from ..builder import build_workspace, dependency_closure
 from ..core import process
-from ._common import CommandError, load, resolve_target, toolchain_for_host
+from ._common import CommandError, load, program_argv, resolve_target, toolchain_for
 from ._session import Session, add_engine_args
 
 
@@ -32,7 +32,7 @@ def execute(args: List[str]) -> int:
 
     workspace = load(parsed.file, parsed.opt)
     target = resolve_target(workspace, parsed.target)
-    target_os, toolchain = toolchain_for_host()
+    target_os, toolchain = toolchain_for(parsed)
 
     if not parsed.no_build:
         # Build the target AND whatever it depends_on() for this config --
@@ -60,11 +60,12 @@ def execute(args: List[str]) -> int:
     else:
         from .. import flags
         from ..builder import build_dir  # internal helper, fine to reach for within the package
-        output = build_dir(workspace, parsed.config, target) / flags.output_filename(target, target_os, toolchain)
+        output = build_dir(workspace, parsed.config, target, toolchain) / flags.output_filename(target, target_os, toolchain)
         if not output.exists():
             raise CommandError("CH4004", path=str(output))
 
+    argv = program_argv(toolchain, output, program_args)      # may refuse (CH8004) before anything is announced
     print(f"Running {output}...")
     sys.stdout.flush()  # otherwise the child's own output can print before this line does
-    completed = process.run([str(output), *program_args], capture=False)
+    completed = process.run(argv, capture=False)
     return completed.returncode

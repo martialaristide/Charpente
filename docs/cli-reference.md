@@ -33,6 +33,10 @@ Compiles every target in the workspace, in dependency order. Independent
 work (every source file, independent targets) runs in parallel.
 
 - `-j N` / `--jobs N`: at most N actions at once (default: one per CPU).
+- `--platform OS-ARCH`: build for another platform (`linux-arm64`, `wasm32-wasi`...). Objects go to
+  `build/<Config>-<platform>/`, so platforms never overwrite each other. Also accepted by `run`,
+  `test` and `package`. See [platforms.md](platforms.md).
+- `--toolchain NAME`: use that detected toolchain instead of the first one.
 - `--no-cache`: neither read nor write the [content cache](#charpente-cache).
 - `-v` / `--verbose`: show every command that runs and *why* it runs
   (`because: header changed: include/a.h`).
@@ -235,10 +239,46 @@ declarations, splitting a widely included header, a precompiled header) is the
 cheapest way to speed up incremental builds. Builds also print a hint when a
 single header change recompiled 20 or more files.
 
-## `charpente toolchain list`
+## `charpente toolchain`
 
-Lists every compiler Charpente can see, its version, and which module provided
-its detector. The first is the default.
+```
+charpente toolchain list
+charpente toolchain install zig[@VERSION] | emsdk[@VERSION]
+charpente toolchain remove NAME[@VERSION]
+```
+
+`list` shows every compiler Charpente can see, its version, which module provided its
+detector and, for cross compilers, the platforms it can build. The first is the default for
+native builds (cross-only toolchains such as Emscripten are never chosen without `--platform`).
+
+`install` downloads into `~/.charpente/toolchains/` and changes nothing else (no PATH, no
+registry). It only runs when you ask; a build never downloads.
+
+- **zig**: the archive's SHA-256 (published by ziglang.org next to the link) is checked before
+  unpacking. One binary that builds Windows, Linux, macOS, FreeBSD, NetBSD and WASI programs.
+- **emsdk**: needs `git` and `python`; Emscripten's own installer downloads LLVM/Binaryen/Node
+  (about 1.5 GB). Charpente relies on emsdk's own integrity checks here, not its own.
+
+`remove` deletes that directory (and nothing outside it).
+
+## `charpente platforms`
+
+```
+charpente platforms [--family desktop|mobile|xr|web|embedded|server] [--json]
+```
+
+Lists every target platform with its support tier, and whether *this* machine can build it now
+(natively, or through which toolchain) or what is missing. See [platforms.md](platforms.md).
+
+## `charpente doctor`
+
+```
+charpente doctor [--json]
+```
+
+Reports the host, the compilers found, useful tools (git, node, wasmtime...), the platforms
+buildable right now and, for each other platform, what to install. Exit code 1 when nothing can
+be built.
 
 ## `charpente module`
 

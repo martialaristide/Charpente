@@ -4,7 +4,7 @@ import argparse
 from typing import List
 
 from ..builder import BuildResult, build_workspace
-from ._common import load, toolchain_for_host
+from ._common import load, toolchain_for
 from ._session import Session, add_engine_args
 
 
@@ -49,7 +49,7 @@ def execute(args: List[str]) -> int:
     parsed = parser.parse_args(args)
 
     workspace = load(parsed.file, parsed.opt)
-    target_os, toolchain = toolchain_for_host()
+    target_os, toolchain = toolchain_for(parsed)
 
     with Session("build", parsed, workspace, toolchain=toolchain.name, config=parsed.config) as session:
         session.say(f"Building {workspace.name} ({parsed.config}, {toolchain.name})...")

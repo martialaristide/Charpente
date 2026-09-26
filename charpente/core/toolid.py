@@ -115,7 +115,12 @@ class ToolIdentities:
         return ToolIdentity(tool, resolved, version, digest)
 
     def _version(self, path: str, family: str) -> str:
-        argv = [path] if family == "msvc" else [path, "--version"]
+        if family == "msvc":
+            argv = [path]
+        elif os.path.basename(path).lower().startswith("zig"):
+            argv = [path, "version"]                 # `zig --version` is not a zig command
+        else:
+            argv = [path, "--version"]
         try:
             result = process.run(argv, runner=self._runner, timeout=30)
         except ChError:

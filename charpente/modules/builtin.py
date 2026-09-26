@@ -16,13 +16,13 @@ from .registry import ExtensionRegistry
 class BuiltinToolchain:
     """One detector: the toolchain called `name`, when the host OS matches."""
 
-    def __init__(self, name: str, host_os: OS, detect_fn: Callable[..., List[Any]]) -> None:
+    def __init__(self, name: str, host_os: Optional[OS], detect_fn: Callable[..., List[Any]]) -> None:
         self.name = name
         self._host_os = host_os
         self._detect = detect_fn
 
     def detect(self, host_os: Any, which: Callable[[str], Optional[str]]) -> List[Any]:
-        if host_os != self._host_os:
+        if self._host_os is not None and host_os != self._host_os:
             return []
         return [t for t in self._detect(which) if t.name == self.name]
 
@@ -35,5 +35,7 @@ def register_builtins(registry: ExtensionRegistry) -> None:
         ("gcc", OS.LINUX, toolchains.detect_linux),
         ("clang", OS.LINUX, toolchains.detect_linux),
         ("apple-clang", OS.MACOS, toolchains.detect_macos),
+        ("zig", None, toolchains.detect_zig),          # a cross compiler: usable from any host
+        ("emscripten", None, toolchains.detect_emscripten),
     ):
         registry.add_builtin("toolchain", name, BuiltinToolchain(name, os_, fn))

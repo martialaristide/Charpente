@@ -461,9 +461,9 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 ### CH4002 — No installer format for this system
 *FR : Aucun format d'installeur pour ce système*
 
-- **Cause:** --format installer exists for Windows, Linux and macOS only.
+- **Cause:** Installers exist for Windows, Linux and macOS, and are built on that system; a cross-compiled target is packaged as a zip.
 - **Fix:** Use --format zip.
-- **Cause (FR) :** --format installer existe pour Windows, Linux et macOS seulement.
+- **Cause (FR) :** Les installeurs existent pour Windows, Linux et macOS et se construisent sur ce système ; une cible compilée en croisé se livre en zip.
 - **Correction (FR) :** Utilisez --format zip.
 
 ### CH4003 — Packaging tool failed
@@ -743,6 +743,48 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Fix:** Review them with `charpente module info {name}`, then `charpente module approve {name}`.
 - **Cause (FR) :** Une mise à jour a changé les capacités demandées par le module.
 - **Correction (FR) :** Examinez-les avec `charpente module info {name}`, puis `charpente module approve {name}`.
+
+## CH8xxx — Platforms, quality gate and Git
+
+### CH8001 — Unknown platform
+*FR : Plateforme inconnue*
+
+- **Cause:** The name is not a platform Charpente knows (a typo, or a platform that needs a module).
+- **Fix:** Use `charpente platforms` to list them, with their support tier.
+- **Cause (FR) :** Ce nom n'est pas une plateforme connue de Charpente (faute de frappe, ou plateforme fournie par un module).
+- **Correction (FR) :** `charpente platforms` les liste, avec leur niveau de support.
+
+### CH8002 — No toolchain can build this platform here
+*FR : Aucune toolchain ne peut construire cette plateforme ici*
+
+- **Cause:** Cross-compiling needs a toolchain that targets the platform (or a native machine of that kind).
+- **Fix:** See the hint; `charpente toolchain list` shows what is installed and `charpente platforms` what each platform needs.
+- **Cause (FR) :** La compilation croisée exige une toolchain qui cible la plateforme (ou une machine native de ce type).
+- **Correction (FR) :** Voyez l'indication ; `charpente toolchain list` montre ce qui est installé et `charpente platforms` ce dont chaque plateforme a besoin.
+
+### CH8003 — Toolchain not found
+*FR : Toolchain introuvable*
+
+- **Cause:** --toolchain names a toolchain that was not detected.
+- **Fix:** `charpente toolchain list`, or install one with `charpente toolchain install NAME@VERSION`.
+- **Cause (FR) :** --toolchain nomme une toolchain qui n'a pas été détectée.
+- **Correction (FR) :** `charpente toolchain list`, ou installez-en une avec `charpente toolchain install NOM@VERSION`.
+
+### CH8004 — Cannot run a binary for another platform
+*FR : Impossible d'exécuter un binaire d'une autre plateforme*
+
+- **Cause:** `run` starts the program on this machine; a cross-compiled binary needs its own runtime or device.
+- **Fix:** Copy it to the target and run it there with the platform's own tools; WebAssembly programs run here if wasmtime or Node.js 20+ is installed.
+- **Cause (FR) :** `run` lance le programme sur cette machine ; un binaire compilé pour une autre plateforme a besoin de son propre environnement d'exécution ou d'un appareil.
+- **Correction (FR) :** Copiez-le sur la cible et lancez-le avec les outils de la plateforme ; les programmes WebAssembly s'exécutent ici si wasmtime ou Node.js 20+ est installé.
+
+### CH8005 — Toolchain installation failed
+*FR : Échec de l'installation de la toolchain*
+
+- **Cause:** The toolchain is unknown, the version does not exist for this machine, or the directory could not be changed.
+- **Fix:** `charpente toolchain list` shows what is installed; versions are listed on the vendor's download page.
+- **Cause (FR) :** La toolchain est inconnue, la version n'existe pas pour cette machine, ou le dossier n'a pas pu être modifié.
+- **Correction (FR) :** `charpente toolchain list` montre ce qui est installé ; les versions sont listées sur la page de téléchargement de l'éditeur.
 
 ## CH9xxx — Internal
 

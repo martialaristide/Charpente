@@ -27,7 +27,7 @@ from .graph import ActionGraph
 #: Kinds this engine builds today. The others (XR_APP, MOBILE_APP...) are
 #: accepted by the DSL and refused here, with CH3007, until their platform lands.
 _BUILDABLE = (Kind.EXECUTABLE, Kind.TEST, Kind.STATIC_LIBRARY, Kind.SHARED_LIBRARY, Kind.PLUGIN)
-_SOURCE_SUFFIXES = (".c", ".cc", ".cpp", ".cxx", ".c++")
+_SOURCE_SUFFIXES = (".c", ".cc", ".cpp", ".cxx", ".c++", ".s", ".m", ".mm")
 
 #: Makes MSVC print `Note: including file:` in English whatever the Windows
 #: display language is (the marker text is localised otherwise).
@@ -47,13 +47,13 @@ class Plan:
     config: str = "Debug"
 
 
-def build_dir(workspace: Workspace, config: str, target: Target) -> Path:
-    return workspace.root / "build" / config / target.name
+def build_dir(workspace: Workspace, variant: str, target: Target) -> Path:
+    return workspace.root / "build" / variant / target.name
 
 
 def context_for(config: str, toolchain: Toolchain, platform_name: Optional[str] = None,
                 options: Optional[Dict[str, object]] = None) -> resolve.BuildContext:
-    return resolve.BuildContext(config=config, platform=platform_name or resolve.host_platform(),
+    return resolve.BuildContext(config=config, platform=platform_name or toolchain.target or resolve.host_platform(),
                                 toolchain=toolchain.name,
                                 options=tuple(sorted((k, str(v).lower() if isinstance(v, bool) else str(v))
                                                      for k, v in (options or {}).items())))
@@ -104,14 +104,16 @@ def _object_path(root: Path, obj_dir: Path, source: Path, object_ext: str) -> Pa
     return obj_dir.joinpath(*parts[:-1], parts[-1] + object_ext)
 
 
-def _action_id(kind: str, target: str, source: Optional[Path], root: Path) -> str:
+def _action_id(kind: str, target: str, source: Optional[Path], root: Path, prefix: str = "") -> str:
+    """`compile:app:src/main.cpp`; a cross build prefixes its platform (`linux-arm64/compile:...`) so
+    each platform keeps its own record and switching between them rebuilds nothing."""
     if source is None:
-        return f"{kind}:{target}"
+        return f"{prefix}{kind}:{target}"
     try:
         shown = Path(os.path.normpath(source)).relative_to(root).as_posix()
     except ValueError:
         shown = source.as_posix()
-    return f"{kind}:{target}:{shown}"
+    return f"{prefix}{kind}:{target}:{shown}"
 
 
 def plan_workspace(
@@ -132,6 +134,8 @@ def plan_workspace(
     order, effective = scope if scope is not None else effective_scope(workspace, toolchain, config, only)
 
     debug = config.lower() == "debug"
+    variant = f"{config}-{toolchain.target}" if toolchain.target else config
+    id_prefix = f"{toolchain.target}/" if toolchain.target else ""
     fam = flags.family(toolchain)
     object_ext = ".obj" if fam == "msvc" else ".o"
     root = workspace.root
@@ -188,7 +192,7 @@ def plan_workspace(
             errors[name] = ChError("CH3001", target=target.name)
             continue
 
-        out_dir = build_dir(workspace, config, target)
+        out_dir = build_dir(workspace, variant, target)
         obj_dir = out_dir / "obj"
         ids: List[str] = plan_targets.setdefault(name, [])
         objects: List[Path] = []
@@ -204,13 +208,13 @@ def plan_workspace(
             argv = flags.compile_args(toolchain, target, source, obj, debug=debug, depfile=depfile)
             compiler = argv[0]
             action = Action(
-                id=_action_id(KIND_COMPILE, target.name, source, root),
+                id=_action_id(KIND_COMPILE, target.name, source, root, id_prefix),
                 kind=KIND_COMPILE,
                 target=target.name,
                 argv=tuple(argv),
                 outputs=(obj,),
                 inputs=(source, *[p for p in generated if p != source]),
-                env=_MSVC_ENV if fam == "msvc" else (),
+                env=_MSVC_ENV if fam == "msvc" else toolchain.env,
                 tool=compiler,
                 depfile=depfile,
                 dep_format=DEP_MSVC if fam == "msvc" else DEP_GNU,
@@ -228,13 +232,13 @@ def plan_workspace(
             dep = effective.get(dep_name) or workspace.targets.get(dep_name)
             if dep is None:
                 continue
-            dependency_dirs.append(build_dir(workspace, config, dep))
+            dependency_dirs.append(build_dir(workspace, variant, dep))
             if dep_name in final_action:
                 after.append(final_action[dep_name])
         for lib in target.link_libraries:
             dep = effective.get(lib) or workspace.targets.get(lib)
             if dep is not None and dep.kind in LIBRARY_KINDS and dep.kind != Kind.PLUGIN:
-                extra_inputs.append(build_dir(workspace, config, dep) / flags.output_filename(dep, target_os, toolchain))
+                extra_inputs.append(build_dir(workspace, variant, dep) / flags.output_filename(dep, target_os, toolchain))
 
         output_path = out_dir / flags.output_filename(target, target_os, toolchain)
         argv = flags.link_args(toolchain, target, objects, output_path, library_dirs=dependency_dirs)
@@ -242,14 +246,14 @@ def plan_workspace(
         kind = KIND_ARCHIVE if is_archive else KIND_LINK
         tool = toolchain.archiver if is_archive else toolchain.linker
         final = Action(
-            id=_action_id(kind, target.name, None, root),
+            id=_action_id(kind, target.name, None, root, id_prefix),
             kind=kind,
             target=target.name,
             argv=tuple(argv),
-            outputs=(output_path,),
+            outputs=(output_path, *flags.side_outputs(target, target_os, output_path)),
             inputs=tuple(objects) + tuple(extra_inputs),
             after=tuple(after),
-            env=_MSVC_ENV if fam == "msvc" else (),
+            env=_MSVC_ENV if fam == "msvc" else toolchain.env,
             tool=argv[0] if argv else tool,
             description=f"{'Archiving' if is_archive else 'Linking'} {output_path.name}",
             cwd=root,

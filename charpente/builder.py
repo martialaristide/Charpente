@@ -61,8 +61,10 @@ class BuildResult:
         return next((t for t in self.targets if t.target_name == name), None)
 
 
-def build_dir(workspace: Workspace, config: str, target: Target) -> Path:
-    return _build_dir(workspace, config, target)
+def build_dir(workspace: Workspace, config: str, target: Target, toolchain: Optional[Toolchain] = None) -> Path:
+    """`build/<config>[-<platform>]/<target>`: a cross build has its own directory."""
+    variant = f"{config}-{toolchain.target}" if toolchain is not None and toolchain.target else config
+    return _build_dir(workspace, variant, target)
 
 
 def state_dir(workspace: Workspace) -> Path:
@@ -105,7 +107,7 @@ def _fold(plan: Plan, result: engine_mod.EngineResult) -> List[TargetResult]:
         if failed:
             failed_ids = {a.id for a in failed}
             text = "\n".join(dict.fromkeys(a.output for a in sorted(failed, key=lambda a: ids.index(a.id))
-                                            if a.output)) or "build failed"
+                                            if a.output)) or _silent_failure(failed[0])
             kind_code = "CH3003" if any(graph.actions[i].kind != "compile" for i in failed_ids) else "CH3002"
             out.append(TargetResult(name, ok=False, error=text, error_code=kind_code, log=log,
                                      executed=n_exec, cached=n_cached, up_to_date=n_fresh))
@@ -130,6 +132,13 @@ def _fold(plan: Plan, result: engine_mod.EngineResult) -> List[TargetResult]:
     return out
 
 
+def _silent_failure(action: "engine_mod.ActionResult") -> str:
+    """Some tools fail without printing anything (an assembler writing to the console directly): say
+    which one and how, rather than a bare 'build failed'."""
+    tool = os.path.basename(action.command[0]) if action.command else "a tool"
+    return f"{tool} exited with code {action.returncode} and printed nothing (run with -v to see its command line)"
+
+
 def _context(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: str, scope: List[str],
              sources: Dict[str, List[str]], effective: Dict[str, Target]) -> List[str]:
     """Everything (other than file contents) that determines what a build does."""
@@ -139,7 +148,8 @@ def _context(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: 
     tools = ToolIdentities()
     tool_keys = sorted({tools.identify(t, fam).key() for t in (
         toolchain.c_compiler, toolchain.cxx_compiler, toolchain.archiver, toolchain.linker)})
-    parts = [_version.__version__, config, target_os.value, toolchain.name, str(workspace.root),
+    parts = [_version.__version__, config, target_os.value, toolchain.name, toolchain.target,
+             repr((toolchain.c_args, toolchain.cxx_args, toolchain.ar_args, toolchain.ld_args)), str(workspace.root),
              "|".join(tool_keys), "|".join(f"{k}={os.environ.get(k, '')}" for k in engine_mod.KEYED_ENV),
              ",".join(scope)]
     # The *effective* targets: overlays, `uses` and public settings already folded in.

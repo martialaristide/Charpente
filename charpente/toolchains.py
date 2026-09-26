@@ -3,9 +3,12 @@ primitive (shutil.which), so detection is trivially mockable in tests
 without touching a real machine's PATH."""
 from __future__ import annotations
 
+import os
+import re
 import shutil
 from dataclasses import dataclass
-from typing import Callable, List, Optional
+from pathlib import Path
+from typing import Callable, List, Optional, Tuple
 
 from .dsl.model import OS
 from .errors import ChError
@@ -18,6 +21,20 @@ class Toolchain:
     cxx_compiler: str
     archiver: str
     linker: str         # usually == cxx_compiler; kept distinct for clarity at call sites
+    # Arguments that follow the executable, for drivers that need them: `zig cc -target X`,
+    # `zig ar`. Empty for ordinary compilers.
+    c_args: Tuple[str, ...] = ()
+    cxx_args: Tuple[str, ...] = ()
+    ar_args: Tuple[str, ...] = ()
+    ld_args: Tuple[str, ...] = ()
+    #: Platform names this toolchain can build for, beyond the host's own (empty = host only).
+    targets: Tuple[str, ...] = ()
+    #: The platform a specialised copy was made for ("" = not specialised: builds for the host).
+    target: str = ""
+    #: Environment variables every action of this toolchain runs with (name, value); part of the action key.
+    env: Tuple[Tuple[str, str], ...] = ()
+    #: True for toolchains that only produce code for other platforms (emscripten): never the native default.
+    cross_only: bool = False
 
 
 WhichFn = Callable[[str], Optional[str]]
@@ -82,6 +99,82 @@ def detect_macos(which: WhichFn = shutil.which) -> List[Toolchain]:
     return found
 
 
+_ZIG_PLATFORMS = ("windows-x64", "windows-arm64", "linux-x64", "linux-arm64", "linux-riscv64",
+                  "macos-x64", "macos-arm64", "wasm32-wasi", "freebsd-x64", "netbsd-x64")
+
+
+def toolchains_dir() -> Path:
+    """Where `charpente toolchain install` puts the toolchains it downloaded."""
+    from .dsl.trust import config_dir
+
+    return config_dir() / "toolchains"
+
+
+def _version_key(text: str) -> Tuple[int, ...]:
+    return tuple(int(p) for p in re.findall(r"\d+", text)[:4])
+
+
+def installed_zigs() -> List[Path]:
+    """Zig copies installed by Charpente, newest version first."""
+    exe = "zig.exe" if os.name == "nt" else "zig"
+    found = [d / exe for d in toolchains_dir().glob("zig-*") if (d / exe).is_file()]
+    return sorted(found, key=lambda p: _version_key(p.parent.name[4:]), reverse=True)
+
+
+def detect_zig(which: WhichFn = shutil.which) -> List[Toolchain]:
+    """Zig as a C/C++ cross compiler: `zig cc` is clang with every libc bundled, so one
+    binary builds for many platforms. Found on PATH or in Charpente's toolchain directory."""
+    zig = which("zig")
+    if not zig and which is shutil.which:            # an injected `which` (tests) keeps detection hermetic
+        installed = installed_zigs()
+        zig = str(installed[0]) if installed else None
+    if not zig:
+        return []
+    return [Toolchain(name="zig", c_compiler=zig, cxx_compiler=zig, archiver=zig, linker=zig,
+                      c_args=("cc",), cxx_args=("c++",), ar_args=("ar",), ld_args=("c++",),
+                      targets=_ZIG_PLATFORMS)]
+
+
+def _emscripten_from(root: Path) -> Optional[Toolchain]:
+    """An emsdk directory (as `emsdk install/activate` leaves it) as a toolchain."""
+    tools = root / "upstream" / "emscripten"
+
+    def launcher(name: str) -> Path:
+        # Windows emsdk ships `.exe` launchers (recent) or `.bat` scripts (older); elsewhere plain scripts.
+        for suffix in ((".exe", ".bat") if os.name == "nt" else ("",)):
+            if (tools / f"{name}{suffix}").is_file():
+                return tools / f"{name}{suffix}"
+        return tools / name
+
+    emcc, empp, emar = launcher("emcc"), launcher("em++"), launcher("emar")
+    if not (emcc.is_file() and empp.is_file() and emar.is_file()):
+        return None
+    env = [("EMSDK", str(root))]
+    config = root / ".emscripten"
+    if config.is_file():
+        env.append(("EM_CONFIG", str(config)))
+    python = sorted(root.glob("python/*/python.exe" if os.name == "nt" else "python/*/bin/python3"))
+    if python:
+        env.append(("EMSDK_PYTHON", str(python[-1])))
+    return Toolchain(name="emscripten", c_compiler=str(emcc), cxx_compiler=str(empp), archiver=str(emar),
+                     linker=str(empp), targets=("wasm32-emscripten",), env=tuple(env), cross_only=True)
+
+
+def detect_emscripten(which: WhichFn = shutil.which) -> List[Toolchain]:
+    """Emscripten (C/C++ to WebAssembly for browsers and Node): on PATH (an activated emsdk), or an emsdk
+    that `charpente toolchain install emsdk` put in Charpente's toolchain directory."""
+    emcc, empp, emar = which("emcc"), which("em++"), which("emar")
+    if emcc and empp and emar:
+        return [Toolchain(name="emscripten", c_compiler=emcc, cxx_compiler=empp, archiver=emar, linker=empp,
+                          targets=("wasm32-emscripten",), cross_only=True)]
+    if which is shutil.which:                        # an injected `which` (tests) keeps detection hermetic
+        for root in sorted(toolchains_dir().glob("emsdk-*"), reverse=True):
+            found = _emscripten_from(root)
+            if found is not None:
+                return [found]
+    return []
+
+
 _DETECTORS = {
     OS.WINDOWS: detect_windows,
     OS.LINUX: detect_linux,
@@ -113,7 +206,7 @@ def pick_default(target_os: OS, which: WhichFn = shutil.which) -> Toolchain:
     """The first toolchain detect() finds, in the order each detector
     lists them (a deliberate preference order, not just "whatever's
     first"). Raises a clear, actionable error if none are installed."""
-    candidates = detect(target_os, which)
+    candidates = [c for c in detect(target_os, which) if not c.cross_only]
     if not candidates:
         raise NoToolchainFoundError("CH2001", os=target_os.value)
     return candidates[0]

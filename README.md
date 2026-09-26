@@ -25,6 +25,12 @@ Running build/Debug/hello/hello...
 Hello, world!
 ```
 
+## Cross-compilation
+
+`charpente toolchain install zig` then `charpente build --platform linux-arm64` (or `windows-arm64`,
+`macos-arm64`, `wasm32-wasi`, ...). `charpente platforms` lists what can be built and how well it is
+verified; see [docs/platforms.md](docs/platforms.md).
+
 ## Status
 
 This is a young, from-scratch project — not a fork or a rename of any
