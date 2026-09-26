@@ -78,6 +78,7 @@ def test_a_session_prints_the_stages_the_targets_the_warnings_and_the_result_box
     failure = next(x for x in lines if x.startswith("  ✘ tests_moteur"))
     assert "undefined reference to 'f'" in failure and "[CH3003]" in failure
     assert any("ld: final link failed" in x for x in lines)
+    assert not any(x.strip().startswith("ld: undefined reference") for x in lines)       # the raw line that only repeats the error shown above is not printed twice
     assert any("╭─ Résultat" in x for x in lines) and "charpente why tests_moteur" in text
     assert any("3 réussies, 1 échec" in x for x in lines) and any("cache" in x and "sur 8" in x for x in lines) and any("4,2 s" in x for x in lines)
     assert any("cache    1 action sur 8" in x for x in lines)                                # 1 action, not "1 actions"

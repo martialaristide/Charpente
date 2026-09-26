@@ -107,7 +107,8 @@ class StyledRenderer:
         self._action_target: Dict[str, str] = {}
         self._outputs: Dict[str, str] = {}               # target -> what it produced (from its last finished action)
         self._warnings: Dict[str, int] = {}
-        self._errors: Dict[str, str] = {}                # target -> first error message
+        self._errors: Dict[str, str] = {}                # target -> first error, as shown (file:line: message)
+        self._error_texts: Dict[str, str] = {}           # target -> that error's bare message
         self._diagnosed: Set[str] = set()                # actions that produced a parsed diagnostic
         self._pending_output: Dict[str, str] = {}
 
@@ -240,6 +241,7 @@ class StyledRenderer:
         elif severity == "error" and target not in self._errors:
             location = f"{display_path(str(p.get('file') or ''), self.cwd)}:{p.get('line')}: " if p.get("file") and p.get("line") else ""
             self._errors[target] = f"{location}{p.get('message', '')}"
+            self._error_texts[target] = str(p.get("message") or "")
 
     def _target(self, kind: str, p: Mapping[str, Any]) -> None:
         name = str(p.get("target", ""))
@@ -261,7 +263,7 @@ class StyledRenderer:
             code = p.get("code")
             self._line(self.style.target_failed(name, f"{summary} [{code}]" if code else summary, self.name_width))
             self._show_warnings(name)
-            for line in _error_lines(str(p.get("error", "")), summary, ERROR_LINES):
+            for line in _error_lines(str(p.get("error", "")), self._error_texts.get(name, ""), ERROR_LINES):
                 self._line(self.style.detail(line))
 
     def _show_warnings(self, name: str) -> None:
@@ -312,10 +314,12 @@ def _usable(caps: Caps) -> Caps:
     return replace(caps, width=max(10, caps.width - 1))
 
 
-def _error_lines(error: str, summary: str, limit: int) -> List[str]:
-    """The lines of a failed target's output worth showing under its failure line: not blank, not the summary again, at most `limit` (with a note about the rest)."""
+def _error_lines(error: str, message: str, limit: int) -> List[str]:
+    """The lines of a failed target's output worth showing under its failure line: not blank, not the line that only repeats the error already shown, at most `limit`
+    (with a note about the rest)."""
     lines = [line.rstrip() for line in error.replace("\r\n", "\n").split("\n") if line.strip()]
-    lines = [line for line in lines if line.strip() != summary.strip()]
+    if message:
+        lines = [line for line in lines if message not in line]
     if len(lines) <= limit:
         return lines
     return lines[:limit] + [f"... (+{len(lines) - limit})"]
