@@ -45,7 +45,7 @@ a build server, debugging). What is verified and what is not is written per feat
 
 - **Verified for real, on one machine (Windows 10, MinGW-w64)**: builds and cache, reproducible builds, budgets, cross builds with zig (mostly *built*, not *executed*), Android (a real emulator), the Studio in a real
   browser (Edge), clangd and gdb, CMake import, Ninja/CMake generation, hot reload, the shared cache.
-- **Tested but not against the real thing**: Visual Studio projects, multi-device deploy (simulated devices), the AI assistant (no real provider was ever called), the VS Code extension (not loaded in a live VS Code).
+- **Tested but not against the real thing**: Visual Studio projects, multi-device deploy with several devices (simulated; one real emulator was tried), the AI assistant (no real provider was ever called), the VS Code extension (not loaded in a live VS Code).
 - **Not done**: remote execution, an Xcode project, a compiled desktop app and installers, precompiled headers and C++20 modules.
 - **Never verified on Linux or macOS**, and there is no CI yet: that is why the version is `0.x` and nothing is called stable.
 

@@ -31,6 +31,8 @@ The same works for keys and signing as single-device deploys: `--keystore`/`--ke
 
 ## Verified, and what is only simulated
 
-* The APK really is built (real NDK, one APK for two ABIs) and the selection logic, parallel install, failure isolation, log merging and events are tested end to end.
-* The *devices* in those tests are simulated by a small stand-in `adb` program. **A run of `--device all` against several real phones or emulators has not been done**; a single real emulator was used with the one-device path.
+* **One real device, end to end**: `charpente deploy --device all --logs` on a real x86_64 emulator (API 30) discovered it (`x86_64, x86`), built the APK, installed and started it, and printed the device's log tagged
+  `[emulator-5554]`, including the app's own line (`I/phone: running on android; ...`).
+* With **several** devices, the selection logic, the multi-ABI APK (real NDK, one APK for two ABIs), parallel install, failure isolation, log merging and events are tested end to end, but those devices are simulated by a
+  small stand-in `adb` program. **A run against several real phones or emulators at once has not been done**, and no real arm64 device was involved.
 * HarmonyOS devices (`hdc`) and iOS are not covered by `--device all`.

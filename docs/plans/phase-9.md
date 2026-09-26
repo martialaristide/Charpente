@@ -11,7 +11,7 @@
 | Rechargement à chaud (`charpente dev`, `charpente_hot.h`, recette `charpente-hot`) | `dev.py`, `commands/dev.py`, `kit_sources/hot/`, `pkg/recipes/charpente-hot-1.0.0.toml` | `tests/test_dev_hot.py` (8) — hôte réel qui charge 3 générations sans redémarrer |
 | `charpente docs` (extracteur, Mermaid, SVG, Doxygen) | `docsgen.py`, `commands/docs.py` | `tests/test_docs.py` (12) |
 | Ressources : mémoire, disque, batterie, chaleur, mode éco, reprise | `resources.py`, `builder.py`, `commands/_session.py` | `tests/test_resources.py` (10) — dont un build tué puis repris |
-| Déploiement multi-appareils, journaux fusionnés | `multideploy.py`, `commands/deploy.py` | `tests/test_multideploy.py` (14) — **vrai APK, faux `adb`** |
+| Déploiement multi-appareils, journaux fusionnés | `multideploy.py`, `commands/deploy.py` | `tests/test_multideploy.py` (14) — **vrai APK, faux `adb`** ; en plus, exécution manuelle sur un **vrai émulateur** x86_64 (installation, lancement, journal étiqueté) |
 | `charpente setup`, préférences (`settings.py`), `charpente self uninstall` | `onboarding.py`, `settings.py`, `selfmanage.py`, `commands/{setup,selfcmd}.py` | `tests/test_setup_self.py` (15) — dont un lien de type jonction Windows |
 | Paquet PyPI prêt (wheel + sdist, `twine check`, installation dans un venv propre) | `pyproject.toml` | construit et installé ; **rien n'a été publié** |
 | Codes CH1026, CH8024–CH8028 | `i18n/`, `docs/errors.md` | catalogue |
@@ -32,5 +32,5 @@ un budget de taille sur une cible sans fichier de sortie passait sans rien dire 
 
 ## Écarts et limites
 
-REAPI et exécution hybride **non faits** (voir ADR 0019) ; projet Xcode **non fait** ; Visual Studio **jamais ouvert** ; appareils multiples **simulés** (un vrai APK, un faux `adb`) ; pas de TLS dans le serveur de cache ;
+REAPI et exécution hybride **non faits** (voir ADR 0019) ; projet Xcode **non fait** ; Visual Studio **jamais ouvert** ; plusieurs appareils **simulés** (un vrai APK, un faux `adb`) ; un seul appareil réel (émulateur) essayé ; pas de TLS dans le serveur de cache ;
 sondes de batterie/mémoire/chaleur non exécutées hors Windows ; rechargement à chaud vérifié sur Windows seulement ; aucune intégration continue, donc la version reste 0.x ; le paquet PyPI n'est **pas publié**.

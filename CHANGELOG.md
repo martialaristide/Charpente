@@ -12,13 +12,13 @@
 - **Dev loop**: `charpente dev` (rebuild on change) and **hot reload** for `Kind.PLUGIN` targets with the header-only `charpente_hot.h` (`charpente-hot` recipe, shipped inside Charpente); experimental.
   `charpente docs` (Markdown API pages from doc comments, Mermaid/SVG target graph, optional Doxygen).
 - **Resources**: memory and disk are watched (`resource.low_memory`, `resource.low_disk`), `--eco` / `CHARPENTE_ECO` for battery and heat; an interrupted build resumes without redoing finished work (verified by killing a real build).
-- **Devices**: `charpente deploy --device all` builds one APK for every connected device's ABIs, installs in parallel (one failure does not stop the others), `--logs` merges every device's log into one tagged stream. Devices in the tests are simulated.
+- **Devices**: `charpente deploy --device all` builds one APK for every connected device's ABIs, installs in parallel (one failure does not stop the others), `--logs` merges every device's log into one tagged stream. Verified on one real x86_64 emulator; the several-device cases are simulated in the tests (real APK, fake `adb`).
 - **First run and removal**: `charpente setup` (guided; asks before every download; never accepts a licence for you), remembered language (`~/.charpente/settings.json`, `CHARPENTE_LANG` still wins),
   `charpente self uninstall` (dry run unless `--yes`; signing keys only with `--keys`; links are never followed). The package builds and passes `twine check` and installs in a clean virtual environment; **nothing was uploaded to PyPI**.
 - New error codes CH1026, CH8024-CH8028; new events `budget.*`, `resource.*`, `dev.*`, `deploy.device_found/installing/launched/log`; ADR 0019; guides in English and French; [docs/stability.md](docs/stability.md) lists what is verified.
 - **Fixed (found by these tests)**: a change saved while `charpente dev`'s first build ran was lost; `dev` output was not flushed when piped; the engine tests depended on the machine's free memory (now pinned in `tests/conftest.py`);
   `verify-reproducible` could not find outputs from `target.finished` (now read from the action events).
-- **Not done**: remote execution (REAPI) and hybrid execution ([ADR 0019](docs/adr/0019-reproductibilite-cache-partage.md) says why), an Xcode project, a run on real phones for `--device all`, TLS in the cache server, MSVC reproducibility (`/Brepro`),
+- **Not done**: remote execution (REAPI) and hybrid execution ([ADR 0019](docs/adr/0019-reproductibilite-cache-partage.md) says why), an Xcode project, a run of `--device all` on several real devices at once, TLS in the cache server, MSVC reproducibility (`/Brepro`),
   and anything on Linux or macOS. The version stays 0.x: there is no CI.
 
 ## v0.12.0 -- Phase P8: Studio, debugging, AI assistance

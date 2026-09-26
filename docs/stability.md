@@ -32,7 +32,7 @@ The *platform* support tiers (1, 2, 3) are a separate thing and are described in
 | Dev loop | `charpente dev`, hot reload (`charpente_hot.h`) | Experimental, verified on Windows | real host process swapped plugins 3 times; Linux/macOS `dlopen` paths unverified |
 | Dev loop | `charpente docs` | Tested | built-in extractor is a text scanner, not a C++ parser; Doxygen path only generates its config and errors cleanly when Doxygen is missing |
 | Devices | `deploy` (one device) | Verified | real x86_64 emulator (API 30) |
-| Devices | `deploy --device all`, merged logs | **Tested** | real APK, *simulated* devices; not run on several real phones/emulators |
+| Devices | `deploy --device all`, merged logs | Verified with one real emulator; **Tested** with several | one real x86_64 emulator end to end; several devices are simulated (real APK, fake `adb`); no real arm64 device |
 | Platforms | Windows/Linux/macOS/wasm/Android/HarmonyOS/firmware builds | See [platforms.md](platforms.md) | most cross builds are built, not executed |
 | Studio | `charpente studio` (browser), LSP (clangd), DAP (gdb) | Verified | headless Edge, clangd 22, gdb 17.2; **only Edge**; lldb-dap never run |
 | Studio | Desktop app (`studio-desktop/`, Tauri) | **Skeleton** | never compiled; no installer exists |

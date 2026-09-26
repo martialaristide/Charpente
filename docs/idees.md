@@ -29,7 +29,7 @@ hardware, licence or time. Nothing here is promised by the documentation elsewhe
 - **`charpente import cmake`**: custom commands and generated sources, per-configuration settings, CTest tests; a larger set of real projects.
 - **Hot reload**: Linux/macOS verification, state migration helpers, hot reload for mobile apps.
 - **`charpente docs`**: a real C++ parser for the built-in extractor, cross references between pages.
-- **Devices**: `--device all` on several real phones; HarmonyOS (`hdc`) and iOS devices; multi-device debugging.
+- **Devices**: `--device all` on several real phones at once (one real emulator was tried); HarmonyOS (`hdc`) and iOS devices; multi-device debugging.
 - **Resources**: macOS battery and memory probes; Linux verification of the thermal and battery probes.
 - **Packaging**: publishing to PyPI (a maintainer decision), Windows/macOS/Linux installers for the CLI, a compiled Studio desktop app.
 - **Continuous integration** on Windows, Linux and macOS: the condition for calling anything stable and for a 1.0.

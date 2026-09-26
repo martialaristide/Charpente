@@ -39,7 +39,7 @@ Un balayeur de texte reconnaît `///`, `//!`, `/** */`, les étiquettes Doxygen 
 `resources.plan_jobs` est une fonction pure d'un `Sample` (mémoire libre, disque libre, batterie, température) : chaque règle se teste sans vraie batterie ni disque plein. Mémoire et disque sont surveillés toujours (un OOM est pire qu'un build lent) ; le mode éco est **opt-in** (`--eco`, `CHARPENTE_ECO`). Une mesure impossible vaut « inconnue » et sa règle ne s'applique pas. La reprise après interruption n'a rien de spécial : chaque action terminée est enregistrée et dans le cache ; testé en tuant un vrai build.
 
 ### 10. Déploiement multi-appareils : un APK, des ABI, des échecs isolés
-On lit les ABI de chaque appareil, on construit **un seul APK** avec exactement les bibliothèques nécessaires, on installe en parallèle, et l'échec d'un appareil n'arrête pas les autres. Les journaux `logcat` sont fusionnés, chaque ligne étiquetée. Vérité annoncée : l'APK est réel, les appareils des tests sont simulés par un faux `adb`.
+On lit les ABI de chaque appareil, on construit **un seul APK** avec exactement les bibliothèques nécessaires, on installe en parallèle, et l'échec d'un appareil n'arrête pas les autres. Les journaux `logcat` sont fusionnés, chaque ligne étiquetée. Vérité annoncée : l'APK est réel ; les tests à plusieurs appareils les simulent par un faux `adb` ; un vrai émulateur (un seul appareil) a été essayé de bout en bout.
 
 ## Conséquences
 
