@@ -403,6 +403,66 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "Vous avez demandé à Charpente de ne pas utiliser le réseau.",
         "fix": "Retirez CHARPENTE_OFFLINE, ou fournissez le fichier via un miroir local ou un dossier vendor.",
     },
+    "CH6005": {
+        "title": "Dépendances non installées",
+        "message": "Les paquets {name} sont requis mais non installés.",
+        "cause": "ws.requires(...) liste des paquets qui n'ont pas encore été résolus et récupérés (pas de charpente.lock, ou les sources ne sont pas sur cette machine). Un build ne télécharge jamais rien de lui-même.",
+        "fix": "Lancez `charpente pkg install` (réseau nécessaire une fois), ou fournissez le dossier vendor/ produit par `charpente pkg vendor`.",
+    },
+    "CH6006": {
+        "title": "Problème avec charpente.lock",
+        "message": "{path} : {detail}",
+        "cause": "Le fichier de verrouillage est illisible, d'une autre version, ou ne correspond plus à ws.requires(...).",
+        "fix": "Lancez `charpente pkg install` pour le régénérer (`--update` pour chercher aussi des versions plus récentes).",
+    },
+    "CH6007": {
+        "title": "Paquet inconnu",
+        "message": "Aucun paquet nommé {name!r} ({where}).",
+        "cause": "Aucune recette de ce nom n'existe dans les recettes fournies, vos dossiers de recettes ou vos registres.",
+        "fix": "`charpente pkg search` liste ce qui est disponible ; ajoutez un registre avec `charpente pkg registry add URL`, ou votre propre dossier de recettes (CHARPENTE_RECIPES).",
+    },
+    "CH6008": {
+        "title": "Recette invalide",
+        "message": "Recette {path} invalide : {detail}",
+        "cause": "Une recette de paquet a une erreur de syntaxe, une clé inconnue ou un champ obligatoire manquant.",
+        "fix": "Corrigez ce que le message nomme ; docs/packages.md documente le format des recettes.",
+    },
+    "CH6009": {
+        "title": "La recette a changé depuis le verrouillage",
+        "message": "La recette de {name} n'est pas celle enregistrée dans charpente.lock (attendu {expected}..., trouvé {actual}...).",
+        "cause": "Le fichier de verrouillage épingle les octets exacts de la recette ; celle-ci a été modifiée ou remplacée après coup.",
+        "fix": "Si le changement est voulu, lancez `charpente pkg install --update` ; sinon restaurez la recette d'origine.",
+    },
+    "CH6010": {
+        "title": "Aucune version ne satisfait toutes les exigences",
+        "message": "Impossible de résoudre {name} : {wants}. Versions disponibles : {available}.",
+        "cause": "Les contraintes de version de votre workspace et des autres paquets ne peuvent pas être satisfaites toutes ensemble.",
+        "fix": "Assouplissez une contrainte dans ws.requires(...), ou ajoutez une version de recette qui les satisfait.",
+    },
+    "CH6011": {
+        "title": "Le correctif n'a pas pu être appliqué",
+        "message": "Le correctif {file} a échoué : {detail}.",
+        "cause": "Un correctif de recette ne correspond pas aux sources qu'il doit corriger, ou sa somme de contrôle est erronée.",
+        "fix": "La recette et l'archive vers laquelle elle pointe ne sont pas synchronisées ; signalez-le à l'auteur de la recette.",
+    },
+    "CH6012": {
+        "title": "L'archive n'a pas pu être décompressée",
+        "message": "Impossible de décompresser {archive} : {detail}.",
+        "cause": "L'archive est corrompue, d'un format non pris en charge, ou tente d'écrire hors de son dossier (refusé).",
+        "fix": "Relancez le téléchargement ; si cela se répète, l'archive source est cassée ou hostile.",
+    },
+    "CH6014": {
+        "title": "Problème avec le dossier vendor",
+        "message": "vendor/ : {detail}.",
+        "cause": "Le dossier vendor n'a pas son manifeste ou ne lui correspond pas.",
+        "fix": "Régénérez-le avec `charpente pkg vendor`.",
+    },
+    "CH6015": {
+        "title": "Le nom du paquet entre en collision avec une cible",
+        "message": "Le paquet {name!r} porte le même nom qu'une cible de votre workspace.",
+        "cause": "Les paquets deviennent des cibles portant leur nom ; une cible du workspace porte déjà ce nom.",
+        "fix": "Renommez votre cible.",
+    },
     # ------------------------------------------------------------------ 7xxx
     "CH7001": {
         "title": "Version invalide",

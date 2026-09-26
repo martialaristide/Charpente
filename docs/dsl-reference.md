@@ -103,6 +103,120 @@ with Workspace("W") as ws:
             t.defines(["PLATFORM_WINDOWS"])
 ```
 
+## DSL v2 (additive: every v0.1.0 file works unchanged)
+
+### `uses`: order, link and shared settings in one line
+
+```python
+with Target("engine") as t:
+    t.kind(Kind.STATIC_LIBRARY)
+    t.sources(["engine/**/*.cpp"])
+    t.public_include_dirs(["engine/include"])     # used here AND by whoever uses engine
+    t.include_dirs(["engine/private"])            # only here
+    t.public_defines(["ENGINE_API=1"])
+    t.interface_include_dirs(["engine/shims"])    # only for users, not for engine itself
+    t.public_links(["dl"])                        # system libraries users must also link
+
+with Target("app") as t:
+    t.sources(["app/**/*.cpp"])
+    t.uses("engine", "fmt")                       # build order + link + engine's public settings
+```
+
+`uses` replaces the v0.1.0 pair `depends_on` + `links`, and fixes its classic trap (a
+`depends_on` without `links` orders the build but never links). `uses_public("x")` also
+re-exports `x`'s public settings to whatever uses *this* target. Static libraries' own
+libraries are linked transitively (`app` uses `mid` uses `base`: `-lmid -lbase`), but include
+directories only travel as far as `public`/`interface`/`uses_public` say. Names are targets of
+the workspace or packages from `ws.requires(...)` ([`packages.md`](packages.md)).
+
+New kinds: `HEADER_ONLY` (no build actions, only settings), `PLUGIN` (a shared library meant to be
+loaded at run time). `SHADERS`, `XR_APP`, `MOBILE_APP`, `WEB_APP`, `FIRMWARE` are accepted by the
+DSL and refused when planning (`CH3007`) until their platform support lands: never silently built
+as something else.
+
+### Conditions
+
+```python
+with t.on_config("Release") as c:                 # Debug / Release / any configuration name
+    c.defines(["NDEBUG"])
+    c.compile_flags(["-fno-rtti"])
+with t.on_platform("linux-*") as p:               # windows-x64, linux-arm64, macos-arm64...
+    p.links(["pthread"])
+with t.on_toolchain("msvc") as c:                 # gcc, clang, msvc, clang-cl, mingw...
+    c.compile_flags(["/permissive-"])
+with t.when(config="Release", platform="windows-*") as c: ...
+with t.on_platform("android-*") as p:
+    p.android(package="cm.nka.app", min_sdk=29)   # recorded for the Android/HarmonyOS modules
+t.platforms(["harmonyos-*"])                      # build this target only for matching platforms
+```
+
+Conditions are resolved *per (configuration, platform, toolchain) when planning*, not when the file
+is loaded, so one workspace serves every configuration and the same graph can be inspected by tools.
+Patterns are `fnmatch` (case-insensitive). Inside a block you may set sources, excludes, include
+dirs, defines, links, flags, `uses` and `depends_on`.
+
+### Options
+
+```python
+fast = ws.option("fast_math", default=False, help="Enable -ffast-math")
+mode = ws.option("mode", choices=["fast", "safe"], default="safe")
+level = ws.option("level", default=2)               # typed from the default: bool, int, string, enum
+```
+
+`ws.option` returns the value (the default, or the one from `charpente build --opt fast_math=true`),
+so ordinary Python `if` works. `charpente options` lists them; a wrong value is `CH1021`, an unknown
+name `CH1022`. Studio lists the same declarations.
+
+### Rules: your own build steps, cached
+
+```python
+with Rule("version") as r:
+    r.command(["python", "tools/gen_version.py", "VERSION", "gen/version.h"])   # a list, never a shell string
+    r.inputs(["VERSION", "tools/gen_version.py"])
+    r.outputs(["gen/version.h"])
+    r.description("Generating version.h")
+
+with Target("app") as t:
+    t.sources(["src/**/*.cpp"])
+    t.rules(["version"])                 # its outputs feed this target's compilations
+```
+
+Declared inputs and outputs are what make a rule cacheable: it runs again exactly when an input
+changes, and its result is served from the cache otherwise. Outputs that are C/C++ files are
+compiled as part of the target.
+
+### `ws.requires`, `ws.platforms`, `ws.version`, single strings
+
+`Workspace("Name", version="1.0.0")`, `ws.platforms(["windows-x64", "linux-x64"])`,
+`ws.requires("fmt@^10")`. Setters accept a single string as well as a list: `t.sources("*.cpp")`
+is one pattern (it used to be split into characters).
+
+### `charpente.toml`: the declarative form
+
+For simple projects and for repositories you do not trust. TOML is *data*: loading it runs no code
+and needs no approval. See the header of `charpente/dsl/toml_loader.py` for the full schema;
+unknown keys are errors.
+
+```toml
+[workspace]
+name = "Demo"
+requires = ["fmt@^10"]
+
+[[target]]
+name = "app"
+sources = ["src/**/*.cpp"]
+uses = ["fmt"]
+
+  [[target.when]]
+  config = "Release"
+  defines = ["NDEBUG"]
+```
+
+`charpente lint` checks a `.charpente` file **without running it** (typos in method names, invalid
+patterns, unknown targets, cycles, the `depends_on`-without-`links` trap); it also runs
+automatically, quietly, before a file is loaded (`CHARPENTE_LINT=0` turns that off).
+`charpente migrate` rewrites v0.1.0 idioms as v2 (a diff first, `--write` to apply).
+
 ## Reacting to events: `ws.on(...)` and `notify()`
 
 The build emits events (see [`events/README.md`](events/README.md)). A function

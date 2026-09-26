@@ -63,6 +63,8 @@ class Overlay:
     extra_link_flags: List[str] = field(default_factory=list)
     public_include_dirs: List[str] = field(default_factory=list)
     public_define_macros: List[str] = field(default_factory=list)
+    public_compile_flags: List[str] = field(default_factory=list)
+    public_link_libraries: List[str] = field(default_factory=list)
     uses: List[str] = field(default_factory=list)
     depends_on: List[str] = field(default_factory=list)
     platform_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)

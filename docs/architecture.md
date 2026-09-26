@@ -9,10 +9,14 @@ charpente/
   errors.py            # ChError: stable CHxxxx codes, localised message + fix
   i18n/                # en.py / fr.py: the message catalogue (plain Python dicts)
   dsl/
-    model.py           # plain dataclasses: Workspace, Target, Kind, Language, OS
-    api.py             # the public DSL: Workspace/Target context managers over module state
+    model.py           # plain dataclasses: Workspace, Target, Overlay, Rule, Kind, Language, OS
+    api.py             # the public DSL: Workspace/Target/Rule context managers over module state
+    resolve.py         # per (config, platform, toolchain): overlays + `uses` -> an ordinary Target (ADR 0009)
+    toml_loader.py     # charpente.toml: the data-only form
     trust.py           # consent before exec()'ing a .charpente file
     loader.py          # trust check -> exec() -> hand back a Workspace
+  lint.py, migrate.py  # static analysis of a .charpente file; v0.1.0 -> v2 rewrites
+  pkg/                 # Charpente Pkg: recipes, resolver, lock, install, materialize, vendor, mirror, audit, sbom
   platform.py          # host OS detection
   toolchains.py        # PATH-based compiler discovery, per host OS
   flags.py             # pure: Toolchain + Target -> compile/link argv

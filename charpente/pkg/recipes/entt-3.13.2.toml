@@ -1,0 +1,22 @@
+# Charpente recipe -- data only, nothing here is executed.
+[package]
+name = "entt"
+version = "3.13.2"
+license = "MIT"
+description = "Gaming meets modern C++: fast entity-component-system"
+homepage = "https://github.com/skypjack/entt"
+purl = "pkg:github/skypjack/entt"
+
+[source]
+url = "https://github.com/skypjack/entt/archive/refs/tags/v3.13.2.tar.gz"
+sha256 = "cb556aa543d01177b62de41321759e02d96078948dda72705b3d7fe68af88489"
+strip_prefix = "entt-3.13.2"
+
+[build]
+type = "header_only"
+language = "cpp"
+standard = "c++17"
+include_dirs = ["src"]
+
+[dependencies]
+requires = []

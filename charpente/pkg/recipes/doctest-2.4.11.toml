@@ -1,0 +1,23 @@
+# Charpente recipe -- data only, nothing here is executed.
+[package]
+name = "doctest"
+version = "2.4.11"
+license = "MIT"
+description = "The fastest feature-rich C++ single-header testing framework"
+homepage = "https://github.com/doctest/doctest"
+purl = "pkg:github/doctest/doctest"
+
+[source]
+url = "https://github.com/doctest/doctest/archive/refs/tags/v2.4.11.tar.gz"
+sha256 = "632ed2c05a7f53fa961381497bf8069093f0d6628c5f26286161fbd32a560186"
+strip_prefix = "doctest-2.4.11"
+
+[build]
+type = "header_only"
+language = "cpp"
+standard = "c++11"
+include_dirs = ["."]
+keep = ["doctest/**", "LICENSE.txt"]
+
+[dependencies]
+requires = []

@@ -3,6 +3,7 @@ thin: argument parsing for each command lives in that command's own module
 (commands/*.py), not here."""
 from __future__ import annotations
 
+import os
 import sys
 from typing import List, Optional
 
@@ -70,6 +71,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     except KeyboardInterrupt:
         print("\ncharpente: interrupted", file=sys.stderr)
         return 130
+    except Exception as exc:  # a bug: report it in Charpente's own format; keep the traceback on request
+        if os.environ.get("CHARPENTE_DEBUG") == "1":
+            raise
+        internal = ChError("CH9002", detail=f"{type(exc).__name__}: {exc}")
+        print(f"charpente: {internal.format()}\n  (set CHARPENTE_DEBUG=1 to see the full traceback)",
+              file=sys.stderr)
+        return 70
 
 
 if __name__ == "__main__":

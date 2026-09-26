@@ -542,6 +542,86 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** Vous avez demandé à Charpente de ne pas utiliser le réseau.
 - **Correction (FR) :** Retirez CHARPENTE_OFFLINE, ou fournissez le fichier via un miroir local ou un dossier vendor.
 
+### CH6005 — Dependencies not installed
+*FR : Dépendances non installées*
+
+- **Cause:** ws.requires(...) lists packages that have not been resolved and fetched yet (there is no charpente.lock, or the sources are not on this machine). Builds never download anything on their own.
+- **Fix:** Run `charpente pkg install` (needs the network once), or `charpente pkg vendor` output present in vendor/.
+- **Cause (FR) :** ws.requires(...) liste des paquets qui n'ont pas encore été résolus et récupérés (pas de charpente.lock, ou les sources ne sont pas sur cette machine). Un build ne télécharge jamais rien de lui-même.
+- **Correction (FR) :** Lancez `charpente pkg install` (réseau nécessaire une fois), ou fournissez le dossier vendor/ produit par `charpente pkg vendor`.
+
+### CH6006 — Problem with charpente.lock
+*FR : Problème avec charpente.lock*
+
+- **Cause:** The lock file is unreadable, from another version, or no longer matches ws.requires(...).
+- **Fix:** Run `charpente pkg install` to regenerate it (`--update` to also look for newer versions).
+- **Cause (FR) :** Le fichier de verrouillage est illisible, d'une autre version, ou ne correspond plus à ws.requires(...).
+- **Correction (FR) :** Lancez `charpente pkg install` pour le régénérer (`--update` pour chercher aussi des versions plus récentes).
+
+### CH6007 — Unknown package
+*FR : Paquet inconnu*
+
+- **Cause:** No recipe of that name exists in the bundled recipes, your recipe folders or your registries.
+- **Fix:** `charpente pkg search` lists what is available; add a registry with `charpente pkg registry add URL`, or add your own recipe folder (CHARPENTE_RECIPES).
+- **Cause (FR) :** Aucune recette de ce nom n'existe dans les recettes fournies, vos dossiers de recettes ou vos registres.
+- **Correction (FR) :** `charpente pkg search` liste ce qui est disponible ; ajoutez un registre avec `charpente pkg registry add URL`, ou votre propre dossier de recettes (CHARPENTE_RECIPES).
+
+### CH6008 — Invalid recipe
+*FR : Recette invalide*
+
+- **Cause:** A package recipe has a syntax error, an unknown key or a missing required field.
+- **Fix:** Fix what the message names; docs/packages.md documents the recipe format.
+- **Cause (FR) :** Une recette de paquet a une erreur de syntaxe, une clé inconnue ou un champ obligatoire manquant.
+- **Correction (FR) :** Corrigez ce que le message nomme ; docs/packages.md documente le format des recettes.
+
+### CH6009 — Recipe changed since it was locked
+*FR : La recette a changé depuis le verrouillage*
+
+- **Cause:** The lock file pins the exact recipe bytes; this recipe was edited or replaced afterwards.
+- **Fix:** If the change is intended, run `charpente pkg install --update`; otherwise restore the original recipe.
+- **Cause (FR) :** Le fichier de verrouillage épingle les octets exacts de la recette ; celle-ci a été modifiée ou remplacée après coup.
+- **Correction (FR) :** Si le changement est voulu, lancez `charpente pkg install --update` ; sinon restaurez la recette d'origine.
+
+### CH6010 — No version satisfies all requirements
+*FR : Aucune version ne satisfait toutes les exigences*
+
+- **Cause:** The version constraints given by your workspace and by other packages cannot all be met at once.
+- **Fix:** Relax a constraint in ws.requires(...), or add a recipe version that satisfies them.
+- **Cause (FR) :** Les contraintes de version de votre workspace et des autres paquets ne peuvent pas être satisfaites toutes ensemble.
+- **Correction (FR) :** Assouplissez une contrainte dans ws.requires(...), ou ajoutez une version de recette qui les satisfait.
+
+### CH6011 — Patch could not be applied
+*FR : Le correctif n'a pas pu être appliqué*
+
+- **Cause:** A recipe patch does not match the source it is meant to fix, or its checksum is wrong.
+- **Fix:** The recipe and the archive it points to are out of sync; report it to the recipe's author.
+- **Cause (FR) :** Un correctif de recette ne correspond pas aux sources qu'il doit corriger, ou sa somme de contrôle est erronée.
+- **Correction (FR) :** La recette et l'archive vers laquelle elle pointe ne sont pas synchronisées ; signalez-le à l'auteur de la recette.
+
+### CH6012 — Archive could not be unpacked
+*FR : L'archive n'a pas pu être décompressée*
+
+- **Cause:** The archive is corrupt, of an unsupported format, or tries to write outside its folder (refused).
+- **Fix:** Retry the download; if it repeats, the source archive is broken or hostile.
+- **Cause (FR) :** L'archive est corrompue, d'un format non pris en charge, ou tente d'écrire hors de son dossier (refusé).
+- **Correction (FR) :** Relancez le téléchargement ; si cela se répète, l'archive source est cassée ou hostile.
+
+### CH6014 — Vendor folder problem
+*FR : Problème avec le dossier vendor*
+
+- **Cause:** The vendor folder is missing its manifest or does not match it.
+- **Fix:** Regenerate it with `charpente pkg vendor`.
+- **Cause (FR) :** Le dossier vendor n'a pas son manifeste ou ne lui correspond pas.
+- **Correction (FR) :** Régénérez-le avec `charpente pkg vendor`.
+
+### CH6015 — Package name collides with a target
+*FR : Le nom du paquet entre en collision avec une cible*
+
+- **Cause:** Packages become targets named after them; a workspace target of that name already exists.
+- **Fix:** Rename your target.
+- **Cause (FR) :** Les paquets deviennent des cibles portant leur nom ; une cible du workspace porte déjà ce nom.
+- **Correction (FR) :** Renommez votre cible.
+
 ## CH7xxx — Modules
 
 ### CH7001 — Invalid version

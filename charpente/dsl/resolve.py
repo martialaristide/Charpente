@@ -73,6 +73,8 @@ def apply_overlays(target: Target, ctx: BuildContext) -> Target:
         link_libraries=list(target.link_libraries), depends_on=list(target.depends_on),
         extra_compile_flags=list(target.extra_compile_flags), extra_link_flags=list(target.extra_link_flags),
         public_include_dirs=list(target.public_include_dirs), public_define_macros=list(target.public_define_macros),
+        public_compile_flags=list(target.public_compile_flags),
+        public_link_libraries=list(target.public_link_libraries),
         uses=list(target.uses), platform_settings={k: dict(v) for k, v in target.platform_settings.items()},
         overlays=[],
     )
@@ -87,6 +89,8 @@ def apply_overlays(target: Target, ctx: BuildContext) -> Target:
         merged.extra_link_flags += o.extra_link_flags
         merged.public_include_dirs += o.public_include_dirs
         merged.public_define_macros += o.public_define_macros
+        merged.public_compile_flags += o.public_compile_flags
+        merged.public_link_libraries += o.public_link_libraries
         merged.uses += o.uses
         for key, values in o.platform_settings.items():
             merged.platform_settings.setdefault(key, {}).update(values)

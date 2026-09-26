@@ -409,6 +409,66 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "You asked Charpente not to use the network.",
         "fix": "Unset CHARPENTE_OFFLINE, or provide the file through a local mirror/vendor folder.",
     },
+    "CH6005": {
+        "title": "Dependencies not installed",
+        "message": "The packages {name} are required but not installed.",
+        "cause": "ws.requires(...) lists packages that have not been resolved and fetched yet (there is no charpente.lock, or the sources are not on this machine). Builds never download anything on their own.",
+        "fix": "Run `charpente pkg install` (needs the network once), or `charpente pkg vendor` output present in vendor/.",
+    },
+    "CH6006": {
+        "title": "Problem with charpente.lock",
+        "message": "{path}: {detail}",
+        "cause": "The lock file is unreadable, from another version, or no longer matches ws.requires(...).",
+        "fix": "Run `charpente pkg install` to regenerate it (`--update` to also look for newer versions).",
+    },
+    "CH6007": {
+        "title": "Unknown package",
+        "message": "No package named {name!r} ({where}).",
+        "cause": "No recipe of that name exists in the bundled recipes, your recipe folders or your registries.",
+        "fix": "`charpente pkg search` lists what is available; add a registry with `charpente pkg registry add URL`, or add your own recipe folder (CHARPENTE_RECIPES).",
+    },
+    "CH6008": {
+        "title": "Invalid recipe",
+        "message": "Invalid recipe {path}: {detail}",
+        "cause": "A package recipe has a syntax error, an unknown key or a missing required field.",
+        "fix": "Fix what the message names; docs/packages.md documents the recipe format.",
+    },
+    "CH6009": {
+        "title": "Recipe changed since it was locked",
+        "message": "The recipe for {name} is not the one recorded in charpente.lock (expected {expected}..., found {actual}...).",
+        "cause": "The lock file pins the exact recipe bytes; this recipe was edited or replaced afterwards.",
+        "fix": "If the change is intended, run `charpente pkg install --update`; otherwise restore the original recipe.",
+    },
+    "CH6010": {
+        "title": "No version satisfies all requirements",
+        "message": "Cannot resolve {name}: {wants}. Available versions: {available}.",
+        "cause": "The version constraints given by your workspace and by other packages cannot all be met at once.",
+        "fix": "Relax a constraint in ws.requires(...), or add a recipe version that satisfies them.",
+    },
+    "CH6011": {
+        "title": "Patch could not be applied",
+        "message": "Patch {file} failed: {detail}.",
+        "cause": "A recipe patch does not match the source it is meant to fix, or its checksum is wrong.",
+        "fix": "The recipe and the archive it points to are out of sync; report it to the recipe's author.",
+    },
+    "CH6012": {
+        "title": "Archive could not be unpacked",
+        "message": "Cannot unpack {archive}: {detail}.",
+        "cause": "The archive is corrupt, of an unsupported format, or tries to write outside its folder (refused).",
+        "fix": "Retry the download; if it repeats, the source archive is broken or hostile.",
+    },
+    "CH6014": {
+        "title": "Vendor folder problem",
+        "message": "vendor/: {detail}.",
+        "cause": "The vendor folder is missing its manifest or does not match it.",
+        "fix": "Regenerate it with `charpente pkg vendor`.",
+    },
+    "CH6015": {
+        "title": "Package name collides with a target",
+        "message": "The package {name!r} has the same name as a target of your workspace.",
+        "cause": "Packages become targets named after them; a workspace target of that name already exists.",
+        "fix": "Rename your target.",
+    },
     # ------------------------------------------------------------------ 7xxx
     "CH7001": {
         "title": "Invalid version",

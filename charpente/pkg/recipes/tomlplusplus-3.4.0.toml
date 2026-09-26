@@ -1,0 +1,22 @@
+# Charpente recipe -- data only, nothing here is executed.
+[package]
+name = "tomlplusplus"
+version = "3.4.0"
+license = "MIT"
+description = "Header-only TOML config file parser and serializer for C++17"
+homepage = "https://marzer.github.io/tomlplusplus/"
+purl = "pkg:github/marzer/tomlplusplus"
+
+[source]
+url = "https://github.com/marzer/tomlplusplus/archive/refs/tags/v3.4.0.tar.gz"
+sha256 = "8517f65938a4faae9ccf8ebb36631a38c1cadfb5efa85d9a72e15b9e97d25155"
+strip_prefix = "tomlplusplus-3.4.0"
+
+[build]
+type = "header_only"
+language = "cpp"
+standard = "c++17"
+include_dirs = ["include"]
+
+[dependencies]
+requires = []

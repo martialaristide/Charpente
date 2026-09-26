@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.5.0 -- Phase P3: DSL v2 and packages
+
+Every v0.1.0 workspace builds identically (the original tests pass unchanged).
+
+- **DSL v2.** `t.uses("engine", "fmt")` (order + link + shared settings), `public_*` /
+  `interface_*` include dirs, defines, flags, `uses_public`, `HEADER_ONLY` and `PLUGIN` kinds,
+  conditions `on_config` / `on_platform` / `on_toolchain` / `when` (resolved per build context),
+  typed options (`ws.option`, `--opt`, `charpente options`), `Rule` (your own cached build steps),
+  `ws.requires`, `ws.platforms`, `Workspace(..., version=)`. Single strings are now one item, not a
+  list of characters.
+- **`charpente.toml`**: a data-only workspace form; no code runs, no approval needed; unknown keys
+  are errors.
+- **`charpente lint`** (static, never runs the file; also quietly before every load) and
+  **`charpente migrate`** (v0.1.0 idioms to v2, diff first).
+- **Charpente Pkg.** `ws.requires("fmt@^10")`, `charpente pkg install` (resolve with backtracking,
+  verified downloads, `charpente.lock`), packages become ordinary targets built by the engine.
+  **A build never downloads.** `pkg vendor` (builds with no store and no network), `pkg mirror`
+  (HTTP with `Range`), `pkg audit` (OSV), `charpente sbom` (SPDX 2.3 + CycloneDX 1.5, validated
+  against the official schemas). Ten bundled recipes (fmt, spdlog, nlohmann_json, glm, CLI11, entt,
+  doctest, tomlplusplus, magic_enum, vulkan-headers), all built with a real compiler and rebuilt
+  offline from `vendor/`.
+- Fixed while verifying with real packages: archive extraction on Windows paths over 260
+  characters, unexpected exceptions now reported as `CH9002` instead of a raw traceback,
+  `charpente run` no longer confused by package targets.
+- Not done (documented): downloadable prebuilt binaries, vcpkg/Conan/pkg-config bridges, recipe
+  options, signed recipes.
+
 ## v0.4.0 -- Phase P2: events and modules
 
 - **Modules.** Everything that is not the core is a module, through one API

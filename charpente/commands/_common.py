@@ -33,13 +33,19 @@ def parse_options(pairs: Optional[List[str]]) -> Dict[str, str]:
     return out
 
 
-def load(file_arg: Optional[str] = None, opts: Optional[List[str]] = None) -> Workspace:
+def load(file_arg: Optional[str] = None, opts: Optional[List[str]] = None, *,
+         materialize_packages: bool = True) -> Workspace:
     """Locate then load the workspace (`--opt name=value` sets workspace options).
     Errors (missing file, trust refusal, a failing .charpente file...) are already
     coded `ChError`s and propagate."""
     entry = find_workspace_file(explicit=file_arg)
     _lint_before_running(entry)
-    return load_workspace(str(entry), options=parse_options(opts) or None)
+    workspace = load_workspace(str(entry), options=parse_options(opts) or None)
+    if materialize_packages and workspace.requires:
+        from ..pkg.materialize import materialize
+
+        materialize(workspace)          # offline: adds a target per locked package (CH6005 if not installed)
+    return workspace
 
 
 def _lint_before_running(entry: Path) -> None:
@@ -63,14 +69,14 @@ def toolchain_for_host() -> "tuple[OS, Toolchain]":
 
 
 def resolve_target(workspace: Workspace, name: Optional[str]) -> Target:
+    own = {n: t for n, t in workspace.targets.items() if not t.external}   # packages are never the default
     if name:
         if name not in workspace.targets:
             raise CommandError("CH1008", name=name, workspace=workspace.name,
                                known=", ".join(sorted(workspace.targets)) or "(none)")
         return workspace.targets[name]
-    if len(workspace.targets) == 1:
-        return next(iter(workspace.targets.values()))
-    if not workspace.targets:
+    if len(own) == 1:
+        return next(iter(own.values()))
+    if not own:
         raise CommandError("CH1010", workspace=workspace.name)
-    raise CommandError("CH1009", workspace=workspace.name, count=len(workspace.targets),
-                       known=", ".join(sorted(workspace.targets)))
+    raise CommandError("CH1009", workspace=workspace.name, count=len(own), known=", ".join(sorted(own)))

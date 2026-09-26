@@ -1,0 +1,22 @@
+# Charpente recipe -- data only, nothing here is executed.
+[package]
+name = "CLI11"
+version = "2.4.1"
+license = "BSD-3-Clause"
+description = "Command line parser for C++11"
+homepage = "https://github.com/CLIUtils/CLI11"
+purl = "pkg:github/CLIUtils/CLI11"
+
+[source]
+url = "https://github.com/CLIUtils/CLI11/archive/refs/tags/v2.4.1.tar.gz"
+sha256 = "73b7ec52261ce8fe980a29df6b4ceb66243bb0b779451dbd3d014cfec9fdbb58"
+strip_prefix = "CLI11-2.4.1"
+
+[build]
+type = "header_only"
+language = "cpp"
+standard = "c++11"
+include_dirs = ["include"]
+
+[dependencies]
+requires = []

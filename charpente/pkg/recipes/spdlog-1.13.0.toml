@@ -1,0 +1,24 @@
+# Charpente recipe -- data only, nothing here is executed.
+[package]
+name = "spdlog"
+version = "1.13.0"
+license = "MIT"
+description = "Fast C++ logging library"
+homepage = "https://github.com/gabime/spdlog"
+purl = "pkg:github/gabime/spdlog"
+
+[source]
+url = "https://github.com/gabime/spdlog/archive/refs/tags/v1.13.0.tar.gz"
+sha256 = "534f2ee1a4dcbeb22249856edfb2be76a1cf4f708a20b0ac2ed090ee24cfdbc9"
+strip_prefix = "spdlog-1.13.0"
+
+[build]
+type = "sources"
+language = "cpp"
+standard = "c++11"
+sources = ["src/spdlog.cpp", "src/stdout_sinks.cpp", "src/color_sinks.cpp", "src/file_sinks.cpp", "src/async.cpp", "src/cfg.cpp"]
+include_dirs = ["include"]
+defines = ["SPDLOG_COMPILED_LIB", "SPDLOG_FMT_EXTERNAL"]
+
+[dependencies]
+requires = ["fmt@^10.1"]

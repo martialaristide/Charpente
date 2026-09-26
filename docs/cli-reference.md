@@ -256,6 +256,27 @@ Adding a module shows what it asks for and needs your confirmation; a module not
 signed by a trusted key also needs `--allow-unsigned`; `--yes` approves the
 capabilities non-interactively.
 
+## `charpente pkg` and `charpente sbom`
+
+```
+charpente pkg install [--update] [--max-download SIZE] [--registry URL]
+charpente pkg list | check | info NAME | search [TEXT] | audit
+charpente pkg vendor [--dir DIR] [--verify]
+charpente pkg registry add|list|remove URL
+charpente pkg mirror populate DIR | serve DIR [--host H] [--port N]
+charpente sbom [--format spdx|cyclonedx|both] [--output DIR|-]
+```
+
+See [`packages.md`](packages.md). `pkg check` exits 1 unless `charpente.lock` is up to date and
+every package is installed (for CI).
+
+## `charpente lint`, `charpente migrate`, `charpente options`
+
+`lint` analyses a `.charpente` file without running it; `--strict` also fails on warnings.
+`migrate` shows a diff turning v0.1.0 idioms into DSL v2 and applies it with `--write` (keeping a
+`.bak`). `options` lists the workspace's `ws.option(...)` declarations with their current values.
+Every build-like command accepts `--opt NAME=VALUE` (repeatable).
+
 ## `charpente explain`
 
 ```

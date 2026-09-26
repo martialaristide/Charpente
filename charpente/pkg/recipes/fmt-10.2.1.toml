@@ -1,0 +1,23 @@
+# Charpente recipe -- data only, nothing here is executed.
+[package]
+name = "fmt"
+version = "10.2.1"
+license = "MIT"
+description = "A modern formatting library"
+homepage = "https://fmt.dev"
+purl = "pkg:github/fmtlib/fmt"
+
+[source]
+url = "https://github.com/fmtlib/fmt/archive/refs/tags/10.2.1.tar.gz"
+sha256 = "1250e4cc58bf06ee631567523f48848dc4596133e163f02615c97f78bab6c811"
+strip_prefix = "fmt-10.2.1"
+
+[build]
+type = "sources"
+language = "cpp"
+standard = "c++11"
+sources = ["src/format.cc", "src/os.cc"]
+include_dirs = ["include"]
+
+[dependencies]
+requires = []

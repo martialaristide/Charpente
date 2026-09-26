@@ -1,0 +1,22 @@
+# Charpente recipe -- data only, nothing here is executed.
+[package]
+name = "magic_enum"
+version = "0.9.5"
+license = "MIT"
+description = "Static reflection for enums (to string, from string, iteration) for C++17"
+homepage = "https://github.com/Neargye/magic_enum"
+purl = "pkg:github/Neargye/magic_enum"
+
+[source]
+url = "https://github.com/Neargye/magic_enum/archive/refs/tags/v0.9.5.tar.gz"
+sha256 = "44ad80db5a72f5047e01d90e18315751d9ac90c0ab42cbea7a6f9ec66a4cd679"
+strip_prefix = "magic_enum-0.9.5"
+
+[build]
+type = "header_only"
+language = "cpp"
+standard = "c++17"
+include_dirs = ["include"]
+
+[dependencies]
+requires = []

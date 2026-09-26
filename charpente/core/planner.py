@@ -65,15 +65,22 @@ def effective_scope(workspace: Workspace, toolchain: Toolchain, config: str,
     """(build order restricted to the scope, effective target of everything in the
     scope's closure). Raises the usual CH3004/CH3005 for cycles and unknown targets."""
     ctx = context_for(config, toolchain, platform_name, workspace.option_values)
-    wanted = None if only is None else set(only)
-    names = [n for n in workspace.build_order() if wanted is None or n in wanted]
+    wanted: Set[str] = set()
+    if only is None:
+        # Everything you wrote, plus the packages it actually uses -- not every package that is installed.
+        for n in workspace.build_order():
+            if not workspace.targets[n].external:
+                wanted |= resolve.closure(workspace, n)
+    else:
+        wanted = set(only)
+    names = [n for n in workspace.build_order() if n in wanted]
     needed: Set[str] = set()
     for n in names:
         needed |= resolve.closure(workspace, n)
     available = [n for n in workspace.build_order()
                  if n in needed and resolve.target_available(workspace.targets[n], ctx)]
     effective = resolve.effective_targets(workspace, available, ctx)
-    order = [n for n in resolve.topo_order(effective) if wanted is None or n in wanted]
+    order = [n for n in resolve.topo_order(effective) if n in wanted]
     return order, effective
 
 

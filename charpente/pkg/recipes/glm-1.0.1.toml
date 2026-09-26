@@ -1,0 +1,23 @@
+# Charpente recipe -- data only, nothing here is executed.
+[package]
+name = "glm"
+version = "1.0.1"
+license = "MIT"
+description = "OpenGL Mathematics: header-only C++ maths for graphics"
+homepage = "https://github.com/g-truc/glm"
+purl = "pkg:github/g-truc/glm"
+
+[source]
+url = "https://github.com/g-truc/glm/archive/refs/tags/1.0.1.tar.gz"
+sha256 = "9f3174561fd26904b23f0db5e560971cbf9b3cbda0b280f04d5c379d03bf234c"
+strip_prefix = "glm-1.0.1"
+
+[build]
+type = "header_only"
+language = "cpp"
+standard = "c++17"
+include_dirs = ["."]
+keep = ["glm/**", "copying.txt"]
+
+[dependencies]
+requires = []
