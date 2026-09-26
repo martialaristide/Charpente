@@ -11,7 +11,7 @@ from ..modules import conformance, installer, official, runtime, signing
 from ..modules.api import MANIFEST_NAME, MODULE_API_VERSION, Manifest
 from ..modules.manifest import load as load_manifest
 from ..modules.store import InstalledModule, ModuleStore
-from .cache import parse_size
+from ..units import parse_size
 
 
 def _interactive() -> bool:

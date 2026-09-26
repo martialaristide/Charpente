@@ -158,6 +158,12 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "Le fichier de workspace déclaratif a une erreur de syntaxe, une clé inconnue ou un type de valeur incorrect.",
         "fix": "Corrigez ce que le message nomme. Les clés inconnues sont des erreurs volontairement : une faute de frappe ne doit pas être ignorée en silence.",
     },
+    "CH1026": {
+        "title": 'Budget invalide',
+        "message": 'Budget invalide : {detail}',
+        "cause": 'Une taille ou une durée donnée à budget() est incompréhensible, ou le nom du budget est inconnu.',
+        "fix": 'Utilisez des tailles comme "2MB" et des durées comme "90s" ; les noms connus sont size (cibles) et build_time, total_size (espace de travail).',
+    },
     "CH1101": {
         "title": "Erreur de syntaxe dans le fichier de workspace",
         "message": "Le fichier de workspace a une erreur de syntaxe.",
@@ -716,6 +722,36 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "message": 'Aucun débogueur disponible : il faut {wanted}.',
         "cause": "Le débogage utilise gdb 14 ou plus récent (son mode DAP intégré) ou lldb-dap de LLVM ; aucun n'a été trouvé dans le PATH.",
         "fix": 'Installez gdb (MSYS2 : pacman -S mingw-w64-ucrt-x86_64-gdb ; Linux : votre gestionnaire de paquets) ou lldb de LLVM, puis lancez `charpente debug --list`.',
+    },
+    "CH8024": {
+        "title": 'Budget dépassé',
+        "message": 'Budget dépassé : {detail}',
+        "cause": 'Une sortie de build est plus grosse, ou le build plus lent, que le budget déclaré avec budget().',
+        "fix": 'Réduisez la sortie (build Release, strip, code mort) ou relevez le budget volontairement dans le fichier .charpente.',
+    },
+    "CH8025": {
+        "title": "La vérification de reproductibilité n'a pas pu s'exécuter",
+        "message": "La vérification de reproductibilité n'a pas pu s'exécuter : {detail}",
+        "cause": "L'un des deux builds a échoué : il n'y a rien à comparer.",
+        "fix": "Corrigez d'abord le build (`charpente build --reproducible` dans votre projet montre la même erreur).",
+    },
+    "CH8026": {
+        "title": 'Import impossible',
+        "message": 'Import impossible : {detail}',
+        "cause": "CMake est absent ou n'a pas pu configurer le projet, le dossier n'a pas de CMakeLists.txt, ou le fichier de sortie existe.",
+        "fix": "Installez CMake (`pip install cmake`), corrigez l'erreur de configuration CMake affichée, ou passez --force / --out.",
+    },
+    "CH8027": {
+        "title": 'Génération impossible',
+        "message": 'Impossible de générer {what} : {detail}',
+        "cause": "L'espace de travail ne s'exprime pas dans ce format (ou un fichier à écraser n'a pas été écrit par Charpente).",
+        "fix": 'Lisez le détail ; `charpente generate --list` montre les formats et ce que chacun gère.',
+    },
+    "CH8028": {
+        "title": 'Cache partagé inutilisable',
+        "message": 'Le cache partagé ne peut pas être utilisé : {detail}',
+        "cause": 'CHARPENTE_REMOTE_CACHE est mal formé, ou désigne un serveur HTTP non protégé sur une autre machine.',
+        "fix": "Corrigez l'adresse ; définissez CHARPENTE_CACHE_SIGNING_KEY (recommandé), utilisez https, ou CHARPENTE_REMOTE_CACHE_INSECURE=1 pour accepter le risque.",
     },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {

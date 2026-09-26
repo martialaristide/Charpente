@@ -49,6 +49,9 @@ def add_engine_args(parser: argparse.ArgumentParser, *, output: bool = True) -> 
                              "needs Clang or GCC with sanitizer runtimes)")
     parser.add_argument("--coverage", action="store_true",
                         help="Instrument the build for gcov-style coverage (own build directory)")
+    parser.add_argument("--reproducible", action="store_true",
+                        help="Build so the output does not depend on the folder or the time of the build (own build directory; "
+                             "see `charpente verify-reproducible`)")
     parser.add_argument("--toolchain", metavar="NAME", default=None,
                         help="Use this toolchain instead of the first detected one (`charpente toolchain list`)")
     if output:

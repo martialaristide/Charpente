@@ -106,6 +106,11 @@ def toolchain_for(parsed: argparse.Namespace, workspace: Optional[Workspace] = N
 
         toolchain = variants.require(variants.sanitize(toolchain, [k for k in sanitize_kinds.split(",") if k]),
                                      "sanitizers")
+    if getattr(parsed, "reproducible", False):
+        from .. import variants
+
+        toolchain = variants.require(variants.reproducible(toolchain, workspace.root if workspace is not None else find_root()),
+                                     "reproducible builds")
     if getattr(parsed, "coverage", False):
         from .. import variants
 

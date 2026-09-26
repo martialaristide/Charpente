@@ -32,8 +32,11 @@ class ToolIdentity:
     version: str
     digest: str
 
-    def key(self) -> str:
-        """The string mixed into action keys."""
+    def key(self, portable: bool = False) -> str:
+        """The string mixed into action keys. `portable` leaves the install path out (version and the binary's digest identify the tool
+        on any machine: what a cache shared between machines needs)."""
+        if portable:
+            return f"{self.version}|{self.digest}"
         return f"{self.path}|{self.version}|{self.digest}"
 
     @property

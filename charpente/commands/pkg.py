@@ -15,8 +15,8 @@ from ..pkg import materialize, mirror, sbom, vendor
 from ..pkg.index import RecipeIndex
 from ..pkg.recipe import Recipe
 from ..pkg.store import PackageStore
+from ..units import parse_size
 from ._common import load
-from .cache import parse_size
 
 
 def _index(workspace: Optional[Workspace], store: PackageStore, extra: Optional[List[str]] = None) -> RecipeIndex:

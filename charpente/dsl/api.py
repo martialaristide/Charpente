@@ -198,6 +198,13 @@ class Workspace:
         self._model.option_values[name] = value
         return value
 
+    def budget(self, *, build_time: Optional[Any] = None, total_size: Optional[Any] = None) -> "Workspace":
+        """Limits for the whole build, checked after `charpente build`: `ws.budget(build_time="90s", total_size="40MB")`."""
+        from ..budgets import parse_workspace_budget
+
+        self._model.budgets.update(parse_workspace_budget({"build_time": build_time, "total_size": total_size}))
+        return self
+
     def on(self, event: Event) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Decorator: run a function when an event happens (see `charpente.hooks`)."""
         if not isinstance(event, Event):
@@ -413,6 +420,13 @@ class Target:
 
     def link_flags(self, flags: Strings) -> "Target":
         self._model.extra_link_flags.extend(_as_list(flags))
+        return self
+
+    def budget(self, *, size: Optional[Any] = None) -> "Target":
+        """The output of this target must stay under `size` ("2MB", or bytes); checked after `charpente build`."""
+        from ..budgets import parse_target_budget
+
+        self._model.budgets.update(parse_target_budget({"size": size}))
         return self
 
     def output_prefix(self, prefix: str) -> "Target":

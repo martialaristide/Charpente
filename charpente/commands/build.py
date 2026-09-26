@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from typing import List
 
 from ..builder import BuildResult, build_workspace
@@ -35,12 +36,35 @@ def print_result_lines(session: Session, result: BuildResult, *, ai_diagnose: bo
               f"{counts['up_to_date']} up to date.")
 
 
+def check_budgets(session: Session, workspace: object, result: BuildResult) -> int:
+    """Print and emit the budget findings of a finished build; 1 when any is exceeded, else 0."""
+    from .. import budgets
+
+    outputs = {t.target_name: t.output_path for t in result.targets if t.output_path is not None}
+    findings = budgets.evaluate(workspace, outputs, result.duration)  # type: ignore[arg-type]
+    exceeded = 0
+    for finding in findings:
+        kind = "budget.checked" if finding.ok else "budget.exceeded"
+        session.bus.emit(kind, scope=finding.scope, kind=finding.kind, limit=float(finding.limit), actual=float(finding.actual))
+        if not finding.ok:
+            exceeded += 1
+        if not session.machine:
+            print(f"  [{'budget ok' if finding.ok else 'OVER BUDGET'}] {finding.describe()}")
+    session.flush()
+    if exceeded and not session.machine:
+        from ..errors import ChError
+
+        print(f"charpente: [CH8024] {ChError('CH8024', detail=f'{exceeded} budget(s) over their limit').message}", file=sys.stderr)
+    return 1 if exceeded else 0
+
+
 def execute(args: List[str]) -> int:
     parser = argparse.ArgumentParser(prog="charpente build", description="Compile the workspace.")
     parser.add_argument("--file", help="Path to the .charpente workspace file")
     parser.add_argument("--config", default="Debug", choices=["Debug", "Release"])
     parser.add_argument("--keep-going", action="store_true",
                         help="Keep building unrelated targets after a failure")
+    parser.add_argument("--no-budget", action="store_true", help="Do not check the budgets declared with ws.budget()/t.budget()")
     parser.add_argument("--ai-diagnose", action="store_true",
                         help="On failure, ask the configured AI provider to diagnose the error "
                              "(never automatic: costs a request and sends the error text to "
@@ -58,7 +82,9 @@ def execute(args: List[str]) -> int:
                                  use_cache=not parsed.no_cache)
         print_result_lines(session, result, ai_diagnose=parsed.ai_diagnose, toolchain_name=toolchain.name)
         code = 130 if result.interrupted else (0 if result.ok else 1)
-        session.finish(result.ok, code)
+        if result.ok and not parsed.no_budget:
+            code = check_budgets(session, workspace, result) or code
+        session.finish(code == 0, code)
     return code
 
 

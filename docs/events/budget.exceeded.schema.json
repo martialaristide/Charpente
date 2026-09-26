@@ -1,0 +1,67 @@
+{
+  "$id": "https://charpente.dev/schemas/events/v1/budget.exceeded.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "id": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "parent_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "payload": {
+      "additionalProperties": true,
+      "properties": {
+        "actual": {
+          "type": "number"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "number"
+        },
+        "scope": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scope",
+        "kind",
+        "limit",
+        "actual"
+      ],
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "number"
+    },
+    "type": {
+      "const": "budget.exceeded"
+    },
+    "wall_time": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "parent_id",
+    "timestamp",
+    "wall_time",
+    "session_id",
+    "type",
+    "payload"
+  ],
+  "title": "budget.exceeded",
+  "type": "object"
+}

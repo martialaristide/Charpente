@@ -157,6 +157,8 @@ class Target:
     shader_target: str = ""
     #: True for targets materialised from `ws.requires(...)` packages.
     external: bool = False
+    #: `t.budget(size="2MB")`: limits the build output must stay under (see budgets.py); name -> bytes.
+    budgets: Dict[str, int] = field(default_factory=dict)
 
     # Filled in by the loader once the workspace's own directory is known;
     # never set directly from a .charpente file.
@@ -231,6 +233,8 @@ class Workspace:
     #: `ws.package_settings("freertos", include_dirs=[...])`: per-workspace tuning of a package's own build
     #: (include dirs, defines, flags, extra `uses`); package name -> setting -> values.
     package_settings: Dict[str, Dict[str, List[str]]] = field(default_factory=dict)
+    #: `ws.budget(build_time="90s", total_size="40MB")`: limits for the whole build (seconds / bytes).
+    budgets: Dict[str, float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         _validate_name(self.name, "Workspace name")

@@ -9,8 +9,8 @@ from typing import List
 from ..builder import state_dir
 from ..core import history
 from ..errors import ChError
+from ..units import human_size as _human_size
 from ._common import load
-from .cache import human as _human_size
 
 
 def execute(args: List[str]) -> int:

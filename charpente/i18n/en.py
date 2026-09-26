@@ -164,6 +164,12 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "The declarative workspace file has a syntax error, an unknown key or a wrong value type.",
         "fix": "Fix what the message names. Unknown keys are errors on purpose: a typo must not be silently ignored.",
     },
+    "CH1026": {
+        "title": 'Invalid budget',
+        "message": 'Invalid budget: {detail}',
+        "cause": 'A size or duration given to budget() could not be understood, or the budget name is unknown.',
+        "fix": 'Use sizes like "2MB" and durations like "90s"; the known names are size (targets) and build_time, total_size (workspace).',
+    },
     "CH1101": {
         "title": "Syntax error in the workspace file",
         "message": "The workspace file has a syntax error.",
@@ -722,6 +728,36 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "message": 'No debugger available: needs {wanted}.',
         "cause": 'Debugging uses gdb 14 or newer (its built-in DAP mode) or lldb-dap from LLVM; neither was found on PATH.',
         "fix": "Install gdb (MSYS2: pacman -S mingw-w64-ucrt-x86_64-gdb; Linux: your package manager) or LLVM's lldb, then run `charpente debug --list`.",
+    },
+    "CH8024": {
+        "title": 'Budget exceeded',
+        "message": 'Budget exceeded: {detail}',
+        "cause": 'A build output is bigger, or the build slower, than the budget declared with budget().',
+        "fix": 'Shrink the output (Release build, strip, remove dead code) or raise the budget on purpose in the .charpente file.',
+    },
+    "CH8025": {
+        "title": 'Reproducibility check could not run',
+        "message": 'The reproducibility check could not run: {detail}',
+        "cause": 'One of the two builds failed, so there is nothing to compare.',
+        "fix": 'Fix the build first (`charpente build --reproducible` in your project shows the same error).',
+    },
+    "CH8026": {
+        "title": 'Import failed',
+        "message": 'Import failed: {detail}',
+        "cause": 'CMake is missing or could not configure the project, the folder has no CMakeLists.txt, or the output file exists.',
+        "fix": 'Install CMake (`pip install cmake`), fix the CMake configuration error shown, or pass --force / --out.',
+    },
+    "CH8027": {
+        "title": 'Generation failed',
+        "message": 'Cannot generate {what}: {detail}',
+        "cause": 'The workspace cannot be expressed in that format (or a file it would overwrite was not written by Charpente).',
+        "fix": 'Read the detail; `charpente generate --list` shows the formats and what each supports.',
+    },
+    "CH8028": {
+        "title": 'Shared cache not usable',
+        "message": 'The shared cache cannot be used: {detail}',
+        "cause": 'CHARPENTE_REMOTE_CACHE is malformed, or names an unprotected plain-HTTP server on another machine.',
+        "fix": 'Fix the address; set CHARPENTE_CACHE_SIGNING_KEY (recommended), use https, or set CHARPENTE_REMOTE_CACHE_INSECURE=1 to accept the risk.',
     },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {

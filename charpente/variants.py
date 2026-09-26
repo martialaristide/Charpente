@@ -49,6 +49,28 @@ def coverage(toolchain: Toolchain) -> Toolchain:
     return with_flags(toolchain, "cov", ("--coverage", "-O0"), ("--coverage",))
 
 
+SOURCE_DATE_EPOCH = "1700000000"                 # the fixed time reproducible builds see (2023-11-14); __DATE__/__TIME__ follow it in GCC/Clang
+
+
+def reproducible(toolchain: Toolchain, root: Path) -> Toolchain:
+    """A flavour whose output does not depend on where or when it was built: the project folder is mapped to `/src` in everything
+    the compiler embeds (paths in debug info, `__FILE__`, assertion messages), the clock is fixed (`SOURCE_DATE_EPOCH`), the linker
+    writes no timestamp or build-id, and archives are deterministic. The flavour is named `repro`.
+
+    GNU-style toolchains only (MSVC-style ones need `/Brepro`, which Charpente does not drive yet). macOS linkers are given no extra flags.
+    """
+    _need_gnu(toolchain, "reproducible builds")
+    prefix = f"-ffile-prefix-map={root.resolve()}=/src"
+    link: Tuple[str, ...] = ()
+    if toolchain.name == "mingw" or toolchain.target.startswith("windows"):
+        link = ("-Wl,--no-insert-timestamp",)
+    elif toolchain.name in ("gcc", "clang") and not toolchain.target.startswith(("macos", "ios")):
+        link = ("-Wl,--build-id=none",)
+    flavoured = with_flags(toolchain, "repro", (prefix,), link)
+    return replace(flavoured, env=(*toolchain.env, ("SOURCE_DATE_EPOCH", SOURCE_DATE_EPOCH), ("TZ", "UTC"), ("LC_ALL", "C")),
+                   extras=(*toolchain.extras, ("deterministic_ar", "1")))
+
+
 def _reason(output: str, fallback: str) -> str:
     """The most informative line of a failed probe: the tool's own words about what is missing or unsupported."""
     lines = [line.strip() for line in output.splitlines() if line.strip()]

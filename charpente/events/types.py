@@ -72,6 +72,9 @@ EVENT_TYPES: Dict[str, Dict[str, str]] = {
     "deploy.installing": {"device": "str", "artifact": "str"},
     "deploy.launched": {"device": "str", "app": "str?"},
     "deploy.log": {"device": "str", "level": "str?", "line": "str"},
+    # -- budgets ------------------------------------------------------------
+    "budget.checked": {"scope": "str", "kind": "str", "limit": "float", "actual": "float"},
+    "budget.exceeded": {"scope": "str", "kind": "str", "limit": "float", "actual": "float"},
     # -- resources ----------------------------------------------------------
     "resource.low_disk": {"path": "str", "free_bytes": "int"},
     "resource.low_memory": {"free_bytes": "int"},

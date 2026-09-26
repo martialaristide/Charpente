@@ -22,13 +22,12 @@ import time
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ..errors import ChError
 from ..events import EventBus
 from . import depscan, diagnostics, hashing, process
 from .actions import DEP_GNU, DEP_MSVC, Action
-from .cache import LocalCache
 from .graph import ActionGraph
 from .statcache import StatCache
 from .state import MISSING, ActionRecord, FileHasher, StateDB
@@ -111,7 +110,8 @@ class Engine:
         state: StateDB,
         bus: EventBus,
         *,
-        cache: Optional[LocalCache] = None,
+        cache: Optional[Any] = None,
+        relocatable: bool = False,
         runner: Optional[process.Runner] = None,
         jobs: int = 0,
         keep_going: bool = False,
@@ -120,6 +120,9 @@ class Engine:
         self.state = state
         self.bus = bus
         self.cache = cache
+        #: keys and cached manifests name project files relative to `root`, so another checkout of the same sources (another folder,
+        #: another machine) finds the same entries. Sound only when outputs do not embed the folder: the reproducible flavour.
+        self.relocatable = relocatable and root is not None
         self.runner = runner
         self.jobs = jobs if jobs > 0 else default_jobs()
         self.keep_going = keep_going
@@ -154,16 +157,33 @@ class Engine:
     def _input_digests(self, action: Action) -> Dict[str, str]:
         return {str(p): self.hasher.digest(p) for p in action.inputs}
 
+    def _canon(self, text: str) -> str:
+        """`text` with the project folder replaced by `@ROOT@` (only in relocatable mode)."""
+        if not self.relocatable or self.root is None:
+            return text
+        base = str(self.root)
+        return text.replace(base, "@ROOT@").replace(base.replace("\\", "/"), "@ROOT@")
+
+    def _uncanon(self, text: str) -> str:
+        return text.replace("@ROOT@", str(self.root)) if self.relocatable and self.root is not None else text
+
     def _key1(self, action: Action, inputs: Dict[str, str], env: List[Tuple[str, str]], tool: ToolIdentity) -> str:
+        if not self.relocatable:
+            return hashing.digest_parts(
+                "charpente-action/1", action.kind, json.dumps(list(action.argv)), str(action.cwd or ""),
+                json.dumps(env), tool.key(), json.dumps(sorted(inputs.items())),
+                json.dumps([str(o) for o in action.outputs]),
+            )
+        canon = self._canon
         return hashing.digest_parts(
-            "charpente-action/1", action.kind, json.dumps(list(action.argv)), str(action.cwd or ""),
-            json.dumps(env), tool.key(), json.dumps(sorted(inputs.items())),
-            json.dumps([str(o) for o in action.outputs]),
+            "charpente-action/1+relocatable", action.kind, json.dumps([canon(a) for a in action.argv]), canon(str(action.cwd or "")),
+            json.dumps([(name, canon(value)) for name, value in env]), tool.key(portable=True),
+            json.dumps(sorted((canon(path), digest) for path, digest in inputs.items())), json.dumps([canon(str(o)) for o in action.outputs]),
         )
 
     def _key2(self, key1: str, deps: List[str]) -> str:
         return hashing.digest_parts("charpente-deps/1", key1,
-                                    json.dumps([[d, self.hasher.digest(d)] for d in sorted(deps)]))
+                                    json.dumps(sorted([self._canon(d), self.hasher.digest(d)] for d in deps)))
 
     # ========================================================== freshness
     def evaluate(self, action: Action, *, rebuilt_upstream: Optional[List[str]] = None) -> Decision:
@@ -358,7 +378,7 @@ class Engine:
     def _try_cache(self, action: Action, key1: str, inputs: Dict[str, str], env: List[Tuple[str, str]],
                    tool: ToolIdentity, decision: Decision) -> Optional[ActionResult]:
         assert self.cache is not None
-        candidates: List[List[str]] = self.cache.manifest(key1) if action.dep_format else [[]]
+        candidates: List[List[str]] = [[self._uncanon(d) for d in deps] for deps in self.cache.manifest(key1)] if action.dep_format else [[]]
         for deps in candidates:
             entry = self.cache.lookup(self._key2(key1, deps) if action.dep_format else key1)
             if entry is None:
@@ -369,11 +389,15 @@ class Engine:
                 continue
             self._record(action, key1, inputs, env, tool, deps, entry.duration)
             self.bus.emit("action.cache_hit", action=action.id, target=action.target, kind=action.kind,
-                          source="local", outputs=[str(o) for o in action.outputs])
+                          source=self._origin(self._key2(key1, deps) if action.dep_format else key1), outputs=[str(o) for o in action.outputs])
             output = "\n".join(p for p in (entry.stdout, entry.stderr) if p.strip())
             self._diagnose(action, output)
             return ActionResult(action.id, STATUS_CACHE_HIT, output=output, reasons=decision.reasons)
         return None
+
+    def _origin(self, key: str) -> str:
+        origin = getattr(self.cache, "origin", None)
+        return str(origin(key)) if callable(origin) else "local"
 
     def _execute(self, action: Action, decision: Decision, key1: str, inputs: Dict[str, str],
                  env: List[Tuple[str, str]], tool: ToolIdentity, begin: float) -> ActionResult:
@@ -437,7 +461,7 @@ class Engine:
             if self.cache.store(self._key2(key1, dep_strs) if action.dep_format else key1,
                                 list(action.outputs), stdout=stdout, stderr=stderr, duration=duration):
                 if action.dep_format:
-                    self.cache.add_to_manifest(key1, dep_strs)
+                    self.cache.add_to_manifest(key1, [self._canon(d) for d in dep_strs])
 
         if output:
             self.bus.emit("action.output", action=action.id, target=action.target, stream="combined", text=output)

@@ -137,7 +137,8 @@ def link_args(
     if target.kind == Kind.STATIC_LIBRARY:
         if fam == "msvc":
             return [toolchain.archiver, *toolchain.ar_args, f"/OUT:{output}", "/nologo", *[str(o) for o in objects]]
-        return [toolchain.archiver, *toolchain.ar_args, "rcs", str(output), *[str(o) for o in objects]]
+        modifiers = "rcsD" if ("deterministic_ar", "1") in toolchain.extras else "rcs"       # D: no timestamps or owners in the archive
+        return [toolchain.archiver, *toolchain.ar_args, modifiers, str(output), *[str(o) for o in objects]]
 
     if fam == "msvc":
         args = [toolchain.linker, *toolchain.ld_args, *[str(o) for o in objects], f"/Fe{output}", "/nologo"]

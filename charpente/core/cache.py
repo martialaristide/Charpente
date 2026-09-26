@@ -164,6 +164,10 @@ class LocalCache:
             return False
         return True
 
+    def write_entry(self, key: str, data: Dict[str, Any]) -> None:
+        """Store an entry record fetched from elsewhere (its blobs must already be here)."""
+        _atomic_write(self._entry_path(key), json.dumps(data).encode("utf-8"))
+
     def restore(self, entry: CacheEntry, destinations: Sequence[Path]) -> bool:
         """Copy the cached files to `destinations` (same order as stored)."""
         if len(entry.outputs) != len(destinations):

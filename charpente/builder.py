@@ -23,6 +23,7 @@ from .core import planner as planner_mod
 from .core.cache import LocalCache
 from .core.planner import Plan, plan_workspace
 from .core.planner import build_dir as _build_dir
+from .core.remote import TieredCache, from_environment
 from .core.statcache import StatCache
 from .core.state import StateDB
 from .core.toolid import ToolIdentities
@@ -60,6 +61,11 @@ class BuildResult:
 
     def target(self, name: str) -> Optional[TargetResult]:
         return next((t for t in self.targets if t.target_name == name), None)
+
+
+def open_cache() -> "LocalCache | TieredCache":
+    """The content cache: the local one, with the shared cache behind it when CHARPENTE_REMOTE_CACHE is set."""
+    return from_environment(LocalCache())
 
 
 def build_dir(workspace: Workspace, config: str, target: Target, toolchain: Optional[Toolchain] = None) -> Path:
@@ -278,10 +284,14 @@ def _build(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: st
 
     state = StateDB(state_dir(workspace) / "state.db")
     try:
-        the_cache = cache if cache is not None else (LocalCache() if use_cache else None)
-        engine = engine_mod.Engine(state, events, cache=the_cache, runner=run, jobs=jobs,
-                                   keep_going=keep_going, root=workspace.root)
+        the_cache = cache if cache is not None else (open_cache() if use_cache else None)
+        engine = engine_mod.Engine(state, events, cache=the_cache, runner=run, jobs=jobs, keep_going=keep_going, root=workspace.root,
+                                   relocatable=toolchain.variant == "repro" or os.environ.get("CHARPENTE_CACHE_RELOCATABLE") == "1")
         result = engine.run(graph, only=runnable)
+        if isinstance(the_cache, TieredCache):
+            the_cache.flush()                                          # uploads to the shared cache finish before the process can exit
+            for warning in the_cache.remote.warnings:
+                events.emit("hint.emitted", code="cache.remote", message=warning)
         for hint in analysis.hints_from_reasons({aid: r.reasons for aid, r in result.results.items()
                                                  if r.status == engine_mod.STATUS_EXECUTED}, workspace.root):
             events.emit("hint.emitted", code=hint.code, message=hint.message, detail=dict(hint.detail))

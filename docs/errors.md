@@ -212,6 +212,14 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** Le fichier de workspace déclaratif a une erreur de syntaxe, une clé inconnue ou un type de valeur incorrect.
 - **Correction (FR) :** Corrigez ce que le message nomme. Les clés inconnues sont des erreurs volontairement : une faute de frappe ne doit pas être ignorée en silence.
 
+### CH1026 — Invalid budget
+*FR : Budget invalide*
+
+- **Cause:** A size or duration given to budget() could not be understood, or the budget name is unknown.
+- **Fix:** Use sizes like "2MB" and durations like "90s"; the known names are size (targets) and build_time, total_size (workspace).
+- **Cause (FR) :** Une taille ou une durée donnée à budget() est incompréhensible, ou le nom du budget est inconnu.
+- **Correction (FR) :** Utilisez des tailles comme "2MB" et des durées comme "90s" ; les noms connus sont size (cibles) et build_time, total_size (espace de travail).
+
 ### CH1101 — Syntax error in the workspace file
 *FR : Erreur de syntaxe dans le fichier de workspace*
 
@@ -961,6 +969,46 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Fix:** Install gdb (MSYS2: pacman -S mingw-w64-ucrt-x86_64-gdb; Linux: your package manager) or LLVM's lldb, then run `charpente debug --list`.
 - **Cause (FR) :** Le débogage utilise gdb 14 ou plus récent (son mode DAP intégré) ou lldb-dap de LLVM ; aucun n'a été trouvé dans le PATH.
 - **Correction (FR) :** Installez gdb (MSYS2 : pacman -S mingw-w64-ucrt-x86_64-gdb ; Linux : votre gestionnaire de paquets) ou lldb de LLVM, puis lancez `charpente debug --list`.
+
+### CH8024 — Budget exceeded
+*FR : Budget dépassé*
+
+- **Cause:** A build output is bigger, or the build slower, than the budget declared with budget().
+- **Fix:** Shrink the output (Release build, strip, remove dead code) or raise the budget on purpose in the .charpente file.
+- **Cause (FR) :** Une sortie de build est plus grosse, ou le build plus lent, que le budget déclaré avec budget().
+- **Correction (FR) :** Réduisez la sortie (build Release, strip, code mort) ou relevez le budget volontairement dans le fichier .charpente.
+
+### CH8025 — Reproducibility check could not run
+*FR : La vérification de reproductibilité n'a pas pu s'exécuter*
+
+- **Cause:** One of the two builds failed, so there is nothing to compare.
+- **Fix:** Fix the build first (`charpente build --reproducible` in your project shows the same error).
+- **Cause (FR) :** L'un des deux builds a échoué : il n'y a rien à comparer.
+- **Correction (FR) :** Corrigez d'abord le build (`charpente build --reproducible` dans votre projet montre la même erreur).
+
+### CH8026 — Import failed
+*FR : Import impossible*
+
+- **Cause:** CMake is missing or could not configure the project, the folder has no CMakeLists.txt, or the output file exists.
+- **Fix:** Install CMake (`pip install cmake`), fix the CMake configuration error shown, or pass --force / --out.
+- **Cause (FR) :** CMake est absent ou n'a pas pu configurer le projet, le dossier n'a pas de CMakeLists.txt, ou le fichier de sortie existe.
+- **Correction (FR) :** Installez CMake (`pip install cmake`), corrigez l'erreur de configuration CMake affichée, ou passez --force / --out.
+
+### CH8027 — Generation failed
+*FR : Génération impossible*
+
+- **Cause:** The workspace cannot be expressed in that format (or a file it would overwrite was not written by Charpente).
+- **Fix:** Read the detail; `charpente generate --list` shows the formats and what each supports.
+- **Cause (FR) :** L'espace de travail ne s'exprime pas dans ce format (ou un fichier à écraser n'a pas été écrit par Charpente).
+- **Correction (FR) :** Lisez le détail ; `charpente generate --list` montre les formats et ce que chacun gère.
+
+### CH8028 — Shared cache not usable
+*FR : Cache partagé inutilisable*
+
+- **Cause:** CHARPENTE_REMOTE_CACHE is malformed, or names an unprotected plain-HTTP server on another machine.
+- **Fix:** Fix the address; set CHARPENTE_CACHE_SIGNING_KEY (recommended), use https, or set CHARPENTE_REMOTE_CACHE_INSECURE=1 to accept the risk.
+- **Cause (FR) :** CHARPENTE_REMOTE_CACHE est mal formé, ou désigne un serveur HTTP non protégé sur une autre machine.
+- **Correction (FR) :** Corrigez l'adresse ; définissez CHARPENTE_CACHE_SIGNING_KEY (recommandé), utilisez https, ou CHARPENTE_REMOTE_CACHE_INSECURE=1 pour accepter le risque.
 
 ## CH9xxx — Internal
 

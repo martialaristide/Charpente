@@ -103,6 +103,13 @@ A field ending in `?` is optional. Adding an optional field is not a breaking ch
 | `deploy.launched` | `device: str`, `app: str?` |
 | `deploy.log` | `device: str`, `level: str?`, `line: str` |
 
+## budget
+
+| Event | Payload |
+|---|---|
+| `budget.checked` | `scope: str`, `kind: str`, `limit: float`, `actual: float` |
+| `budget.exceeded` | `scope: str`, `kind: str`, `limit: float`, `actual: float` |
+
 ## resource
 
 | Event | Payload |
