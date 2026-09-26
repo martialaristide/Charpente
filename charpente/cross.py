@@ -39,10 +39,15 @@ def can_target(toolchain: Toolchain, platform: platforms.Platform) -> bool:
     return platform.name in toolchain.targets
 
 
-def specialise(toolchain: Toolchain, platform: platforms.Platform) -> Toolchain:
-    """A copy of `toolchain` that builds for `platform`."""
+def specialise(toolchain: Toolchain, platform: platforms.Platform, android_api: Optional[int] = None) -> Toolchain:
+    """A copy of `toolchain` that builds for `platform`. `android_api` is the minimum Android API level
+    (the manifest's minSdkVersion) when the platform is Android."""
     if not can_target(toolchain, platform):
         raise ChError("CH8002", platform=platform.name, hint=_hint(platform))
+    if toolchain.name == "ndk":
+        from . import android
+
+        return android.specialise_ndk(toolchain, platform.name, android_api or android.DEFAULT_API)
     if toolchain.name == "zig":
         triple = platform.triple(_ZIG_ABI.get(platform.os))
         target = ("-target", triple)
@@ -60,7 +65,7 @@ def _hint(platform: platforms.Platform) -> str:
 
 
 def select(platform_name: Optional[str], toolchain_name: Optional[str], *,
-           detect: Optional[DetectFn] = None) -> Tuple[OS, Toolchain]:
+           detect: Optional[DetectFn] = None, android_api: Optional[int] = None) -> Tuple[OS, Toolchain]:
     """(target OS, toolchain) for the requested platform/toolchain (either may be None)."""
     find = detect or toolchains.detect
     here = host_os()
@@ -83,7 +88,7 @@ def select(platform_name: Optional[str], toolchain_name: Optional[str], *,
         return here, candidates[0]
     for candidate in candidates:
         if can_target(candidate, wanted):
-            return os_of(wanted), specialise(candidate, wanted)
+            return os_of(wanted), specialise(candidate, wanted, android_api)
     raise ChError("CH8002", platform=wanted.name, hint=_hint(wanted))
 
 

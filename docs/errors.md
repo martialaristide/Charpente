@@ -786,6 +786,46 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** La toolchain est inconnue, la version n'existe pas pour cette machine, ou le dossier n'a pas pu être modifié.
 - **Correction (FR) :** `charpente toolchain list` montre ce qui est installé ; les versions sont listées sur la page de téléchargement de l'éditeur.
 
+### CH8006 — Invalid platform setting
+*FR : Réglage de plateforme invalide*
+
+- **Cause:** A value declared for the platform (its application id, SDK levels...) is missing or not valid.
+- **Fix:** Correct it in the .charpente file, e.g. t.platform_settings("android", package="com.example.app").
+- **Cause (FR) :** Une valeur déclarée pour la plateforme (identifiant d'application, niveaux de SDK...) manque ou est invalide.
+- **Correction (FR) :** Corrigez-la dans le fichier .charpente, p. ex. t.platform_settings("android", package="com.exemple.app").
+
+### CH8007 — A platform tool is missing
+*FR : Un outil de la plateforme manque*
+
+- **Cause:** Building or packaging for this platform needs a tool that is not installed or not found.
+- **Fix:** Install it as the message says; `charpente doctor` shows what is found.
+- **Cause (FR) :** Construire ou empaqueter pour cette plateforme exige un outil qui n'est pas installé ou pas trouvé.
+- **Correction (FR) :** Installez-le comme indiqué ; `charpente doctor` montre ce qui est trouvé.
+
+### CH8008 — A packaging step failed
+*FR : Une étape d'empaquetage a échoué*
+
+- **Cause:** One of the platform's packaging tools returned an error.
+- **Fix:** Read the tool's message above; run with the same arguments to reproduce.
+- **Cause (FR) :** Un des outils d'empaquetage de la plateforme a renvoyé une erreur.
+- **Correction (FR) :** Lisez le message de l'outil ci-dessus ; relancez avec les mêmes arguments pour reproduire.
+
+### CH8009 — No usable device
+*FR : Aucun appareil utilisable*
+
+- **Cause:** Deploying needs exactly one connected and authorised device or running emulator.
+- **Fix:** Connect or start one (`adb devices`), or pick with --device SERIAL.
+- **Cause (FR) :** Le déploiement exige exactement un appareil ou émulateur connecté et autorisé.
+- **Correction (FR) :** Branchez ou démarrez-en un (`adb devices`), ou choisissez avec --device SERIE.
+
+### CH8010 — License not accepted
+*FR : Licence non acceptée*
+
+- **Cause:** Charpente never accepts a vendor's license for you. The agreement's text was printed above.
+- **Fix:** Read it (full terms: {url}); if you agree, repeat the command with --accept-android-license.
+- **Cause (FR) :** Charpente n'accepte jamais la licence d'un éditeur à votre place. Le texte de l'accord a été affiché ci-dessus.
+- **Correction (FR) :** Lisez-le (conditions complètes : {url}) ; si vous êtes d'accord, relancez la commande avec --accept-android-license.
+
 ## CH9xxx — Internal
 
 ### CH9001 — Command must be a list of arguments

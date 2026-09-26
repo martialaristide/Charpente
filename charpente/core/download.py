@@ -36,11 +36,22 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def sha1_file(path: Path) -> str:
+    """SHA-1, only for vendors that publish nothing stronger (the Android SDK repository). Charpente's
+    own downloads use SHA-256."""
+    h = hashlib.sha1()
+    with open(path, "rb") as handle:
+        for block in iter(lambda: handle.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
 def download(
     url: str,
     dest: Path,
     *,
     sha256: Optional[str] = None,
+    sha1: Optional[str] = None,
     max_bytes: Optional[int] = None,
     retries: int = 3,
     timeout: float = 30.0,
@@ -72,14 +83,15 @@ def download(
             if attempt == retries:
                 raise ChError("CH6001", url=url, detail=last_error) from exc
             time.sleep(backoff * (2 ** attempt))
-    if sha256 is not None:
-        actual = sha256_file(part)
-        if actual.lower() != sha256.lower():
-            try:
-                part.unlink()
-            except OSError:
-                pass
-            raise ChError("CH6002", url=url, expected=sha256.lower(), actual=actual)
+    for expected, digest in ((sha256, sha256_file), (sha1, sha1_file)):
+        if expected is not None:
+            actual = digest(part)
+            if actual.lower() != expected.lower():
+                try:
+                    part.unlink()
+                except OSError:
+                    pass
+                raise ChError("CH6002", url=url, expected=expected.lower(), actual=actual)
     os.replace(part, dest)
     return dest
 

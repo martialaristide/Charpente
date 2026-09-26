@@ -585,6 +585,36 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "La toolchain est inconnue, la version n'existe pas pour cette machine, ou le dossier n'a pas pu être modifié.",
         "fix": "`charpente toolchain list` montre ce qui est installé ; les versions sont listées sur la page de téléchargement de l'éditeur.",
     },
+    "CH8006": {
+        "title": "Réglage de plateforme invalide",
+        "message": "Réglages {platform} invalides : {detail}",
+        "cause": "Une valeur déclarée pour la plateforme (identifiant d'application, niveaux de SDK...) manque ou est invalide.",
+        "fix": "Corrigez-la dans le fichier .charpente, p. ex. t.platform_settings(\"android\", package=\"com.exemple.app\").",
+    },
+    "CH8007": {
+        "title": "Un outil de la plateforme manque",
+        "message": "{what} introuvable. {hint}",
+        "cause": "Construire ou empaqueter pour cette plateforme exige un outil qui n'est pas installé ou pas trouvé.",
+        "fix": "Installez-le comme indiqué ; `charpente doctor` montre ce qui est trouvé.",
+    },
+    "CH8008": {
+        "title": "Une étape d'empaquetage a échoué",
+        "message": "{step} a échoué : {detail}",
+        "cause": "Un des outils d'empaquetage de la plateforme a renvoyé une erreur.",
+        "fix": "Lisez le message de l'outil ci-dessus ; relancez avec les mêmes arguments pour reproduire.",
+    },
+    "CH8009": {
+        "title": "Aucun appareil utilisable",
+        "message": "Impossible de choisir un appareil : {detail}",
+        "cause": "Le déploiement exige exactement un appareil ou émulateur connecté et autorisé.",
+        "fix": "Branchez ou démarrez-en un (`adb devices`), ou choisissez avec --device SERIE.",
+    },
+    "CH8010": {
+        "title": "Licence non acceptée",
+        "message": "{component} est distribué sous l'accord {license}, qui n'a pas été accepté.",
+        "cause": "Charpente n'accepte jamais la licence d'un éditeur à votre place. Le texte de l'accord a été affiché ci-dessus.",
+        "fix": "Lisez-le (conditions complètes : {url}) ; si vous êtes d'accord, relancez la commande avec --accept-android-license.",
+    },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {
         "title": "La commande doit être une liste d'arguments",

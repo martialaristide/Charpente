@@ -591,6 +591,36 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "The toolchain is unknown, the version does not exist for this machine, or the directory could not be changed.",
         "fix": "`charpente toolchain list` shows what is installed; versions are listed on the vendor's download page.",
     },
+    "CH8006": {
+        "title": "Invalid platform setting",
+        "message": "Invalid {platform} settings: {detail}",
+        "cause": "A value declared for the platform (its application id, SDK levels...) is missing or not valid.",
+        "fix": "Correct it in the .charpente file, e.g. t.platform_settings(\"android\", package=\"com.example.app\").",
+    },
+    "CH8007": {
+        "title": "A platform tool is missing",
+        "message": "Missing {what}. {hint}",
+        "cause": "Building or packaging for this platform needs a tool that is not installed or not found.",
+        "fix": "Install it as the message says; `charpente doctor` shows what is found.",
+    },
+    "CH8008": {
+        "title": "A packaging step failed",
+        "message": "{step} failed: {detail}",
+        "cause": "One of the platform's packaging tools returned an error.",
+        "fix": "Read the tool's message above; run with the same arguments to reproduce.",
+    },
+    "CH8009": {
+        "title": "No usable device",
+        "message": "Cannot choose a device: {detail}",
+        "cause": "Deploying needs exactly one connected and authorised device or running emulator.",
+        "fix": "Connect or start one (`adb devices`), or pick with --device SERIAL.",
+    },
+    "CH8010": {
+        "title": "License not accepted",
+        "message": "{component} is distributed under the {license} agreement, which has not been accepted.",
+        "cause": "Charpente never accepts a vendor's license for you. The agreement's text was printed above.",
+        "fix": "Read it (full terms: {url}); if you agree, repeat the command with --accept-android-license.",
+    },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {
         "title": "Command must be a list of arguments",

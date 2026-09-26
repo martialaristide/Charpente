@@ -37,7 +37,7 @@ def _list() -> int:
     if installed:
         print("\nInstalled by Charpente:")
         for name, version, directory in installed:
-            print(f"  {name}@{version}   {directory}")
+            print(f"  {name + '@' + version if version else name}   {directory}")
     return 0
 
 
@@ -56,18 +56,22 @@ def _progress() -> Optional[Callable[[int, Optional[int]], None]]:
     return show
 
 
-def _install(spec: str) -> int:
+def _install(spec: str, accept_license: bool = False) -> int:
     name, _, version = spec.partition("@")
     if name == "emsdk":
         directory = toolchain_install.install_emsdk(version or "latest")
         print(f"Installed in {directory}")
         print("Build for the web with `charpente build --platform wasm32-emscripten`.")
         return 0
+    if name in ("ndk", "build-tools", "platform", "platform-tools"):
+        directory = toolchain_install.install_android(spec, accept_license=accept_license)
+        print(f"Installed in {directory}")
+        return 0
     if name != "zig":
         from ..errors import ChError
 
-        raise ChError("CH8005", name=spec, detail="only `zig` and `emsdk` can be installed for now "
-                                                  "(Android NDK and wasmtime are planned)")
+        raise ChError("CH8005", name=spec, detail="components: zig, emsdk, ndk, build-tools, platform, "
+                                                  "platform-tools (wasmtime is planned)")
     print(f"Installing zig{'@' + version if version else ' (latest release)'} ...")
     directory = toolchain_install.install_zig(version or None, progress=_progress())
     print(f"Installed in {directory}")
@@ -80,14 +84,17 @@ def execute(args: List[str]) -> int:
     parser = argparse.ArgumentParser(prog="charpente toolchain", description="Inspect and install toolchains.")
     sub = parser.add_subparsers(dest="action", required=True)
     sub.add_parser("list", help="List detected toolchains")
-    install = sub.add_parser("install", help="Download a toolchain into ~/.charpente/toolchains (zig, emsdk)")
-    install.add_argument("spec", help="NAME or NAME@VERSION, e.g. zig or zig@0.16.0")
+    install = sub.add_parser("install", help="Download a toolchain into ~/.charpente/toolchains (zig, emsdk, Android NDK/SDK parts)")
+    install.add_argument("spec", help="NAME or NAME@VERSION, e.g. zig, zig@0.16.0, ndk, build-tools, platform@35")
+    install.add_argument("--accept-android-license", action="store_true",
+                         help="Accept the Android SDK License Agreement (required for ndk, build-tools, "
+                              "platform, platform-tools; the text is shown when you do not pass this)")
     remove = sub.add_parser("remove", help="Delete a toolchain installed by Charpente")
     remove.add_argument("spec", help="NAME or NAME@VERSION")
     parsed = parser.parse_args(args)
 
     if parsed.action == "install":
-        return _install(parsed.spec)
+        return _install(parsed.spec, parsed.accept_android_license)
     if parsed.action == "remove":
         directory = toolchain_install.remove(parsed.spec)
         print(f"Removed {directory}")

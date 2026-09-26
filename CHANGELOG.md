@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.7.0 -- Phase P4b: Android
+
+- **Native Android apps without Gradle**: `Kind.MOBILE_APP` + `platform_settings("android", ...)`,
+  the NDK as a cross toolchain (`--platform android-arm64|android-arm|android-x64`), `native_app_glue`, libc++
+  static or shared.
+- **`charpente package --format apk`**: manifest, libraries (stored, aligned), `zipalign`, `apksigner`, then a
+  verification of the signature; debug key or your own (`--keystore`, password only from the environment).
+- **`charpente deploy`**: installs on the connected device/emulator and starts the app.
+- **`charpente toolchain install ndk|build-tools|platform|platform-tools`** into `~/.charpente/toolchains/android-sdk`,
+  only after `--accept-android-license` (the license is shown, never accepted for you); SHA-1 checked.
+- Verified for real with the NDK 28.2, build-tools 36.1 and an x86_64 emulator: built, packaged, signed, installed,
+  launched, log read back. arm64 was built and inspected, **not run**. Not done: Java/Kotlin, Gradle, AAB, shaders.
+- Fixed: shared objects lacked `-fPIC` (non-Windows); a C file inside a C++ target can now be compiled as C where
+  needed; `download()` accepts a SHA-1; zip extraction creates in-archive symlinks safely (POSIX only).
+- New error codes CH8006-CH8010.
+
 ## v0.6.0 -- Phase P4a: platforms and cross-compilation
 
 Native builds are unchanged.

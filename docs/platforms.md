@@ -35,9 +35,11 @@ also says whether your machine can build each platform right now.
 | wasm32-wasi | zig | build **and run** (through Node's WASI: `hello from wasi`) |
 | wasm32-emscripten | emsdk 6.0.10 | build **and run** under Node; `.js` + `.wasm` both restored from the cache |
 | assembly (`.S`) | zig, MinGW | build, header dependency tracking, run natively |
+| android-x64 | NDK 28.2 | build, signed APK, **installed and launched on an x86_64 emulator** (API 30), the app's log line read back |
+| android-arm64 | NDK 28.2 | build and APK (ELF machine 183, `zipalign -P 16` verified). **Not run**: no arm64 device or emulator here |
 
 The Linux and macOS CI jobs run the same builds natively; until those run on real runners, their
-results are not claimed here. Android, HarmonyOS, iOS and embedded targets are Phases P4b-P4d.
+results are not claimed here. Android is described in [android.md](android.md); HarmonyOS, iOS and embedded targets are Phases P4c-P4d.
 
 ## How it works
 

@@ -49,7 +49,7 @@ def execute(args: List[str]) -> int:
     parsed = parser.parse_args(args)
 
     workspace = load(parsed.file, parsed.opt)
-    target_os, toolchain = toolchain_for(parsed)
+    target_os, toolchain = toolchain_for(parsed, workspace)
 
     with Session("build", parsed, workspace, toolchain=toolchain.name, config=parsed.config) as session:
         session.say(f"Building {workspace.name} ({parsed.config}, {toolchain.name})...")

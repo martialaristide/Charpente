@@ -32,7 +32,7 @@ def execute(args: List[str]) -> int:
 
     workspace = load(parsed.file, parsed.opt)
     target = resolve_target(workspace, parsed.target)
-    target_os, toolchain = toolchain_for(parsed)
+    target_os, toolchain = toolchain_for(parsed, workspace)
 
     if not parsed.no_build:
         # Build the target AND whatever it depends_on() for this config --

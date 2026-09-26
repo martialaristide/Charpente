@@ -50,6 +50,9 @@ def extract(archive: Path, destination: Path, strip_prefix: str = "", keep_exec:
     tmp.mkdir(parents=True)
     try:
         _extract_into(archive, tmp, keep_exec)
+        if strip_prefix == "*":                       # the archive's single top-level folder, whatever it is called
+            entries = list(tmp.iterdir())
+            strip_prefix = entries[0].name if len(entries) == 1 and entries[0].is_dir() else ""
         top = tmp / strip_prefix if strip_prefix else tmp
         if strip_prefix and not top.is_dir():
             raise ChError("CH6012", archive=archive.name,
@@ -60,6 +63,16 @@ def extract(archive: Path, destination: Path, strip_prefix: str = "", keep_exec:
         raise ChError("CH6012", archive=archive.name, detail=str(exc)) from exc
     finally:
         shutil.rmtree(_long(str(tmp)), ignore_errors=True)
+
+
+def _zip_symlink(target: str, dest: str, base: str, archive_name: str) -> None:
+    """A symbolic link stored in a zip (toolchain archives for Linux/macOS use them). Created only when it
+    points inside the archive's own tree; on Windows, where creating one needs privileges, skipped."""
+    link = os.path.normpath(os.path.join(os.path.dirname(dest), target))
+    if target.startswith(("/", "\\")) or not (link == base or link.startswith(base + os.sep)):
+        raise ChError("CH6012", archive=archive_name, detail=f"link to {target!r} points outside the archive")
+    if os.name != "nt":
+        os.symlink(target, dest)
 
 
 def _extract_into(archive: Path, tmp: Path, keep_exec: bool = False) -> None:
@@ -76,6 +89,9 @@ def _extract_into(archive: Path, tmp: Path, keep_exec: bool = False) -> None:
                         os.makedirs(_long(dest), exist_ok=True)
                         continue
                     os.makedirs(_long(os.path.dirname(dest)), exist_ok=True)
+                    if keep_exec and ((info.external_attr >> 16) & 0o170000) == 0o120000:
+                        _zip_symlink(zf.read(info).decode("utf-8", "replace"), dest, base, archive.name)
+                        continue
                     with zf.open(info) as src, open(_long(dest), "wb") as out:
                         shutil.copyfileobj(src, out)
                     if keep_exec and (info.external_attr >> 16) & 0o111:

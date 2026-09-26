@@ -15,6 +15,7 @@ import json
 import platform as _platform
 import re
 import shutil
+import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -155,11 +156,22 @@ def installed() -> List[Tuple[str, str, Path]]:
     """(name, version, directory) of everything Charpente installed."""
     found: List[Tuple[str, str, Path]] = []
     root = toolchains_dir()
-    if root.is_dir():
-        for directory in sorted(root.iterdir()):
-            if directory.is_dir() and directory.name != "downloads" and "-" in directory.name:
-                name, _, version = directory.name.partition("-")
-                found.append((name, version, directory))
+    if not root.is_dir():
+        return found
+    for directory in sorted(root.iterdir()):
+        if not directory.is_dir() or directory.name == "downloads":
+            continue
+        if directory.name == "android-sdk":
+            for kind, name in (("ndk", "ndk"), ("build-tools", "build-tools"), ("platforms", "platform")):
+                for component in sorted((directory / kind).glob("*")):
+                    if component.is_dir():
+                        found.append((name, component.name.replace("android-", ""), component))
+            if (directory / "platform-tools").is_dir():
+                found.append(("platform-tools", "", directory / "platform-tools"))
+            continue
+        match = re.fullmatch(r"([a-z][a-z0-9]*)-(\d[\w.+-]*|latest)", directory.name)
+        if match:
+            found.append((match.group(1), match.group(2), directory))
     return found
 
 
@@ -167,6 +179,8 @@ def remove(spec: str) -> Path:
     """Delete an installed toolchain given as `name@version` (or a unique `name`)."""
     name, _, version = spec.partition("@")
     matches = [d for n, v, d in installed() if n == name and (not version or v == version)]
+    if not name:
+        matches = []
     if not matches:
         raise ChError("CH8005", name=spec, detail="it is not installed (see `charpente toolchain list`)")
     if len(matches) > 1:
@@ -183,3 +197,129 @@ def remove(spec: str) -> Path:
 def zig_executable() -> Optional[Path]:
     found = installed_zigs()
     return found[0] if found else None
+
+
+# ------------------------------------------------------------------ Android SDK components
+ANDROID_REPO = "https://dl.google.com/android/repository/"
+ANDROID_MANIFEST = "repository2-3.xml"
+MAX_ANDROID_BYTES = 1500 * 1024 * 1024
+LICENSE_ID = "android-sdk-license"
+
+_ANDROID_HOSTS = {"win32": "windows", "linux": "linux", "darwin": "macosx"}
+
+
+@dataclass(frozen=True)
+class AndroidComponent:
+    path: str                     # "ndk;28.2.13676358", "build-tools;35.0.0", "platforms;android-35", "platform-tools"
+    display: str
+    url: str
+    sha1: str
+    size: int
+    license_id: str
+
+    @property
+    def install_subdir(self) -> str:
+        """Where it lives inside an SDK root -- the same layout Android Studio uses."""
+        kind, _, rest = self.path.partition(";")
+        return f"{kind}/{rest}" if rest else kind
+
+
+def fetch_android_manifest(base_url: str = ANDROID_REPO) -> Tuple[Any, Dict[str, str]]:
+    """(the repository's XML root, {license id: text}). The document is parsed only if it declares no
+    entities, so a hostile mirror cannot expand one into gigabytes."""
+    import xml.etree.ElementTree as ET
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = download.download(base_url + ANDROID_MANIFEST, Path(tmp) / "repo.xml", max_bytes=16 * 1024 * 1024)
+        data = path.read_bytes()
+    if b"<!ENTITY" in data or b"<!DOCTYPE" in data:
+        raise ChError("CH8005", name="android", detail="the SDK repository manifest declares XML entities; refusing it")
+    try:
+        root = ET.fromstring(data)
+    except ET.ParseError as exc:
+        raise ChError("CH8005", name="android", detail=f"the SDK repository manifest is not valid XML: {exc}") from exc
+    licenses = {str(el.get("id")): (el.text or "").strip() for el in root.iter("license") if el.get("id")}
+    return root, licenses
+
+
+def _stable(package: Any) -> bool:
+    ref = package.find("channelRef")
+    return (ref is None or ref.get("ref") == "channel-0") and package.find("revision/preview") is None
+
+
+def resolve_android(root: Any, spec: str, host: Optional[str] = None) -> AndroidComponent:
+    """`ndk`, `ndk@28.2.13676358`, `build-tools`, `build-tools@35.0.0`, `platform@35`, `platform-tools`."""
+    host = host or _ANDROID_HOSTS.get(sys.platform, "linux")
+    name, _, version = spec.partition("@")
+    prefix = {"ndk": "ndk", "build-tools": "build-tools", "platform": "platforms",
+              "platform-tools": "platform-tools"}.get(name)
+    if prefix is None:
+        raise ChError("CH8005", name=spec, detail="components: ndk, build-tools, platform, platform-tools")
+    wanted = None
+    if prefix == "platform-tools":
+        wanted = "platform-tools"
+    elif version:
+        wanted = f"platforms;android-{version}" if prefix == "platforms" else f"{prefix};{version}"
+    matches = []
+    for package in root.iter("remotePackage"):
+        path = str(package.get("path", ""))
+        if (wanted and path != wanted) or (not wanted and not path.startswith(prefix + ";")):
+            continue
+        if not wanted and not _stable(package):
+            continue
+        if prefix == "platforms" and not wanted and not re.fullmatch(r"platforms;android-\d+", path):
+            continue
+        matches.append(package)
+    if not matches:
+        raise ChError("CH8005", name=spec, detail="no such release in the Android SDK repository")
+    package = max(matches, key=lambda p: _semver_key(str(p.get("path", "")).partition(";")[2].replace("android-", "")))
+    for archive in package.iterfind("archives/archive"):
+        archive_host = archive.findtext("host-os")
+        if archive_host not in (None, host):
+            continue
+        complete = archive.find("complete")
+        if complete is None:
+            continue
+        url, digest, size = complete.findtext("url"), complete.findtext("checksum"), complete.findtext("size")
+        if url and digest and size:
+            ref = package.find("uses-license")
+            return AndroidComponent(str(package.get("path")), package.findtext("display-name") or spec, url,
+                                    digest.strip().lower(), int(size), ref.get("ref", LICENSE_ID) if ref is not None else LICENSE_ID)
+    raise ChError("CH8005", name=spec, detail=f"{package.get('path')} has no download for {host}")
+
+
+def android_sdk_root() -> Path:
+    return toolchains_dir() / "android-sdk"
+
+
+def install_android(spec: str, *, accept_license: bool = False, base_url: str = ANDROID_REPO,
+                    fetch_manifest: Callable[[str], Tuple[Any, Dict[str, str]]] = fetch_android_manifest,
+                    host: Optional[str] = None, progress: Progress = None,
+                    say: Callable[[str], None] = print) -> Path:
+    """Install an Android SDK component into Charpente's own SDK root, after the Android SDK License
+    Agreement has been accepted (`accept_license=True`, i.e. `--accept-android-license`).
+
+    The license is Google's, not Charpente's: it is shown, never accepted on the user's behalf."""
+    root, licenses = fetch_manifest(base_url)
+    component = resolve_android(root, spec, host)
+    target = android_sdk_root() / component.install_subdir
+    if target.exists():
+        return target
+    if not accept_license:
+        text = licenses.get(component.license_id, "")
+        say(text[:1500] + ("\n[...]" if len(text) > 1500 else ""))
+        raise ChError("CH8010", component=component.display, license=component.license_id,
+                      url="https://developer.android.com/studio/terms")
+    say(f"Downloading {component.display} ({component.size // (1024 * 1024)} MB) ...")
+    archive = toolchains_dir() / "downloads" / component.url.rsplit("/", 1)[-1]
+    download.download(base_url + component.url, archive, sha1=component.sha1,
+                      max_bytes=min(component.size + 1024, MAX_ANDROID_BYTES), progress=progress)
+    fetch.extract(archive, target, strip_prefix="*", keep_exec=True)
+    (target / "charpente-install.json").write_text(
+        json.dumps({"component": component.path, "url": base_url + component.url, "sha1": component.sha1},
+                   indent=1), encoding="utf-8")
+    try:
+        archive.unlink()
+    except OSError:
+        pass
+    return target

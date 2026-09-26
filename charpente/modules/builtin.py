@@ -37,5 +37,6 @@ def register_builtins(registry: ExtensionRegistry) -> None:
         ("apple-clang", OS.MACOS, toolchains.detect_macos),
         ("zig", None, toolchains.detect_zig),          # a cross compiler: usable from any host
         ("emscripten", None, toolchains.detect_emscripten),
+        ("ndk", None, toolchains.detect_ndk),
     ):
         registry.add_builtin("toolchain", name, BuiltinToolchain(name, os_, fn))

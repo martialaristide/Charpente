@@ -21,6 +21,7 @@ from ..builder import build_dir, build_workspace, dependency_closure
 from ..core import process
 from ..dsl.model import OS, Target, Workspace
 from ..toolchains import Toolchain
+from ._android import add_apk_args, build_apk
 from ._common import CommandError, load, resolve_target, toolchain_for
 from ._session import Session, add_engine_args
 
@@ -31,18 +32,23 @@ def execute(args: List[str]) -> int:
     parser.add_argument("--target", help="Target to package (default: the only one, if unambiguous)")
     parser.add_argument("--config", default="Release", choices=["Debug", "Release"])
     parser.add_argument("--output", help="Output path (default: dist/<target>-<config>.<ext>)")
-    parser.add_argument("--format", default="zip", choices=["zip", "installer"],
-                        help="'zip' (default, no external tool needed) or 'installer' "
-                             "(a real platform installer: .exe/.deb/.pkg)")
+    parser.add_argument("--format", default="zip", choices=["zip", "installer", "apk"],
+                        help="'zip' (default, no external tool needed), 'installer' "
+                             "(a real platform installer: .exe/.deb/.pkg) or 'apk' (Android; a Kind.MOBILE_APP target)")
     parser.add_argument("--version", default="1.0.0", help="Version string embedded in the installer")
     parser.add_argument("--maintainer", default="unknown <unknown@example.com>",
                         help="Maintainer field for a .deb package")
+    add_apk_args(parser)
     add_engine_args(parser, output=False)
     parsed = parser.parse_args(args)
 
     workspace = load(parsed.file, parsed.opt)
     target = resolve_target(workspace, parsed.target)
-    target_os, toolchain = toolchain_for(parsed)
+    if parsed.format == "apk":
+        apk, app = build_apk(parsed, workspace, target, workspace.root / parsed.output if parsed.output else None)
+        print(f"Packaged {apk}  ({app.package}, minSdk {app.min_sdk}, signature verified)")
+        return 0
+    target_os, toolchain = toolchain_for(parsed, workspace)
 
     # Build the target's dependency_closure(), not just the target itself --
     # see run.py's execute() for why (a config never built via `charpente

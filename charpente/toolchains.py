@@ -35,6 +35,8 @@ class Toolchain:
     env: Tuple[Tuple[str, str], ...] = ()
     #: True for toolchains that only produce code for other platforms (emscripten): never the native default.
     cross_only: bool = False
+    #: Facts about the installation other modules need (name, value), e.g. the NDK's root directory.
+    extras: Tuple[Tuple[str, str], ...] = ()
 
 
 WhichFn = Callable[[str], Optional[str]]
@@ -173,6 +175,20 @@ def detect_emscripten(which: WhichFn = shutil.which) -> List[Toolchain]:
             if found is not None:
                 return [found]
     return []
+
+
+def detect_ndk(which: WhichFn = shutil.which) -> List[Toolchain]:
+    """The Android NDK's clang, from `ANDROID_NDK_HOME`, an SDK (`ANDROID_HOME`, Android Studio's default
+    folder) or `charpente toolchain install ndk`. An injected `which` (tests) keeps detection hermetic."""
+    if which is not shutil.which:
+        return []
+    from . import android
+
+    sdk = android.find_sdk()
+    if sdk is None or sdk.ndk is None:
+        return []
+    toolchain = android.ndk_toolchain(sdk.ndk)
+    return [toolchain] if Path(toolchain.cxx_compiler).is_file() else []
 
 
 _DETECTORS = {

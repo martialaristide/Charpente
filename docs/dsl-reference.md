@@ -130,9 +130,14 @@ directories only travel as far as `public`/`interface`/`uses_public` say. Names 
 the workspace or packages from `ws.requires(...)` ([`packages.md`](packages.md)).
 
 New kinds: `HEADER_ONLY` (no build actions, only settings), `PLUGIN` (a shared library meant to be
-loaded at run time). `SHADERS`, `XR_APP`, `MOBILE_APP`, `WEB_APP`, `FIRMWARE` are accepted by the
-DSL and refused when planning (`CH3007`) until their platform support lands: never silently built
-as something else.
+loaded at run time), `MOBILE_APP` (an Android app: built as a shared library that Android's
+`NativeActivity` loads, see [android.md](android.md); refused with `CH3007` on other platforms).
+`SHADERS`, `XR_APP`, `WEB_APP`, `FIRMWARE` are accepted by the DSL and refused when planning
+(`CH3007`) until their platform support lands: never silently built as something else.
+
+`t.platform_settings("android", package="com.example.app", ...)` (or `p.android(...)` inside
+`with t.on_platform("android-*") as p:`) carries per-platform settings; the Android ones are in
+[android.md](android.md).
 
 ### Conditions
 

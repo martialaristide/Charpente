@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import hashlib
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path, PurePosixPath
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-from .. import flags
+from .. import android, flags
 from ..dsl import resolve
-from ..dsl.model import LIBRARY_KINDS, OS, Kind, Target, Workspace
+from ..dsl.model import LIBRARY_KINDS, OS, Kind, Language, Target, Workspace
 from ..errors import ChError
 from ..toolchains import Toolchain
 from .actions import DEP_GNU, DEP_MSVC, KIND_ARCHIVE, KIND_COMPILE, KIND_CUSTOM, KIND_LINK, Action
@@ -168,7 +168,7 @@ def plan_workspace(
         target = effective[name]
         if target.kind == Kind.HEADER_ONLY:
             continue                                    # contributes settings to its users, builds nothing
-        if target.kind not in _BUILDABLE:
+        if target.kind not in _BUILDABLE and not (target.kind == Kind.MOBILE_APP and target_os == OS.ANDROID):
             errors[name] = ChError("CH3007", kind=target.kind.value)
             failed.add(name)
             continue
@@ -192,6 +192,21 @@ def plan_workspace(
             errors[name] = ChError("CH3001", target=target.name)
             continue
 
+        c_sources: Set[Path] = set()
+        if target_os == OS.ANDROID and target.platform_settings.get("android", {}).get("native_app_glue"):
+            glue_dir = android.native_app_glue_dir(toolchain)
+            if glue_dir is None:
+                failed.add(name)
+                errors[name] = ChError("CH8007", what="the NDK's native_app_glue sources",
+                                       hint="build with the Android NDK (`charpente platforms` shows what is missing)")
+                continue
+            glue = glue_dir / "android_native_app_glue.c"
+            target_sources.append(glue)
+            c_sources.add(glue)
+            target = replace(target, include_dirs=[*target.include_dirs, str(glue_dir)],
+                             link_libraries=[*target.link_libraries, "android", "log"],
+                             extra_link_flags=[*target.extra_link_flags, "-u", "ANativeActivity_onCreate"])
+
         out_dir = build_dir(workspace, variant, target)
         obj_dir = out_dir / "obj"
         ids: List[str] = plan_targets.setdefault(name, [])
@@ -205,7 +220,8 @@ def plan_workspace(
             used.add(obj)
             objects.append(obj)
             depfile = None if fam == "msvc" else obj.with_name(obj.name + ".d")
-            argv = flags.compile_args(toolchain, target, source, obj, debug=debug, depfile=depfile)
+            argv = flags.compile_args(toolchain, target, source, obj, debug=debug, depfile=depfile,
+                                      language=Language.C if source in c_sources else None)
             compiler = argv[0]
             action = Action(
                 id=_action_id(KIND_COMPILE, target.name, source, root, id_prefix),

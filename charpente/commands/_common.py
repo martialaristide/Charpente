@@ -64,11 +64,25 @@ def _lint_before_running(entry: Path) -> None:
               file=sys.stderr)
 
 
-def toolchain_for(parsed: argparse.Namespace) -> "tuple[OS, Toolchain]":
+def android_min_sdk(workspace: Optional[Workspace]) -> Optional[int]:
+    """The highest `min_sdk` any target declares for Android: the API level everything is compiled against."""
+    if workspace is None:
+        return None
+    levels = []
+    for target in workspace.targets.values():
+        for settings in [target.platform_settings, *[o.platform_settings for o in target.overlays]]:
+            value = settings.get("android", {}).get("min_sdk")
+            if isinstance(value, int):
+                levels.append(value)
+    return max(levels) if levels else None
+
+
+def toolchain_for(parsed: argparse.Namespace, workspace: Optional[Workspace] = None) -> "tuple[OS, Toolchain]":
     """(target OS, toolchain) for `--platform` / `--toolchain` (native build when neither is given)."""
     from .. import cross
 
-    target_os, toolchain = cross.select(getattr(parsed, "platform", None), getattr(parsed, "toolchain", None))
+    target_os, toolchain = cross.select(getattr(parsed, "platform", None), getattr(parsed, "toolchain", None),
+                                        android_api=android_min_sdk(workspace))
     if toolchain.target:
         from .. import platforms
 

@@ -244,6 +244,8 @@ single header change recompiled 20 or more files.
 ```
 charpente toolchain list
 charpente toolchain install zig[@VERSION] | emsdk[@VERSION]
+charpente toolchain install ndk[@VERSION] | build-tools[@VERSION] | platform[@API] | platform-tools
+                            --accept-android-license
 charpente toolchain remove NAME[@VERSION]
 ```
 
@@ -259,7 +261,29 @@ registry). It only runs when you ask; a build never downloads.
 - **emsdk**: needs `git` and `python`; Emscripten's own installer downloads LLVM/Binaryen/Node
   (about 1.5 GB). Charpente relies on emsdk's own integrity checks here, not its own.
 
+- **ndk, build-tools, platform, platform-tools**: from Google's SDK repository into
+  `~/.charpente/toolchains/android-sdk/` (the layout Android Studio uses). They are under Google's
+  **Android SDK License Agreement**: Charpente shows it and refuses (CH8010) until you pass
+  `--accept-android-license`; it never accepts for you. Downloads are checked against the SHA-1 Google
+  publishes (the only digest the repository offers). An SDK you already have (Android Studio,
+  `ANDROID_HOME`) is used as it is; nothing needs installing then.
+
 `remove` deletes that directory (and nothing outside it).
+
+### Android: `package --format apk` and `deploy`
+
+```
+charpente package --format apk --platform android-arm64,android-x64 [--config Debug|Release]
+                   [--keystore FILE --key-alias NAME]
+charpente deploy   [--platform android-x64] [--device SERIAL] [--no-launch]
+```
+
+`package --format apk` builds a `Kind.MOBILE_APP` target for each listed ABI, then links the manifest
+(`aapt2`), adds the libraries, aligns (`zipalign`), signs (`apksigner`) and **verifies** the signature.
+Debug builds use the standard Android debug key; a release build without `--keystore` warns that the
+APK is debug-signed. The release key's password is read from `$CHARPENTE_KEYSTORE_PASSWORD`, never from
+the command line. `deploy` does the same, then `adb install -r` and starts the app on the one connected
+device or emulator. See [android.md](android.md).
 
 ## `charpente platforms`
 

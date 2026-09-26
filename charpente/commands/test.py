@@ -22,7 +22,7 @@ def execute(args: List[str]) -> int:
     parsed = parser.parse_args(args)
 
     workspace = load(parsed.file, parsed.opt)
-    target_os, toolchain = toolchain_for(parsed)
+    target_os, toolchain = toolchain_for(parsed, workspace)
 
     test_targets = [t for t in workspace.targets.values() if t.kind == Kind.TEST]
     if not test_targets:
