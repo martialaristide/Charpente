@@ -1,0 +1,22 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+
+    with Target("@IDENT@_core") as core:
+        core.kind(Kind.STATIC_LIBRARY)
+        core.standard("c++17")
+        core.sources(["src/core/*.cpp"])
+        core.public_include_dirs(["src/core"])
+
+    with Target("@NAME@") as app:
+        app.kind(Kind.EXECUTABLE)
+        app.standard("c++17")
+        app.sources(["src/main.cpp"])
+        app.uses("@IDENT@_core")
+
+    with Target("@IDENT@_tests") as tests:
+        tests.kind(Kind.TEST)
+        tests.standard("c++17")
+        tests.sources(["tests/*.cpp"])
+        tests.uses("@IDENT@_core")

@@ -1,0 +1,8 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-app"
+description = "Windowed applications: Dear ImGui (core), stb single-file libraries. Windowing (GLFW) is listed in `notes`."
+requires = ["imgui@^1.91", "stb@^2024"]
+verified = "imgui core and stb_image compiled, linked and run (imgui context created and destroyed) with MinGW GCC."
+unverified = "ImGui backends (GLFW/OpenGL3/Vulkan) are compiled from the imgui source tree by your project: see the app-gui template."
+notes = "SDL3 and nativefiledialog-extended are not packaged (they need system libraries that a recipe cannot supply); GLFW is provided by the app-gui template."

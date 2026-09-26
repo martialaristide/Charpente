@@ -1,0 +1,7 @@
+[template]
+name = "web-wasm"
+description = "A C++ program compiled to WebAssembly for the browser (Emscripten), with an HTML page"
+platforms = ["wasm32-emscripten"]
+verified = "Built with emsdk 6.0.10 and run under Node from Windows (output line checked)."
+unverified = "The HTML page was not opened in a browser."
+next = ["cd @NAME@", "charpente toolchain install emsdk && charpente run --platform wasm32-emscripten"]

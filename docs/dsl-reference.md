@@ -196,6 +196,14 @@ compiled as part of the target.
 `ws.requires("fmt@^10")`. Setters accept a single string as well as a list: `t.sources("*.cpp")`
 is one pattern (it used to be split into characters).
 
+### Kits, package settings, output names
+
+- `ws.kit("kit-core")` requires a kit's packages; `t.uses("kit-core")` / `t.uses_public("kit-core")` use all its members ([kits.md](kits.md)).
+- `ws.package_settings("freertos", include_dirs=["config"], defines=[...], compile_flags=[...], uses=[...], link_libraries=[...])` tunes one
+  package's build in this workspace only (paths relative to the workspace).
+- `t.output_prefix("")` and `t.output_extension(".pyd")` rename a library/plugin's file (Python extensions, Node addons).
+- `t.platform_settings("ios", name="My App", ...)`: the settings can now include a key called `name`.
+
 ### `charpente.toml`: the declarative form
 
 For simple projects and for repositories you do not trust. TOML is *data*: loading it runs no code

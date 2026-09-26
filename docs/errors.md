@@ -498,6 +498,22 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** La fonctionnalité est optionnelle et sa dépendance n'est installée que sur demande.
 - **Correction (FR) :** Installez-le avec : pip install "charpente[{extra}]"
 
+### CH4008 — The template would overwrite files
+*FR : Le modèle écraserait des fichiers*
+
+- **Cause:** Files the template creates already exist in the destination folder.
+- **Fix:** Choose an empty folder (--dir), or remove/rename the files that clash.
+- **Cause (FR) :** Des fichiers que le modèle crée existent déjà dans le dossier de destination.
+- **Correction (FR) :** Choisissez un dossier vide (--dir), ou supprimez/renommez les fichiers en conflit.
+
+### CH4009 — Unknown template
+*FR : Modèle inconnu*
+
+- **Cause:** --template names a template that is not bundled and not provided by a module or the project.
+- **Fix:** `charpente init --list` shows the templates.
+- **Cause (FR) :** --template nomme un modèle ni fourni avec Charpente, ni par un module, ni par le projet.
+- **Correction (FR) :** `charpente init --list` montre les modèles.
+
 ## CH5xxx — AI
 
 ### CH5001 — AI provider not configured
@@ -621,6 +637,22 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Fix:** Rename your target.
 - **Cause (FR) :** Les paquets deviennent des cibles portant leur nom ; une cible du workspace porte déjà ce nom.
 - **Correction (FR) :** Renommez votre cible.
+
+### CH6016 — Unknown kit
+*FR : Kit inconnu*
+
+- **Cause:** ws.kit() names a kit that Charpente does not ship and the project does not define.
+- **Fix:** `charpente kit list` shows the kits; a project can add its own under .charpente/kits/NAME.toml.
+- **Cause (FR) :** ws.kit() nomme un kit que Charpente ne fournit pas et que le projet ne définit pas.
+- **Correction (FR) :** `charpente kit list` montre les kits ; un projet peut ajouter les siens dans .charpente/kits/NOM.toml.
+
+### CH6017 — Settings for a package that is not required
+*FR : Réglages pour un paquet qui n'est pas requis*
+
+- **Cause:** Settings were declared for a package that is not among ws.requires() (or the kits) or their dependencies.
+- **Fix:** Require the package (or its kit), or remove the settings.
+- **Cause (FR) :** Des réglages ont été déclarés pour un paquet absent de ws.requires() (ou des kits) et de leurs dépendances.
+- **Correction (FR) :** Requérez le paquet (ou son kit), ou supprimez les réglages.
 
 ## CH7xxx — Modules
 

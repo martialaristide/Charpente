@@ -1,0 +1,25 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "simdjson"
+version = "3.10.1"
+license = "Apache-2.0"
+description = "Parsing gigabytes of JSON per second"
+homepage = "https://simdjson.org"
+purl = "pkg:github/simdjson/simdjson"
+
+[source]
+url = "https://github.com/simdjson/simdjson/archive/refs/tags/v3.10.1.tar.gz"
+sha256 = "1e8f881cb2c0f626c56cd3665832f1e97b9d4ffc648ad9e1067c134862bba060"
+strip_prefix = "simdjson-3.10.1"
+
+[build]
+type = "sources"
+language = "cpp"
+standard = "c++17"
+sources = ["src/simdjson.cpp"]
+include_dirs = ["include"]
+private_include_dirs = ["src"]
+
+[dependencies]
+requires = []

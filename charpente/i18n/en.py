@@ -377,6 +377,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "The feature is optional and its dependency is only installed on request.",
         "fix": "Install it with: pip install \"charpente[{extra}]\"",
     },
+    "CH4008": {
+        "title": "The template would overwrite files",
+        "message": "The {template!r} template would overwrite existing files: {files}",
+        "cause": "Files the template creates already exist in the destination folder.",
+        "fix": "Choose an empty folder (--dir), or remove/rename the files that clash.",
+    },
+    "CH4009": {
+        "title": "Unknown template",
+        "message": "There is no template named {name!r}. Available: {known}",
+        "cause": "--template names a template that is not bundled and not provided by a module or the project.",
+        "fix": "`charpente init --list` shows the templates.",
+    },
     # ------------------------------------------------------------------ 5xxx
     "CH5001": {
         "title": "AI provider not configured",
@@ -468,6 +480,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "message": "The package {name!r} has the same name as a target of your workspace.",
         "cause": "Packages become targets named after them; a workspace target of that name already exists.",
         "fix": "Rename your target.",
+    },
+    "CH6016": {
+        "title": "Unknown kit",
+        "message": "There is no kit named {name!r}. Available: {known}",
+        "cause": "ws.kit() names a kit that Charpente does not ship and the project does not define.",
+        "fix": "`charpente kit list` shows the kits; a project can add its own under .charpente/kits/NAME.toml.",
+    },
+    "CH6017": {
+        "title": "Settings for a package that is not required",
+        "message": "ws.package_settings() names packages the workspace does not use: {names}",
+        "cause": "Settings were declared for a package that is not among ws.requires() (or the kits) or their dependencies.",
+        "fix": "Require the package (or its kit), or remove the settings.",
     },
     # ------------------------------------------------------------------ 7xxx
     "CH7001": {

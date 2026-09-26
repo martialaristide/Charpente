@@ -1,0 +1,7 @@
+[template]
+name = "firmware-stm32"
+description = "Bare-metal firmware for an STM32F4 (Cortex-M4): startup code, linker script, an LED blink"
+platforms = ["cortexm4-arm"]
+verified = "Built with zig from Windows: ELF (ARM), bin, hex; the vector table was read back from the .bin."
+unverified = "Never flashed or run on a board; the register addresses follow the STM32F407 reference manual."
+next = ["cd @NAME@", "charpente toolchain install zig && charpente build --platform cortexm4-arm && charpente size --platform cortexm4-arm"]

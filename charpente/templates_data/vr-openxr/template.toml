@@ -1,0 +1,9 @@
+[template]
+name = "vr-openxr"
+description = "An OpenXR starting point (desktop runtimes and Android headsets): loads the runtime dynamically and creates an instance"
+kits = ["kit-xr", "kit-android"]
+platforms = ["host", "android-arm64"]
+verified = "Builds and runs on Windows/MinGW (reports honestly when no runtime is installed); the Android/Quest APK manifest is accepted by aapt2 and the APK signs and verifies."
+unverified = "Never ran with a headset or a real OpenXR runtime; the Quest build was not run; there is no rendering."
+install = true
+next = ["cd @NAME@", "charpente pkg install && charpente run"]

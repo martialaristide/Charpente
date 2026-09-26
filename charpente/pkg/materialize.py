@@ -132,6 +132,23 @@ def materialize(workspace: Workspace, store: Optional[PackageStore] = None) -> L
         if name in workspace.targets:
             continue
         recipe, tree = load_locked_recipe(lock.packages[name], root, store)
-        workspace.add_target(package_target(recipe, tree))
+        target = package_target(recipe, tree)
+        apply_settings(target, workspace.package_settings.get(name, {}), root)
+        workspace.add_target(target)
         added.append(name)
+    unknown = sorted(set(workspace.package_settings) - set(reachable(lock, workspace.requires)))
+    if unknown:
+        raise ChError("CH6017", names=", ".join(unknown))
     return added
+
+
+def apply_settings(target: Target, settings: Dict[str, List[str]], root: Path) -> None:
+    """`ws.package_settings(...)`: this workspace's additions to a package's build (private, never propagated)."""
+    def path(p: str) -> str:
+        return str(Path(p) if Path(p).is_absolute() else root / p)
+
+    target.include_dirs += [path(d) for d in settings.get("include_dirs", [])]
+    target.define_macros += list(settings.get("defines", []))
+    target.extra_compile_flags += list(settings.get("compile_flags", []))
+    target.uses += list(settings.get("uses", []))
+    target.link_libraries += list(settings.get("link_libraries", []))

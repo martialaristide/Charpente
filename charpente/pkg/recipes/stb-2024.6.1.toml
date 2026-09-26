@@ -1,0 +1,23 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "stb"
+version = "2024.6.1"
+license = "MIT OR Unlicense"
+description = "Single-file public domain libraries: image loading/writing, fonts, and more"
+homepage = "https://github.com/nothings/stb"
+purl = "pkg:github/nothings/stb"
+
+[source]
+url = "https://github.com/nothings/stb/archive/ae721c50eaf761660b4f90cc590453cdb0c2acd0.tar.gz"
+sha256 = "cd82be3ddc4146ef738f80a794a83f2ed45faab1c5b23278121788ef7b598e89"
+strip_prefix = "stb-ae721c50eaf761660b4f90cc590453cdb0c2acd0"
+
+[build]
+type = "header_only"
+language = "c"
+include_dirs = ["."]
+keep = ["*.h", "LICENSE"]
+
+[dependencies]
+requires = []

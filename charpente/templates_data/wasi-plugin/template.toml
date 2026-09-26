@@ -1,0 +1,6 @@
+[template]
+name = "wasi-plugin"
+description = "A WebAssembly (WASI) command or plugin that runs anywhere a WASI runtime does"
+platforms = ["wasm32-wasi"]
+verified = "Built with zig and run under Node's WASI from Windows."
+next = ["cd @NAME@", "charpente toolchain install zig && charpente run --platform wasm32-wasi"]

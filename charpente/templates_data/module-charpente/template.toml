@@ -1,0 +1,6 @@
+[template]
+name = "module-charpente"
+description = "A Charpente module: a command, a quality check or a notifier, with its manifest and a test"
+platforms = ["host"]
+verified = "`charpente module check` passes on the generated module."
+next = ["cd @NAME@", "charpente module check ."]

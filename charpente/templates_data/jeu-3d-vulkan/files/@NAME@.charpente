@@ -1,0 +1,15 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.kit("kit-graphics")                        # Vulkan headers, volk, VMA, glm, meshoptimizer, cgltf
+    ws.requires("glfw@^3.4")
+
+    with Target("@NAME@") as app:
+        app.kind(Kind.EXECUTABLE)
+        app.standard("c++17")
+        app.sources(["src/*.cpp"])
+        app.uses("kit-graphics", "glfw")
+        app.defines(["GLFW_INCLUDE_NONE"])
+        with app.on_platform("windows-*") as windows:
+            windows.links(["user32"])

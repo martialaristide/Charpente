@@ -1,0 +1,25 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "printf"
+version = "6.1.0"
+license = "MIT"
+description = "Small, self-contained printf/sprintf implementation for embedded systems"
+homepage = "https://github.com/eyalroz/printf"
+purl = "pkg:github/eyalroz/printf"
+
+[source]
+url = "https://github.com/eyalroz/printf/archive/refs/tags/v6.1.0.tar.gz"
+sha256 = "c798ab6ff593b2728f731c13781cf4f5bb68452f8e1c07727a5d203603398c90"
+strip_prefix = "printf-6.1.0"
+
+[build]
+type = "sources"
+language = "c"
+standard = "c99"
+sources = ["src/printf/printf.c"]
+include_dirs = ["src"]
+defines = ["PRINTF_INCLUDE_CONFIG_H=0"]
+
+[dependencies]
+requires = []

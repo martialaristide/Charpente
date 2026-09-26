@@ -1,0 +1,16 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.platforms(["harmonyos-arm64"])
+    ws.kit("kit-ohos")
+
+    # The native library of the app: libentry.so, a Node-API module the ArkTS UI imports.
+    with Target("entry") as native:
+        native.kind(Kind.MOBILE_APP)
+        native.standard("c++17")
+        native.sources(["src/*.cpp"])
+        native.uses("kit-ohos")
+        native.links(["ace_napi.z"])            # Node-API (libace_napi.z.so in the OpenHarmony sysroot)
+        native.platform_settings("harmony", project="harmony", module="entry", package_type="hap",
+                                 bundle_name="@PACKAGE@")

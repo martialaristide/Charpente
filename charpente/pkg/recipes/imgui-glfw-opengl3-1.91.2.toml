@@ -1,0 +1,31 @@
+# Charpente recipe -- data only, nothing here is executed.
+[package]
+name = "imgui-glfw-opengl3"
+version = "1.91.2"
+license = "MIT"
+description = "Dear ImGui backends for GLFW and OpenGL 3 (from the same release as the imgui package)"
+homepage = "https://github.com/ocornut/imgui"
+purl = "pkg:github/ocornut/imgui"
+
+[source]
+url = "https://github.com/ocornut/imgui/archive/refs/tags/v1.91.2.tar.gz"
+sha256 = "a3c4fd857a0a48f6edad3e25de68fa1e96d2437f1665039714d1de9ad579b8d0"
+strip_prefix = "imgui-1.91.2"
+
+[build]
+type = "sources"
+language = "cpp"
+standard = "c++11"
+sources = ["backends/imgui_impl_glfw.cpp", "backends/imgui_impl_opengl3.cpp"]
+include_dirs = ["backends"]
+private_include_dirs = ["."]
+keep = ["*.h", "backends/imgui_impl_glfw.*", "backends/imgui_impl_opengl3*", "LICENSE.txt"]
+
+[build.platform."windows-*"]
+links = ["opengl32", "gdi32"]
+
+[build.platform."linux-*"]
+links = ["GL"]
+
+[dependencies]
+requires = ["imgui@^1.91", "glfw@^3.4"]

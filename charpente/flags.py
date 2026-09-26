@@ -212,7 +212,13 @@ def output_filename(target: Target, target_os: OS, toolchain: Toolchain) -> str:
         if target_os in _NO_SHARED_LIBRARIES:
             raise ChValueError("CH3007", kind=f"{target.kind.value} (not available for {target_os.value})")
         if target_os == OS.WINDOWS:
-            return f"{name}.dll"
-        return f"lib{name}.dylib" if target_os in (OS.MACOS, OS.IOS, OS.VISIONOS) else f"lib{name}.so"
+            prefix, extension = "", ".dll"
+        elif target_os in (OS.MACOS, OS.IOS, OS.VISIONOS):
+            prefix, extension = "lib", ".dylib"
+        else:
+            prefix, extension = "lib", ".so"
+        prefix = target.output_prefix if target.output_prefix is not None else prefix
+        extension = target.output_extension if target.output_extension is not None else extension
+        return f"{prefix}{name}{extension}"
 
     raise ChValueError("CH3007", kind=target.kind.value)

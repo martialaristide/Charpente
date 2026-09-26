@@ -1,0 +1,8 @@
+[template]
+name = "plugin-python"
+description = "A Python extension module in C++ (pybind11): builds a .pyd/.so you import from Python"
+platforms = ["host"]
+verified = "Built with MinGW on Windows against Python 3.12 and imported from Python (test script passes)."
+unverified = "Linux and macOS builds (the sources are the same; the .so naming and link line differ); wheels are not produced."
+install = true
+next = ["cd @NAME@", "charpente pkg install && charpente build && python test_@IDENT@.py"]

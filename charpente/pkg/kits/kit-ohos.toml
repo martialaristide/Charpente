@@ -1,0 +1,8 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-ohos"
+description = "HarmonyOS native code: the mobile layer (hilog, rawfile resources, files dir); the Node-API skeleton comes from charpente.harmony.napi_files."
+requires = ["charpente-mobile@^1.0"]
+verified = "See kit-mobile: the backend links against the real SDK's libhilog_ndk.z and librawfile.z."
+unverified = "Never run on a HarmonyOS device or emulator; XComponent (native rendering) helpers are not provided."
+notes = "Call charpente::mobile::harmony_attach(resourceManager, filesDir) from your module init."

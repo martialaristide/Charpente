@@ -1,0 +1,23 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "cmsis"
+version = "6.1.0"
+license = "Apache-2.0"
+description = "Arm CMSIS-Core headers for Cortex-M devices"
+homepage = "https://arm-software.github.io/CMSIS_6"
+purl = "pkg:github/ARM-software/CMSIS_6"
+
+[source]
+url = "https://github.com/ARM-software/CMSIS_6/archive/refs/tags/v6.1.0.tar.gz"
+sha256 = "d8a044e4b50b7112476d6855a12c729ae2b70b3f77a2a038c23890e9a3515973"
+strip_prefix = "CMSIS_6-6.1.0"
+
+[build]
+type = "header_only"
+language = "c"
+include_dirs = ["CMSIS/Core/Include"]
+keep = ["CMSIS/Core/Include/**", "LICENSE"]
+
+[dependencies]
+requires = []

@@ -1,0 +1,6 @@
+[template]
+name = "firmware-esp32"
+description = "An ESP32 firmware project for ESP-IDF (blink); Charpente does not drive idf.py yet"
+platforms = ["esp32-xtensa"]
+unverified = "Never built: ESP-IDF was not available. Follows Espressif's `blink` example structure."
+next = ["cd @NAME@", "idf.py set-target esp32 && idf.py build"]

@@ -1,0 +1,9 @@
+[template]
+name = "app-harmonyos"
+description = "A HarmonyOS app: ArkTS UI (hvigor project) plus a C++ Node-API library built by Charpente"
+kits = ["kit-ohos"]
+platforms = ["harmonyos-arm64"]
+verified = "The native library (Node-API module) builds and links against the real OpenHarmony SDK 5.0.0.71."
+unverified = "The ArkTS/hvigor project was written without DevEco Studio and never built; HAP packaging, signing and running on a device are unverified."
+install = true
+next = ["cd @NAME@", "charpente toolchain install ohos && charpente pkg install && charpente build --platform harmonyos-arm64"]

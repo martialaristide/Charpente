@@ -1,0 +1,12 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.platforms(["linux-arm64"])              # Raspberry Pi 3/4/5 and Jetson boards running a 64-bit Linux
+
+    with Target("@NAME@") as app:
+        app.kind(Kind.EXECUTABLE)
+        app.standard("c++17")
+        app.sources(["src/*.cpp"])
+        with app.on_platform("linux-*") as linux:
+            linux.links(["pthread"])

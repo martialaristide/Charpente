@@ -1,0 +1,9 @@
+[template]
+name = "jeu-3d-vulkan"
+description = "A Vulkan starting point: GLFW window, volk loader, instance, GPU selection (rendering is left to you)"
+kits = ["kit-graphics"]
+platforms = ["host"]
+verified = "Built on Windows/MinGW. See the run result in tests/test_templates.py notes / docs (needs a Vulkan driver)."
+unverified = "It does not render anything: it initialises Vulkan and lists devices. Not tried on Linux/macOS (MoltenVK) or mobile."
+install = true
+next = ["cd @NAME@", "charpente pkg install && charpente run"]

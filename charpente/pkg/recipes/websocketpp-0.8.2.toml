@@ -1,0 +1,25 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "websocketpp"
+version = "0.8.2"
+license = "BSD-3-Clause"
+description = "Header-only C++ WebSocket client and server (over standalone Asio)"
+homepage = "https://www.zaphoyd.com/websocketpp"
+purl = "pkg:github/zaphoyd/websocketpp"
+
+[source]
+url = "https://github.com/zaphoyd/websocketpp/archive/refs/tags/0.8.2.tar.gz"
+sha256 = "6ce889d85ecdc2d8fa07408d6787e7352510750daa66b5ad44aacb47bea76755"
+strip_prefix = "websocketpp-0.8.2"
+
+[build]
+type = "header_only"
+language = "cpp"
+standard = "c++14"
+include_dirs = ["."]
+defines = ["_WEBSOCKETPP_CPP11_STL_", "_WEBSOCKETPP_CPP11_THREAD_"]
+keep = ["websocketpp/**", "COPYING"]
+
+[dependencies]
+requires = ["asio@^1.30"]

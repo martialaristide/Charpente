@@ -154,6 +154,30 @@ class Workspace:
                 self._model.requires.append(spec)
         return self
 
+    def kit(self, *names: Strings) -> "Workspace":
+        """`ws.kit("kit-core")`: require every package of the kit; `t.uses("kit-core")` then uses them all."""
+        from ..pkg import kits as kits_mod
+
+        for name in _flatten(names):
+            where = self._model.location
+            kit = kits_mod.get(name, where / ".charpente" / "kits" if where is not None else None)
+            self.requires(*kit.requires)
+            self._model.kits[kit.name] = list(kit.uses)
+        return self
+
+    def package_settings(self, package: str, *, include_dirs: Strings = (), defines: Strings = (),
+                         compile_flags: Strings = (), uses: Strings = (), link_libraries: Strings = ()) -> "Workspace":
+        """Tune how one package is built *in this workspace*: FreeRTOS needs your `FreeRTOSConfig.h` on its include
+        path, an embedded package needs `tinylibc`, etc. Paths are relative to the workspace. The recipe (and the lock
+        file) are untouched; only this workspace's build of the package changes."""
+        if not _PACKAGE_RE.match(package):
+            raise ChValueError("CH1023", spec=package)
+        table = self._model.package_settings.setdefault(package, {})
+        for key, values in (("include_dirs", include_dirs), ("defines", defines), ("compile_flags", compile_flags),
+                            ("uses", uses), ("link_libraries", link_libraries)):
+            table.setdefault(key, []).extend(x for x in _flatten((values,)) if x not in table.get(key, []))
+        return self
+
     def option(self, name: str, default: Any = None, *, help: str = "",
                choices: Optional[Iterable[Any]] = None) -> Any:
         """Declare a typed option and return its value (the default, or the one given with
@@ -240,6 +264,19 @@ class Rule:
 _PLATFORM_KEYS = ("android", "harmony", "ios", "wasm", "web", "xr", "embedded", "quest")
 
 
+def _expand_kits(names: List[str]) -> List[str]:
+    """`uses("kit-core")` means every target of the kit declared with `ws.kit("kit-core")`."""
+    workspace = _current_workspace
+    if workspace is None or not workspace.kits:
+        return names
+    out: List[str] = []
+    for name in names:
+        for item in workspace.kits.get(name, [name]):
+            if item not in out:
+                out.append(item)
+    return out
+
+
 class _Conditional:
     """`with t.on_platform("android-*") as p: p.defines([...])`: settings that
     only apply when the (config, platform, toolchain) condition holds."""
@@ -292,14 +329,14 @@ class _Conditional:
         return self
 
     def uses(self, *names: Strings) -> "_Conditional":
-        self._overlay.uses.extend(_flatten(names))
+        self._overlay.uses.extend(_expand_kits(_flatten(names)))
         return self
 
     def depends_on(self, targets: Strings) -> "_Conditional":
         self._overlay.depends_on.extend(_as_list(targets))
         return self
 
-    def platform_settings(self, name: str, **settings: Any) -> "_Conditional":
+    def platform_settings(self, name: str, /, **settings: Any) -> "_Conditional":
         self._overlay.platform_settings.setdefault(name, {}).update(settings)
         return self
 
@@ -378,16 +415,28 @@ class Target:
         self._model.extra_link_flags.extend(_as_list(flags))
         return self
 
+    def output_prefix(self, prefix: str) -> "Target":
+        """The file-name prefix of a library/plugin (`""` for a Python extension instead of `lib`)."""
+        self._model.output_prefix = prefix
+        return self
+
+    def output_extension(self, extension: str) -> "Target":
+        """The file extension of a library/plugin (`".pyd"` for a Python extension on Windows)."""
+        if extension and not extension.startswith("."):
+            raise ChValueError("CH1011", field="output_extension")
+        self._model.output_extension = extension
+        return self
+
     # ------------------------------------------------------------------ v2
     def uses(self, *names: Strings) -> "Target":
         """Build order, linking and the used targets' public settings, in one line:
         `t.uses("engine", "glm")`. Names are workspace targets or `ws.requires` packages."""
-        self._model.uses.extend(_flatten(names))
+        self._model.uses.extend(_expand_kits(_flatten(names)))
         return self
 
     def uses_public(self, *names: Strings) -> "Target":
         """Like `uses`, and whatever uses *this* target inherits them too (CMake's PUBLIC)."""
-        self._model.uses_public.extend(_flatten(names))
+        self._model.uses_public.extend(_expand_kits(_flatten(names)))
         return self
 
     def public_include_dirs(self, dirs: Strings) -> "Target":
@@ -441,7 +490,7 @@ class Target:
         self._model.shader_target = value
         return self
 
-    def platform_settings(self, name: str, **settings: Any) -> "Target":
+    def platform_settings(self, name: str, /, **settings: Any) -> "Target":
         self._model.platform_settings.setdefault(name, {}).update(settings)
         return self
 

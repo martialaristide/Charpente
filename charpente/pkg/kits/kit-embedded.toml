@@ -1,0 +1,8 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-embedded"
+description = "Microcontroller basics: tinylibc (freestanding string/stdlib), a small printf, CMSIS-Core headers, FreeRTOS."
+requires = ["tinylibc@^1.0", "printf@^6.1", "cmsis@^6.1", "freertos@^11.1"]
+verified = "A FreeRTOS + printf + tinylibc firmware linked for Cortex-M3 with zig 0.16 (ELF, bin, hex produced)."
+unverified = "Nothing was run on hardware or an emulator. The Cortex-M4F/M7 FreeRTOS ports are GCC-syntax assembly that zig's clang assembler rejects: use arm-none-eabi-gcc for them (also unverified here)."
+notes = "FreeRTOS needs your FreeRTOSConfig.h: ws.package_settings(\"freertos\", include_dirs=[\"config\"], uses=[\"tinylibc\"]). tinylibc is only for toolchains without a C library (zig); with arm-none-eabi-gcc use newlib."

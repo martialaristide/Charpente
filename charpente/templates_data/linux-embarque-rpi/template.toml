@@ -1,0 +1,7 @@
+[template]
+name = "linux-embarque-rpi"
+description = "A program for a Raspberry Pi (or any 64-bit ARM Linux board), cross-built from any machine"
+platforms = ["linux-arm64"]
+verified = "Cross-built for linux-arm64 with zig from Windows (ELF AArch64). Never run on a board."
+unverified = "Never executed on a real board; deployment over SSH (`charpente deploy --device ssh://...`) is not implemented."
+next = ["cd @NAME@", "charpente toolchain install zig && charpente build --platform linux-arm64"]

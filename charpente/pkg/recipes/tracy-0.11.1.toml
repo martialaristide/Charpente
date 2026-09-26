@@ -1,0 +1,30 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "tracy"
+version = "0.11.1"
+license = "BSD-3-Clause"
+description = "Frame profiler; without TRACY_ENABLE its macros compile to nothing"
+homepage = "https://github.com/wolfpld/tracy"
+purl = "pkg:github/wolfpld/tracy"
+
+[source]
+url = "https://github.com/wolfpld/tracy/archive/refs/tags/v0.11.1.tar.gz"
+sha256 = "2c11ca816f2b756be2730f86b0092920419f3dabc7a7173829ffd897d91888a1"
+strip_prefix = "tracy-0.11.1"
+
+[build]
+type = "sources"
+language = "cpp"
+standard = "c++11"
+sources = ["public/TracyClient.cpp"]
+include_dirs = ["public"]
+
+[build.platform."windows-*"]
+links = ["ws2_32", "dbghelp"]
+
+[build.platform."linux-*"]
+links = ["pthread", "dl"]
+
+[dependencies]
+requires = []

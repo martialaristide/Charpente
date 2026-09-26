@@ -1,0 +1,31 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "asio"
+version = "1.30.2"
+license = "BSL-1.0"
+description = "Standalone Asio: cross-platform asynchronous networking and I/O"
+homepage = "https://think-async.com"
+purl = "pkg:github/chriskohlhoff/asio"
+
+[source]
+url = "https://github.com/chriskohlhoff/asio/archive/refs/tags/asio-1-30-2.tar.gz"
+sha256 = "755bd7f85a4b269c67ae0ea254907c078d408cce8e1a352ad2ed664d233780e8"
+strip_prefix = "asio-asio-1-30-2"
+
+[build]
+type = "header_only"
+language = "cpp"
+standard = "c++14"
+include_dirs = ["asio/include"]
+defines = ["ASIO_STANDALONE"]
+keep = ["asio/include/**", "asio/COPYING", "asio/LICENSE_1_0.txt"]
+
+[build.platform."windows-*"]
+links = ["ws2_32", "mswsock"]
+
+[build.platform."linux-*"]
+links = ["pthread"]
+
+[dependencies]
+requires = []

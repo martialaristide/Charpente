@@ -17,6 +17,7 @@ from typing import Callable, List, Optional
 
 from ..core import download
 from ..errors import ChError
+from . import localsrc
 from .recipe import Recipe
 from .store import PackageStore, file_sha256
 
@@ -189,6 +190,10 @@ def fetch_source(recipe: Recipe, store: PackageStore, *, max_bytes: Optional[int
     Idempotent: an existing tree for this exact recipe is reused."""
     target = store.source_dir(recipe.name, recipe.version, recipe.digest)
     if target.exists():
+        return target
+    if localsrc.is_local(recipe.source.url):                    # a kit shipped inside Charpente: nothing to download
+        target.parent.mkdir(parents=True, exist_ok=True)
+        localsrc.materialize(recipe.source.url, recipe.source.sha256, target)
         return target
     archive = store.archive_path(recipe.source.sha256, recipe.source.url)
     if not archive.exists() or file_sha256(archive) != recipe.source.sha256:

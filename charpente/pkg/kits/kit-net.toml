@@ -1,0 +1,8 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-net"
+description = "Networking: standalone Asio and websocketpp (header-only)."
+requires = ["asio@^1.30", "websocketpp@^0.8"]
+verified = "asio and websocketpp headers compiled and an asio::io_context created, with MinGW GCC on Windows."
+unverified = "No connection was made; TLS (OpenSSL/mbedTLS) and libcurl are not packaged."
+notes = "websocketpp is unmaintained upstream; it works with standalone Asio 1.30 (ASIO_STANDALONE and C++11 STL defines are set by the recipes)."

@@ -1,0 +1,9 @@
+[template]
+name = "jeu-2d"
+description = "A 2D game (breakout): GLFW window and OpenGL, game logic separate and unit-tested"
+kits = ["kit-app"]
+platforms = ["host"]
+verified = "Built, unit-tested and run on Windows/MinGW (real OpenGL window, frames rendered)."
+unverified = "Linux (X11) and macOS builds; gameplay feel was not tuned."
+install = true
+next = ["cd @NAME@", "charpente pkg install && charpente test && charpente run -- --frames 120"]

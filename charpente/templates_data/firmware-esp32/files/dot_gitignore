@@ -1,0 +1,10 @@
+build/
+dist/
+*.o
+*.obj
+.vs/
+.idea/
+.vscode/
+sdkconfig
+sdkconfig.old
+managed_components/

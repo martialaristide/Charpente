@@ -371,6 +371,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "La fonctionnalité est optionnelle et sa dépendance n'est installée que sur demande.",
         "fix": "Installez-le avec : pip install \"charpente[{extra}]\"",
     },
+    "CH4008": {
+        "title": "Le modèle écraserait des fichiers",
+        "message": "Le modèle {template!r} écraserait des fichiers existants : {files}",
+        "cause": "Des fichiers que le modèle crée existent déjà dans le dossier de destination.",
+        "fix": "Choisissez un dossier vide (--dir), ou supprimez/renommez les fichiers en conflit.",
+    },
+    "CH4009": {
+        "title": "Modèle inconnu",
+        "message": "Aucun modèle nommé {name!r}. Disponibles : {known}",
+        "cause": "--template nomme un modèle ni fourni avec Charpente, ni par un module, ni par le projet.",
+        "fix": "`charpente init --list` montre les modèles.",
+    },
     # ------------------------------------------------------------------ 5xxx
     "CH5001": {
         "title": "Fournisseur d'IA non configuré",
@@ -462,6 +474,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "message": "Le paquet {name!r} porte le même nom qu'une cible de votre workspace.",
         "cause": "Les paquets deviennent des cibles portant leur nom ; une cible du workspace porte déjà ce nom.",
         "fix": "Renommez votre cible.",
+    },
+    "CH6016": {
+        "title": "Kit inconnu",
+        "message": "Aucun kit nommé {name!r}. Disponibles : {known}",
+        "cause": "ws.kit() nomme un kit que Charpente ne fournit pas et que le projet ne définit pas.",
+        "fix": "`charpente kit list` montre les kits ; un projet peut ajouter les siens dans .charpente/kits/NOM.toml.",
+    },
+    "CH6017": {
+        "title": "Réglages pour un paquet qui n'est pas requis",
+        "message": "ws.package_settings() nomme des paquets que l'espace de travail n'utilise pas : {names}",
+        "cause": "Des réglages ont été déclarés pour un paquet absent de ws.requires() (ou des kits) et de leurs dépendances.",
+        "fix": "Requérez le paquet (ou son kit), ou supprimez les réglages.",
     },
     # ------------------------------------------------------------------ 7xxx
     "CH7001": {

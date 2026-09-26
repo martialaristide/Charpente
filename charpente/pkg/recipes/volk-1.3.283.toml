@@ -1,0 +1,27 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "volk"
+version = "1.3.283"
+license = "MIT"
+description = "Meta loader for Vulkan: loads entry points without linking the loader"
+homepage = "https://github.com/zeux/volk"
+purl = "pkg:github/zeux/volk"
+
+[source]
+url = "https://github.com/zeux/volk/archive/refs/tags/vulkan-sdk-1.3.283.0.tar.gz"
+sha256 = "872035f1f26c53b218632a3a8dbccbd276710aaabafb9bb1bc1a6c0633ee6aab"
+strip_prefix = "volk-vulkan-sdk-1.3.283.0"
+
+[build]
+type = "sources"
+language = "c"
+standard = "c99"
+sources = ["volk.c"]
+include_dirs = ["."]
+
+[build.platform."linux-*"]
+links = ["dl"]
+
+[dependencies]
+requires = ["vulkan-headers@^1.3"]

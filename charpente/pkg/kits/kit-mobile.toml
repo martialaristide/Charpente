@@ -1,0 +1,8 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-mobile"
+description = "One C++ code base for Android, HarmonyOS and iOS: lifecycle, logging, app files, packaged assets (charpente-mobile)."
+requires = ["charpente-mobile@^1.0"]
+verified = "Desktop (MinGW). Android (NDK 28.2): an APK using it ran on an x86_64 API 30 emulator and logged its platform, private data directory, an asset read from the APK and the lifecycle events (start, resume, window-ready, pause, window-lost, stop). HarmonyOS (SDK 5.0.0.71): the backend compiles and links against hilog and rawfile for arm64 and arm."
+unverified = "The iOS/visionOS backend (written without a Mac); HarmonyOS on a device; there is no sensors or permissions API yet."
+notes = "Set the handler before android_attach() so Event::Create is not dropped. On iOS add frameworks=[\"Foundation\"] to platform_settings(\"ios\", ...)."

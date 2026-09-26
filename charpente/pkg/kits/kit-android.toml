@@ -1,0 +1,8 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-android"
+description = "Android native apps: the mobile layer (logcat, assets from the APK, files dir, lifecycle) for NativeActivity/native_app_glue."
+requires = ["charpente-mobile@^1.0"]
+verified = "See kit-mobile: built with the NDK, packaged and run on an emulator."
+unverified = "JNI helpers and GameActivity are not provided; use platform_settings(\"android\", native_app_glue=True) for NativeActivity."
+notes = "Call charpente::mobile::android_attach(app->activity) from android_main and android_command(cmd) from onAppCmd."

@@ -1,0 +1,9 @@
+[template]
+name = "app-mobile"
+description = "One C++ engine for Android, HarmonyOS and iOS, with a desktop build for fast development"
+kits = ["kit-mobile"]
+platforms = ["android-arm64", "harmonyos-arm64", "ios-arm64"]
+verified = "Android: the same structure built into an APK and run on an emulator (lifecycle, assets). Desktop: built, tested, run. HarmonyOS: the native library compiles and links against the real SDK."
+unverified = "iOS entry point (written without a Mac); the HarmonyOS module was not loaded by a real ArkTS app; the ArkTS project in harmony/ is a placeholder (see the app-harmonyos template)."
+install = true
+next = ["cd @NAME@", "charpente pkg install && charpente test && charpente run --target @IDENT@_desktop"]

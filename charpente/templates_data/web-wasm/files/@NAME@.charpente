@@ -1,0 +1,12 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.platforms(["wasm32-emscripten"])
+
+    with Target("@NAME@") as t:
+        t.kind(Kind.EXECUTABLE)                 # produces @NAME@.js + @NAME@.wasm
+        t.standard("c++17")
+        t.sources(["src/*.cpp"])
+        with t.on_platform("wasm32-*") as web:
+            web.link_flags(["-sEXPORTED_FUNCTIONS=_main,_add_numbers", "-sEXPORTED_RUNTIME_METHODS=ccall,cwrap"])

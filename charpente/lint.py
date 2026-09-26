@@ -51,6 +51,16 @@ class _TargetInfo:
     dynamic_edges: bool = False
 
 
+def _kit_members(name: str) -> List[str]:
+    """Package names of a bundled kit (empty for an unknown name: `ws.kit` itself reports it when loaded)."""
+    try:
+        from .pkg import kits
+
+        return [spec.partition("@")[0] for spec in kits.load_all()[name].requires]
+    except Exception:
+        return []
+
+
 def _literal_strings(node: ast.AST) -> Optional[List[str]]:
     """The strings in a literal (`"a"`, `["a", "b"]`, `("a",)`), or None if not fully literal."""
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
@@ -151,6 +161,11 @@ def lint_source(source: str) -> List[LintIssue]:
                     for arg in node.args:
                         for name in _literal_strings(arg) or []:
                             requires.add(name.partition("@")[0])
+                if kind == "workspace" and method == "kit":
+                    for arg in node.args:
+                        for name in _literal_strings(arg) or []:
+                            requires.add(name)                          # `uses("kit-core")` is valid ...
+                            requires.update(_kit_members(name))         # ... and so are its members
                 if method in ("sources", "exclude") and kind in ("target", "condition"):
                     for arg in node.args:
                         for pattern in _literal_strings(arg) or []:

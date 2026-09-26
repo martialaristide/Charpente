@@ -1,0 +1,22 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+
+    with Target("@IDENT@") as lib:
+        lib.kind(Kind.STATIC_LIBRARY)          # Kind.SHARED_LIBRARY for a .dll/.so/.dylib
+        lib.standard("c++17")
+        lib.sources(["src/*.cpp"])
+        lib.public_include_dirs(["include"])   # what users of the library see
+
+    with Target("@IDENT@_example") as example:
+        example.kind(Kind.EXECUTABLE)
+        example.standard("c++17")
+        example.sources(["examples/main.cpp"])
+        example.uses("@IDENT@")
+
+    with Target("@IDENT@_tests") as tests:
+        tests.kind(Kind.TEST)
+        tests.standard("c++17")
+        tests.sources(["tests/*.cpp"])
+        tests.uses("@IDENT@")

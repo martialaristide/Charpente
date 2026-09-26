@@ -311,6 +311,12 @@ charpente platforms [--family desktop|mobile|xr|web|embedded|server] [--json]
 Lists every target platform with its support tier, and whether *this* machine can build it now
 (natively, or through which toolchain) or what is missing. See [platforms.md](platforms.md).
 
+## `charpente init`, `charpente kit`
+
+`charpente init NAME` creates `NAME.charpente` and `src/main.cpp` as before. `charpente init NAME --template T [--dir D] [--install]` creates a project
+folder from a template (`charpente init --list`); `charpente kit list|show|add` browses the curated library sets. See [templates.md](templates.md) and
+[kits.md](kits.md).
+
 ## `charpente doctor`
 
 ```

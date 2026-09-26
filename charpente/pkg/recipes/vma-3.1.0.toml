@@ -1,0 +1,23 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "vma"
+version = "3.1.0"
+license = "MIT"
+description = "Vulkan Memory Allocator"
+homepage = "https://gpuopen.com/vulkan-memory-allocator"
+purl = "pkg:github/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator"
+
+[source]
+url = "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/archive/refs/tags/v3.1.0.tar.gz"
+sha256 = "ae134ecc37c55634f108e926f85d5d887b670360e77cd107affaf3a9539595f2"
+strip_prefix = "VulkanMemoryAllocator-3.1.0"
+
+[build]
+type = "header_only"
+language = "cpp"
+standard = "c++14"
+include_dirs = ["include"]
+
+[dependencies]
+requires = ["vulkan-headers@^1.3"]

@@ -1,0 +1,24 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "meshoptimizer"
+version = "0.21"
+license = "MIT"
+description = "Mesh optimization: vertex cache, overdraw, simplification, compression"
+homepage = "https://meshoptimizer.org"
+purl = "pkg:github/zeux/meshoptimizer"
+
+[source]
+url = "https://github.com/zeux/meshoptimizer/archive/refs/tags/v0.21.tar.gz"
+sha256 = "050a5438e4644833ff69f35110fcf4e37038a89c5fdc8aed45d8cd848ecb3a20"
+strip_prefix = "meshoptimizer-0.21"
+
+[build]
+type = "sources"
+language = "cpp"
+standard = "c++11"
+sources = ["src/*.cpp"]
+include_dirs = ["src"]
+
+[dependencies]
+requires = []

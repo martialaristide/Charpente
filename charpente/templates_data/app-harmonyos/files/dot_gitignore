@@ -1,0 +1,11 @@
+build/
+dist/
+*.o
+*.obj
+.vs/
+.idea/
+.vscode/
+harmony/entry/libs/
+harmony/**/build/
+harmony/.hvigor/
+harmony/oh_modules/

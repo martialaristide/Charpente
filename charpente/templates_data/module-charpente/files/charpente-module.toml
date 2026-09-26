@@ -1,0 +1,17 @@
+[module]
+name = "@NAME@"
+version = "0.1.0"
+api = "^2.0"
+license = "MIT"
+description = "@TITLE@: a Charpente module"
+entry = "@IDENT@:register"
+
+# What the module contributes (registered in register() below) ...
+[provides]
+commands = ["@IDENT@-hello"]
+
+# ... and what it is allowed to do. Nothing is granted by default.
+[capabilities]
+process = []
+filesystem = "none"
+network = false

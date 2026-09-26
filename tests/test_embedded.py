@@ -80,7 +80,7 @@ def test_link_flags_differ_between_gnu_and_zig():
     assert "-nostartfiles" in gnu and "--specs=nano.specs" in gnu and "-Wl,-Map=out.map" in gnu
     assert gnu[gnu.index("-T") + 1] == str(root / "link.ld") and "-Wl,-e,Start" in gnu and "-Wl,--gc-sections" in gnu
     zig = embedded.link_flags(specialised(ZIG, "cortexm4-arm"), s, root, Path("out.map"))
-    assert "-nostdlib" in zig and not any("Map" in a for a in zig) and "--specs=nano.specs" not in zig
+    assert "-nostdlib" not in zig and not any("Map" in a for a in zig) and "--specs=nano.specs" not in zig
     assert "--specs=nano.specs" not in embedded.link_flags(specialised(ARM_GCC, "cortexm4-arm"),
                                                            embedded.settings_from("fw", {"specs": "none"}), root, None)
 

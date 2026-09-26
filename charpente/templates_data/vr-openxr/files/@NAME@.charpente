@@ -1,0 +1,25 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.platforms(["android-arm64"])
+    ws.kit("kit-xr", "kit-android")
+
+    # Desktop: uses the system's OpenXR runtime (SteamVR, Meta Link, Monado ...), loaded at run time.
+    with Target("@NAME@") as app:
+        app.kind(Kind.EXECUTABLE)
+        app.standard("c++17")
+        app.sources(["src/xr_probe.cpp", "src/desktop_main.cpp"])
+        app.uses("kit-xr")
+        app.platforms(["windows-*", "linux-*"])
+        with app.on_platform("linux-*") as linux:
+            linux.links(["dl"])
+
+    # Android headsets (Meta Quest, Pico ...): the same probe inside a NativeActivity app with the OpenXR manifest entries.
+    with Target("@IDENT@_quest") as quest:
+        quest.kind(Kind.XR_APP)
+        quest.standard("c++17")
+        quest.sources(["src/xr_probe.cpp", "src/android_main.cpp"])
+        quest.uses("kit-xr", "kit-android")
+        quest.platforms(["android-*"])
+        quest.platform_settings("android", package="@PACKAGE@", label="@TITLE@", min_sdk=29, native_app_glue=True, xr="quest")

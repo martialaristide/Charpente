@@ -128,6 +128,10 @@ class Target:
 
     extra_compile_flags: List[str] = field(default_factory=list)
     extra_link_flags: List[str] = field(default_factory=list)
+    #: Overrides for the output file name of libraries and plugins (Python extensions want `name.pyd`/`name.so`,
+    #: no `lib` prefix): None keeps the platform's convention.
+    output_prefix: Optional[str] = None
+    output_extension: Optional[str] = None
 
     # ---- DSL v2 (all optional; a v0.1.0 target never sets any of them) -----
     #: `uses("dep")`: build order + link + the dependency's public settings, in one line.
@@ -222,6 +226,11 @@ class Workspace:
     platforms: List[str] = field(default_factory=list)
     #: `ws.requires("fmt@^10", ...)`: external packages, resolved by `charpente pkg install`.
     requires: List[str] = field(default_factory=list)
+    #: `ws.kit("kit-core")`: kit name -> the target names `uses("kit-core")` expands to.
+    kits: Dict[str, List[str]] = field(default_factory=dict)
+    #: `ws.package_settings("freertos", include_dirs=[...])`: per-workspace tuning of a package's own build
+    #: (include dirs, defines, flags, extra `uses`); package name -> setting -> values.
+    package_settings: Dict[str, Dict[str, List[str]]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         _validate_name(self.name, "Workspace name")

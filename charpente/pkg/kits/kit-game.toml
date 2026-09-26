@@ -1,0 +1,8 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-game"
+description = "Game building blocks: EnTT (ECS), miniaudio, Tracy profiler."
+requires = ["entt@^3.13", "miniaudio@^0.11", "tracy@^0.11"]
+verified = "entt, miniaudio (library built, version string read) and Tracy's client compiled and linked with MinGW GCC; no audio device or profiler server was used."
+unverified = "Jolt Physics is not packaged yet."
+notes = "Tracy is inert until you define TRACY_ENABLE."

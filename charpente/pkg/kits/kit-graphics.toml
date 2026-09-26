@@ -1,0 +1,8 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-graphics"
+description = "Vulkan-oriented graphics: headers, volk loader, Vulkan Memory Allocator, glm, meshoptimizer, cgltf."
+requires = ["vulkan-headers@^1.3", "volk@^1.3", "vma@^3.1", "glm@^1.0", "meshoptimizer@^0.21", "cgltf@^1.14"]
+verified = "volk and meshoptimizer compiled to libraries; vulkan-headers, vma, cgltf, glm included and used, with MinGW GCC (compile and link; no GPU was used)."
+unverified = "Running Vulkan needs a driver and the Vulkan loader on the target; shaderc is not packaged (compile shaders with glslc from the Vulkan SDK or the NDK)."
+notes = "VMA and cgltf are single-header: define VMA_IMPLEMENTATION / CGLTF_IMPLEMENTATION in exactly one source file."

@@ -1,0 +1,25 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "imgui"
+version = "1.91.2"
+license = "MIT"
+description = "Dear ImGui: immediate-mode graphical user interface (core; backends are separate)"
+homepage = "https://github.com/ocornut/imgui"
+purl = "pkg:github/ocornut/imgui"
+
+[source]
+url = "https://github.com/ocornut/imgui/archive/refs/tags/v1.91.2.tar.gz"
+sha256 = "a3c4fd857a0a48f6edad3e25de68fa1e96d2437f1665039714d1de9ad579b8d0"
+strip_prefix = "imgui-1.91.2"
+
+[build]
+type = "sources"
+language = "cpp"
+standard = "c++11"
+sources = ["imgui.cpp", "imgui_draw.cpp", "imgui_tables.cpp", "imgui_widgets.cpp"]
+include_dirs = ["."]
+keep = ["*.h", "*.cpp", "LICENSE.txt", "backends/*.h", "backends/*.cpp"]
+
+[dependencies]
+requires = []

@@ -1,0 +1,7 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-xr"
+description = "OpenXR headers for VR/AR applications (desktop runtimes, Quest, Pico)."
+requires = ["openxr-headers@^1.1"]
+verified = "openxr/openxr.h compiled into a program with MinGW GCC."
+unverified = "The OpenXR loader, a simulated runtime (Monado) and controller/hand-tracking helpers are not packaged: on Android headsets the loader ships with the runtime, on desktop use the system's (SteamVR, Meta Link, Monado)."

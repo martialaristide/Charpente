@@ -1,0 +1,30 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "miniaudio"
+version = "0.11.21"
+license = "MIT-0 OR Unlicense"
+description = "Audio playback and capture in one small C library"
+homepage = "https://miniaud.io"
+purl = "pkg:github/mackron/miniaudio"
+
+[source]
+url = "https://github.com/mackron/miniaudio/archive/refs/tags/0.11.21.tar.gz"
+sha256 = "6afb5c231613d2fab4f1c668b7243ff9a7d6d78a7f5a2692c133f026fe508506"
+strip_prefix = "miniaudio-0.11.21"
+
+[build]
+type = "sources"
+language = "c"
+standard = "c99"
+sources = ["extras/miniaudio_split/miniaudio.c"]
+include_dirs = ["extras/miniaudio_split"]
+
+[build.platform."linux-*"]
+links = ["dl", "pthread", "m"]
+
+[build.platform."android-*"]
+links = ["log"]
+
+[dependencies]
+requires = []

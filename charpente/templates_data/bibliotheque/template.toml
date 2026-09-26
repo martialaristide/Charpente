@@ -1,0 +1,6 @@
+[template]
+name = "bibliotheque"
+description = "A C++ library with a public header, an example and tests"
+platforms = ["host"]
+verified = "Generated, built, run and tested with MinGW GCC on Windows."
+next = ["cd @NAME@", "charpente test && charpente run --target @IDENT@_example"]

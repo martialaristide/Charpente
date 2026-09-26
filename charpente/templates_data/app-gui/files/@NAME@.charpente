@@ -1,0 +1,17 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.requires("imgui-glfw-opengl3@^1.91")       # Dear ImGui + GLFW + the OpenGL 3 backend (checksummed sources)
+
+    with Target("@NAME@") as app:
+        app.kind(Kind.EXECUTABLE)
+        app.standard("c++17")
+        app.sources(["src/*.cpp"])
+        app.uses("imgui-glfw-opengl3")
+        with app.on_platform("windows-*") as windows:
+            windows.links(["opengl32"])
+        with app.on_platform("linux-*") as linux:
+            linux.links(["GL"])
+        with app.on_platform("macos-*") as mac:
+            mac.link_flags(["-framework", "Cocoa", "-framework", "IOKit", "-framework", "CoreVideo", "-framework", "OpenGL"])

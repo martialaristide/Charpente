@@ -57,13 +57,19 @@ charpente = "charpente.cli:main"
 [tool.setuptools.packages.find]
 include = ["charpente*"]
 
+# Data files must be listed: setuptools leaves out everything that is not Python. (Recipes, kit sources and project
+# templates were missing from the wheel until this was declared -- tests/test_packaging.py now guards it.)
+[tool.setuptools.package-data]
+charpente = ["pkg/recipes/*.toml", "pkg/kits/*.toml", "kit_sources/**/*", "templates_data/**/*",
+             "modules/official/*.toml"]
+
 [tool.setuptools.dynamic]
 version = { attr = "charpente._version.__version__" }
 
 [tool.ruff]
 line-length = 120
 target-version = "py39"
-extend-exclude = ["build", "dist", "studio", "vscode-charpente"]
+extend-exclude = ["build", "dist", "studio", "vscode-charpente", "charpente/templates_data", "charpente/kit_sources"]
 
 [tool.ruff.lint]
 # Deliberately small and stable: bugs (F, B), imports (I), pycodestyle errors (E).
@@ -79,6 +85,7 @@ ignore = [
 [tool.mypy]
 strict = true
 warn_unused_configs = true
+exclude = ["templates_data", "kit_sources"]
 
 [[tool.mypy.overrides]]
 # Optional AI SDKs: imported lazily, absent unless the `ai` extra is installed.

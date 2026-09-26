@@ -1,0 +1,6 @@
+[template]
+name = "console"
+description = "A command-line program with a tested core library"
+platforms = ["host"]
+verified = "Generated, built, run and tested with MinGW GCC on Windows (see tests/test_templates.py)."
+next = ["cd @NAME@", "charpente build && charpente run -- Ada && charpente test"]

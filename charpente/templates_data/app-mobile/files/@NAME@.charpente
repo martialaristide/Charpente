@@ -1,0 +1,59 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.platforms(["android-arm64", "harmonyos-arm64", "ios-arm64"])
+    ws.kit("kit-mobile")
+
+    # The engine: platform-independent C++ that talks to the device only through charpente::mobile.
+    with Target("@IDENT@_engine") as engine:
+        engine.kind(Kind.STATIC_LIBRARY)
+        engine.standard("c++17")
+        engine.sources(["src/engine/*.cpp"])
+        engine.uses_public("kit-mobile")
+
+    # Develop and test on your PC first.
+    with Target("@IDENT@_desktop") as desktop:
+        desktop.kind(Kind.EXECUTABLE)
+        desktop.standard("c++17")
+        desktop.sources(["src/platform/desktop_main.cpp"])
+        desktop.uses("@IDENT@_engine")
+        desktop.platforms(["windows-*", "linux-*", "macos-*"])
+
+    with Target("@IDENT@_tests") as tests:
+        tests.kind(Kind.TEST)
+        tests.standard("c++17")
+        tests.sources(["tests/*.cpp"])
+        tests.uses("@IDENT@_engine")
+        tests.platforms(["windows-*", "linux-*", "macos-*"])
+
+    # Android: an APK.
+    with Target("@IDENT@") as android_app:
+        android_app.kind(Kind.MOBILE_APP)
+        android_app.standard("c++17")
+        android_app.sources(["src/platform/android_main.cpp"])
+        android_app.uses("@IDENT@_engine")
+        android_app.platforms(["android-*"])
+        android_app.platform_settings("android", package="@PACKAGE@", label="@TITLE@", min_sdk=24,
+                                      native_app_glue=True, assets="assets")
+
+    # HarmonyOS: libentry.so, loaded by the ArkTS app in harmony/ (built with hvigor).
+    with Target("entry") as harmony_lib:
+        harmony_lib.kind(Kind.MOBILE_APP)
+        harmony_lib.standard("c++17")
+        harmony_lib.sources(["src/platform/harmony_napi.cpp"])
+        harmony_lib.uses("@IDENT@_engine")
+        harmony_lib.platforms(["harmonyos-*"])
+        harmony_lib.links(["ace_napi.z"])                 # Node-API (libace_napi.z.so in the OpenHarmony sysroot)
+        harmony_lib.platform_settings("harmony", project="harmony", module="entry", package_type="hap",
+                                      bundle_name="@PACKAGE@")
+
+    # iOS: the app executable (bundled with `charpente package --format app`).
+    with Target("@IDENT@_ios") as ios_app:
+        ios_app.kind(Kind.MOBILE_APP)
+        ios_app.standard("c++17")
+        ios_app.sources(["src/platform/ios_main.mm"])
+        ios_app.uses("@IDENT@_engine")
+        ios_app.platforms(["ios-*"])
+        ios_app.platform_settings("ios", bundle_id="@PACKAGE@", name="@TITLE@", min_os="15.0",
+                                  frameworks=["Foundation", "UIKit"])

@@ -1,0 +1,16 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.platforms(["cortexm4-arm"])
+
+    with Target("@NAME@") as fw:
+        fw.kind(Kind.FIRMWARE)
+        fw.language(Language.C)
+        fw.standard("c11")
+        fw.sources(["src/*.c"])
+        fw.platform_settings("embedded",
+                             linker_script="stm32f4.ld",
+                             entry="Reset_Handler",
+                             flash="openocd",
+                             flash_args=["-f", "interface/stlink.cfg", "-f", "target/stm32f4x.cfg"])

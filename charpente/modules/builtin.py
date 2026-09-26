@@ -28,6 +28,10 @@ class BuiltinToolchain:
 
 
 def register_builtins(registry: ExtensionRegistry) -> None:
+    from .. import templates
+
+    for template in templates.load_all().values():
+        registry.add_builtin("template", template.name, template)
     from ..quality.gate import BUILTIN_CHECKS
 
     for check in BUILTIN_CHECKS:

@@ -1,0 +1,14 @@
+from charpente import *
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.platforms(["android-arm64", "android-x64"])
+    ws.kit("kit-android")                       # the mobile layer: logcat, assets, files dir, lifecycle events
+
+    with Target("@IDENT@") as app:
+        app.kind(Kind.MOBILE_APP)               # built as libs@IDENT@.so and packaged into an APK
+        app.standard("c++17")
+        app.sources(["src/*.cpp"])
+        app.uses("kit-android")
+        app.platform_settings("android", package="@PACKAGE@", label="@TITLE@", min_sdk=24,
+                              native_app_glue=True, assets="assets")

@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>@TITLE@</title></head>
+<body>
+  <h1>@TITLE@</h1>
+  <pre id="out"></pre>
+  <script>
+    var Module = { print: function (text) { document.getElementById("out").textContent += text + "\n"; } };
+  </script>
+  <script src="@NAME@.js"></script>
+</body>
+</html>

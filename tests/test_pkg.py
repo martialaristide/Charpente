@@ -160,8 +160,9 @@ def test_every_bundled_recipe_is_valid_and_pinned():
     seen = set()
     for path in files:
         r = recipe.load(path)
-        assert r.source.url.startswith("https://") and len(r.source.sha256) == 64
-        assert r.license and r.purl and r.description and r.source.strip_prefix
+        local = r.source.url.startswith("charpente://")            # a kit shipped inside Charpente: no download, no purl
+        assert (local or r.source.url.startswith("https://")) and len(r.source.sha256) == 64
+        assert r.license and r.description and (local or (r.purl and r.source.strip_prefix))
         assert (r.name, r.version) not in seen
         seen.add((r.name, r.version))
         assert path.stem.lower() == f"{r.name}-{r.version}".lower()

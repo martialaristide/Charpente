@@ -1,0 +1,25 @@
+import sys
+import sysconfig
+
+from charpente import *
+
+# Python's headers (and, on Windows, its import library) come from the interpreter that runs Charpente.
+PY_INCLUDE = sysconfig.get_paths()["include"]
+IS_WINDOWS = sys.platform == "win32"
+
+with Workspace("@NAME@", version="0.1.0") as ws:
+    ws.configurations(["Debug", "Release"])
+    ws.requires("pybind11@^2.13")
+
+    with Target("@IDENT@") as ext:
+        ext.kind(Kind.PLUGIN)                                    # a shared library loaded at run time
+        ext.standard("c++17")
+        ext.sources(["src/*.cpp"])
+        ext.uses("pybind11")
+        ext.include_dirs([PY_INCLUDE])
+        ext.output_prefix("")                                    # Python imports `@IDENT@`, not `lib@IDENT@`
+        ext.output_extension(".pyd" if IS_WINDOWS else ".so")
+        if IS_WINDOWS:
+            # Python 3.8+ does not search PATH for a module's DLL dependencies: link MinGW's runtime in statically.
+            ext.link_flags(["-static-libgcc", "-static-libstdc++", "-static",
+                            "-L" + sys.base_prefix.replace("\\", "/") + "/libs", "-lpython%d%d" % sys.version_info[:2]])

@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.10.0 -- Phase P6: kits and project templates
+
+- **Kits**: `kit-core`, `kit-app`, `kit-graphics`, `kit-xr`, `kit-game`, `kit-net`, `kit-embedded`, `kit-mobile`, `kit-android`, `kit-ohos`: curated recipe sets with a stated
+  verification (`charpente kit list|show|add`, `ws.kit()`, `t.uses("kit-x")`). Twenty new recipes (simdjson, stb, miniaudio, cgltf, volk, vma, meshoptimizer, asio, websocketpp,
+  tracy, imgui, glfw, ImGui backends, freertos, printf, cmsis, openxr-headers, pybind11), all compiled for real.
+- **Kits shipped inside Charpente** (`charpente://` sources, digest-pinned): `tinylibc` (freestanding libc bits for zig) and `charpente-mobile` (lifecycle, logging, files, assets on
+  Android/HarmonyOS/iOS/desktop; Android verified on an emulator).
+- **16 project templates**: `charpente init NAME --template T` (console, bibliotheque, app-gui, jeu-2d, jeu-3d-vulkan, vr-openxr, app-android, app-harmonyos, app-mobile, web-wasm,
+  wasi-plugin, plugin-python, firmware-stm32, firmware-esp32, linux-embarque-rpi, module-charpente); each states what was verified. `charpente init NAME` is unchanged.
+- DSL: `ws.package_settings()`, `t.output_prefix()/output_extension()`, `platform_settings(..., name=...)` allowed.
+- **Fixed: the wheel never contained the recipes** (nor, now, kits, kit sources or templates): `package-data` was not declared. A test compares the declaration with the files (including
+  dot-files, which packaging tools skip).
+- Also fixed: zig firmware lost compiler-rt (`-nostdlib`); `uses_public` did not expand kits; the linter did not know kit names.
+- Not done: `ar-mobile`, `jeu-harmonyos`, SDL3/libcurl/TLS/shaderc/Jolt/OpenXR loader in kits, ESP-IDF delegation, a shared binary cache.
+
 ## v0.9.0 -- Phase P5: quality gate, Git and GitHub, releases
 
 - **`charpente check`**: a configurable quality gate (`.charpente/quality.toml`) with three levels. Checks: build, clang-format, DSL lint, **secrets**,

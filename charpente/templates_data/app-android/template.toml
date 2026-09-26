@@ -1,0 +1,9 @@
+[template]
+name = "app-android"
+description = "A native Android app (NativeActivity, C++): lifecycle, logcat, assets, signed APK"
+kits = ["kit-android"]
+platforms = ["android-arm64", "android-x64"]
+verified = "Built, packaged, signed, installed and started on an x86_64 emulator (API 30); logcat showed the lifecycle events and the asset text."
+unverified = "arm64 was built but not run; Java/Kotlin, Gradle and AAB are not part of this template."
+install = true
+next = ["cd @NAME@", "charpente pkg install && charpente deploy --platform android-x64"]

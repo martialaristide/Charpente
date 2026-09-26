@@ -1,0 +1,42 @@
+# Charpente recipe -- data only, nothing here is executed.
+# Code written for Charpente and shipped inside it: no download. `python tools/sync_kit_digests.py` keeps sha256 in step.
+[package]
+name = "charpente-mobile"
+version = "1.0.0"
+license = "MIT"
+description = "One C++ API for lifecycle, logging, files and assets on Android, HarmonyOS, iOS and the desktop"
+homepage = "https://github.com/martialaristide/Charpente"
+purl = ""
+
+[source]
+url = "charpente://mobile"
+sha256 = "05cfa5fd6d44872e290ca913c2f379cd9af3640afc3f4aef3440ab3949f9c815"
+strip_prefix = ""
+
+[build]
+type = "sources"
+language = "cpp"
+standard = "c++14"
+sources = ["src/common.cpp", "src/desktop.cpp"]
+include_dirs = ["include"]
+
+[build.platform."android-*"]
+sources = ["src/android.cpp"]
+exclude = ["src/desktop.cpp"]
+links = ["log", "android"]
+
+[build.platform."harmonyos-*"]
+sources = ["src/harmony.cpp"]
+exclude = ["src/desktop.cpp"]
+links = ["hilog_ndk.z", "rawfile.z"]
+
+[build.platform."ios-*"]
+sources = ["src/ios.mm"]
+exclude = ["src/desktop.cpp"]
+
+[build.platform."visionos-*"]
+sources = ["src/ios.mm"]
+exclude = ["src/desktop.cpp"]
+
+[dependencies]
+requires = []

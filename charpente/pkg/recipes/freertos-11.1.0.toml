@@ -1,0 +1,41 @@
+# Charpente recipe -- data only, nothing here is executed.
+
+[package]
+name = "freertos"
+version = "11.1.0"
+license = "MIT"
+description = "FreeRTOS kernel (you provide FreeRTOSConfig.h); heap_4 allocator"
+homepage = "https://www.freertos.org"
+purl = "pkg:github/FreeRTOS/FreeRTOS-Kernel"
+
+[source]
+url = "https://github.com/FreeRTOS/FreeRTOS-Kernel/archive/refs/tags/V11.1.0.tar.gz"
+sha256 = "0e21928b3bcc4f9bcaf7333fb1c8c0299d97e2ec9e13e3faa2c5a7ac8a3bc573"
+strip_prefix = "FreeRTOS-Kernel-11.1.0"
+
+[build]
+type = "sources"
+language = "c"
+standard = "c11"
+sources = ["tasks.c", "queue.c", "list.c", "timers.c", "event_groups.c", "stream_buffer.c", "portable/MemMang/heap_4.c"]
+include_dirs = ["include"]
+keep = ["*.c", "include/*.h", "portable/**", "LICENSE.md"]
+
+[build.platform."cortexm0-arm"]
+sources = ["portable/GCC/ARM_CM0/port.c"]
+include_dirs = ["portable/GCC/ARM_CM0"]
+
+[build.platform."cortexm3-arm"]
+sources = ["portable/GCC/ARM_CM3/port.c"]
+include_dirs = ["portable/GCC/ARM_CM3"]
+
+[build.platform."cortexm4-arm"]
+sources = ["portable/GCC/ARM_CM4F/port.c"]
+include_dirs = ["portable/GCC/ARM_CM4F"]
+
+[build.platform."cortexm7-arm"]
+sources = ["portable/GCC/ARM_CM7/r0p1/port.c"]
+include_dirs = ["portable/GCC/ARM_CM7/r0p1"]
+
+[dependencies]
+requires = []

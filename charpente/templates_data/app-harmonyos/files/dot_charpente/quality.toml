@@ -1,0 +1,3 @@
+# Charpente quality gate (`charpente check`); see docs/quality.md.
+[gate]
+level = "standard"

@@ -1,0 +1,7 @@
+# A Charpente kit: a tested selection of packages. Data only.
+[kit]
+name = "kit-core"
+description = "Everyday C++ building blocks: formatting, logging, JSON, command line, unit tests."
+requires = ["fmt@^10.2", "spdlog@^1.13", "nlohmann_json@^3.11", "simdjson@^3.10", "CLI11@^2.4", "doctest@^2.4"]
+verified = "fmt, spdlog, nlohmann_json, CLI11, doctest and simdjson built and run together with MinGW GCC on Windows (a program using each)."
+unverified = "Other toolchains and platforms: the recipes are plain sources, but only Windows/MinGW was exercised here."

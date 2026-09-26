@@ -1,0 +1,24 @@
+# Charpente recipe -- data only, nothing here is executed.
+# Code written for Charpente and shipped inside it: no download. `python tools/sync_kit_digests.py` keeps sha256 in step.
+[package]
+name = "tinylibc"
+version = "1.0.0"
+license = "MIT"
+description = "Freestanding string.h/stdlib.h/assert.h for microcontrollers when the toolchain has no C library (zig)"
+homepage = "https://github.com/martialaristide/Charpente"
+purl = ""
+
+[source]
+url = "charpente://tinylibc"
+sha256 = "9028184f3fbfb29efa7c8a2893a63d11d03250c42ccc4185ddf027d59d2e404b"
+strip_prefix = ""
+
+[build]
+type = "sources"
+language = "c"
+standard = "c11"
+sources = ["src/string.c", "src/stdlib.c"]
+include_dirs = ["include"]
+
+[dependencies]
+requires = []

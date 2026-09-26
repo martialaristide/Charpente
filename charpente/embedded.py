@@ -136,7 +136,7 @@ def compile_flags(toolchain: Toolchain, settings: FirmwareSettings, cxx: bool) -
 def link_flags(toolchain: Toolchain, settings: FirmwareSettings, root: Path, map_file: Optional[Path]) -> List[str]:
     flags = [*cpu_flags(toolchain, settings), "-Wl,--gc-sections", f"-Wl,-e,{settings.entry}"]
     if toolchain.name == "zig":
-        flags.append("-nostdlib")
+        pass          # zig's freestanding targets have no libc to leave out, and keep compiler-rt (soft-float, division helpers)
     else:
         flags.append("-nostartfiles")
         if settings.specs != "none":

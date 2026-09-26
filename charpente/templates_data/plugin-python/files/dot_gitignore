@@ -1,0 +1,9 @@
+build/
+dist/
+*.o
+*.obj
+.vs/
+.idea/
+.vscode/
+__pycache__/
+*.pyd

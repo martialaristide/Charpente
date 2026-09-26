@@ -1,0 +1,9 @@
+[template]
+name = "app-gui"
+description = "A desktop GUI app: Dear ImGui on GLFW and OpenGL 3 (window, widgets, a render loop)"
+kits = ["kit-app"]
+platforms = ["host"]
+verified = "Built and run on Windows/MinGW: a real OpenGL 4.6 window rendered ImGui frames (the program printed its frame count)."
+unverified = "The Linux (X11) and macOS (Cocoa) GLFW builds were not tried; the macOS link flags are GLFW's documented frameworks."
+install = true
+next = ["cd @NAME@", "charpente pkg install && charpente run -- --frames 60"]
