@@ -72,7 +72,7 @@ def test_the_theme_can_come_from_the_environment():
     assert "38;2;255;190;225" in text                                                       # neon's light shadow too
     assert "38;2;255;45;150" in text
     basic = show("--color", "always", env={})                                              # no colour depth known: the 16 basic colours
-    assert "[" in basic and "38;2;" not in basic and "38;5;" not in basic
+    assert "\x1b[" in basic and "38;2;" not in basic and "38;5;" not in basic
 
 
 def test_bad_arguments_are_reported_by_argparse():
