@@ -16,9 +16,9 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path, PurePosixPath
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-from .. import android, flags
+from .. import android, cross, embedded, flags
 from ..dsl import resolve
-from ..dsl.model import LIBRARY_KINDS, OS, Kind, Language, Target, Workspace
+from ..dsl.model import APP_KINDS, LIBRARY_KINDS, OS, Kind, Language, Target, Workspace
 from ..errors import ChError
 from ..toolchains import Toolchain
 from .actions import DEP_GNU, DEP_MSVC, KIND_ARCHIVE, KIND_COMPILE, KIND_CUSTOM, KIND_LINK, Action
@@ -134,8 +134,8 @@ def plan_workspace(
     order, effective = scope if scope is not None else effective_scope(workspace, toolchain, config, only)
 
     debug = config.lower() == "debug"
-    variant = f"{config}-{toolchain.target}" if toolchain.target else config
-    id_prefix = f"{toolchain.target}/" if toolchain.target else ""
+    variant = cross.variant_name(config, toolchain)
+    id_prefix = cross.id_prefix(toolchain)
     fam = flags.family(toolchain)
     object_ext = ".obj" if fam == "msvc" else ".o"
     root = workspace.root
@@ -168,7 +168,9 @@ def plan_workspace(
         target = effective[name]
         if target.kind == Kind.HEADER_ONLY:
             continue                                    # contributes settings to its users, builds nothing
-        if target.kind not in _BUILDABLE and not (target.kind == Kind.MOBILE_APP and target_os == OS.ANDROID):
+        if target.kind not in _BUILDABLE and not (target.kind in APP_KINDS
+                                                  and target_os in (OS.ANDROID, OS.IOS, OS.VISIONOS, OS.OHOS)) \
+                and not (target.kind == Kind.FIRMWARE and target_os == OS.BAREMETAL):
             errors[name] = ChError("CH3007", kind=target.kind.value)
             failed.add(name)
             continue
@@ -257,7 +259,7 @@ def plan_workspace(
                 extra_inputs.append(build_dir(workspace, variant, dep) / flags.output_filename(dep, target_os, toolchain))
 
         output_path = out_dir / flags.output_filename(target, target_os, toolchain)
-        argv = flags.link_args(toolchain, target, objects, output_path, library_dirs=dependency_dirs)
+        argv = flags.link_args(toolchain, target, objects, output_path, library_dirs=dependency_dirs, root=root)
         is_archive = target.kind == Kind.STATIC_LIBRARY
         kind = KIND_ARCHIVE if is_archive else KIND_LINK
         tool = toolchain.archiver if is_archive else toolchain.linker
@@ -266,7 +268,7 @@ def plan_workspace(
             kind=kind,
             target=target.name,
             argv=tuple(argv),
-            outputs=(output_path, *flags.side_outputs(target, target_os, output_path)),
+            outputs=(output_path, *flags.side_outputs(target, target_os, output_path, toolchain)),
             inputs=tuple(objects) + tuple(extra_inputs),
             after=tuple(after),
             env=_MSVC_ENV if fam == "msvc" else toolchain.env,
@@ -278,6 +280,26 @@ def plan_workspace(
         ids.append(final.id)
         final_action[name] = final.id
         outputs[name] = output_path
+        if target.kind == Kind.FIRMWARE and target_os == OS.BAREMETAL:
+            for image in ("bin", "hex"):                # the flashable images, produced (and cached) like anything else
+                image_path = output_path.with_suffix(f".{image}")
+                image_argv = embedded.objcopy_argv(toolchain, image, output_path, image_path)
+                actions.append(Action(
+                    id=_action_id(KIND_CUSTOM, target.name, None, root, id_prefix + f"{image}:"),
+                    kind=KIND_CUSTOM, target=target.name, argv=tuple(image_argv), outputs=(image_path,),
+                    inputs=(output_path,), after=(final.id,), tool=image_argv[0],
+                    description=f"Creating {image_path.name}", cwd=root))
+                ids.append(actions[-1].id)
+            fw = embedded.settings_from(target.name, target.platform_settings.get("embedded", {}))
+            if fw.uf2_base:
+                uf2_path = output_path.with_suffix(".uf2")
+                uf2_cmd = embedded.uf2_argv(output_path.with_suffix(".bin"), uf2_path, fw)
+                actions.append(Action(
+                    id=_action_id(KIND_CUSTOM, target.name, None, root, id_prefix + "uf2:"),
+                    kind=KIND_CUSTOM, target=target.name, argv=tuple(uf2_cmd), outputs=(uf2_path,),
+                    inputs=(output_path.with_suffix(".bin"),), after=(actions[-1].id,), tool=uf2_cmd[0],
+                    description=f"Creating {uf2_path.name}", cwd=root))
+                ids.append(actions[-1].id)
 
     return Plan(graph=ActionGraph(actions), target_actions=plan_targets, outputs=outputs,
                 errors=errors, order=order, config=config)

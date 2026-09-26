@@ -826,6 +826,54 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** Charpente n'accepte jamais la licence d'un éditeur à votre place. Le texte de l'accord a été affiché ci-dessus.
 - **Correction (FR) :** Lisez-le (conditions complètes : {url}) ; si vous êtes d'accord, relancez la commande avec --accept-android-license.
 
+### CH8011 — Sanitizers or coverage not available
+*FR : Sanitizers ou couverture indisponibles*
+
+- **Cause:** Sanitizers and coverage need compiler and runtime support that not every toolchain ships (MinGW has no AddressSanitizer; MSVC uses other options).
+- **Fix:** Use Clang or GCC on Linux/macOS, or run the strict gate on a machine (or CI job) that has them.
+- **Cause (FR) :** Les sanitizers et la couverture exigent un support du compilateur et de l'exécution que toutes les toolchains n'ont pas (MinGW n'a pas AddressSanitizer ; MSVC utilise d'autres options).
+- **Correction (FR) :** Utilisez Clang ou GCC sous Linux/macOS, ou lancez le portail strict sur une machine (ou un job CI) qui les a.
+
+### CH8012 — Invalid quality gate configuration
+*FR : Configuration du portail qualité invalide*
+
+- **Cause:** The quality configuration or a gate option is malformed or names something that does not exist.
+- **Fix:** Fix the file (see `charpente check --init` for a valid starter), or use a check name from `charpente check --list`.
+- **Cause (FR) :** La configuration qualité ou une option du portail est mal formée ou nomme quelque chose d'inexistant.
+- **Correction (FR) :** Corrigez le fichier (`charpente check --init` en écrit un valide), ou utilisez un nom de vérification de `charpente check --list`.
+
+### CH8013 — Git command failed
+*FR : Commande Git en échec*
+
+- **Cause:** Git returned an error, is not installed, or the folder is not a repository.
+- **Fix:** Read Git's message above; `git status` shows the state of the repository.
+- **Cause (FR) :** Git a renvoyé une erreur, n'est pas installé, ou le dossier n'est pas un dépôt.
+- **Correction (FR) :** Lisez le message de Git ci-dessus ; `git status` montre l'état du dépôt.
+
+### CH8014 — Blocked
+*FR : Bloqué*
+
+- **Cause:** The quality gate, the commit-message rules or a safety check stopped this action.
+- **Fix:** Fix what the report says and retry; `charpente check` shows the details. `--no-verify` skips the gate but is recorded and flagged in pull requests.
+- **Cause (FR) :** Le portail qualité, les règles de message de commit ou un garde-fou a arrêté cette action.
+- **Correction (FR) :** Corrigez ce que dit le rapport et recommencez ; `charpente check` donne le détail. `--no-verify` saute le portail mais est enregistré et signalé dans les pull requests.
+
+### CH8015 — Cannot open the pull request
+*FR : Impossible d'ouvrir la pull request*
+
+- **Cause:** The branch, the remote or the GitHub credentials are not in a state where a pull request can be created.
+- **Fix:** Follow the message; `gh auth login` (GitHub CLI) is the easiest way to authenticate.
+- **Cause (FR) :** La branche, le dépôt distant ou les identifiants GitHub ne permettent pas de créer une pull request.
+- **Correction (FR) :** Suivez le message ; `gh auth login` (GitHub CLI) est le moyen le plus simple de s'authentifier.
+
+### CH8016 — Release refused
+*FR : Release refusée*
+
+- **Cause:** A precondition of a release is not met (clean tree, gate, version, tools).
+- **Fix:** Fix the reason and run `charpente release` again; `--dry-run` shows the plan without changing anything.
+- **Cause (FR) :** Une condition préalable de la release n'est pas remplie (arbre propre, portail, version, outils).
+- **Correction (FR) :** Corrigez la raison et relancez `charpente release` ; `--dry-run` montre le plan sans rien modifier.
+
 ## CH9xxx — Internal
 
 ### CH9001 — Command must be a list of arguments

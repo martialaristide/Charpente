@@ -28,6 +28,10 @@ class BuiltinToolchain:
 
 
 def register_builtins(registry: ExtensionRegistry) -> None:
+    from ..quality.gate import BUILTIN_CHECKS
+
+    for check in BUILTIN_CHECKS:
+        registry.add_builtin("quality_check", check.name, check)
     for name, os_, fn in (
         ("msvc", OS.WINDOWS, toolchains.detect_windows),
         ("clang-cl", OS.WINDOWS, toolchains.detect_windows),
@@ -38,5 +42,9 @@ def register_builtins(registry: ExtensionRegistry) -> None:
         ("zig", None, toolchains.detect_zig),          # a cross compiler: usable from any host
         ("emscripten", None, toolchains.detect_emscripten),
         ("ndk", None, toolchains.detect_ndk),
+        ("xcode", None, toolchains.detect_xcode),
+        ("ohos", None, toolchains.detect_ohos),
+        ("arm-none-eabi", None, toolchains.detect_arm_gnu),
+        ("avr-gcc", None, toolchains.detect_avr_gcc),
     ):
         registry.add_builtin("toolchain", name, BuiltinToolchain(name, os_, fn))

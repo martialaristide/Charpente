@@ -77,12 +77,36 @@ def android_min_sdk(workspace: Optional[Workspace]) -> Optional[int]:
     return max(levels) if levels else None
 
 
+def apple_min_os(workspace: Optional[Workspace]) -> Optional[str]:
+    """The highest `min_os` any target declares in platform_settings("ios", ...): the deployment target."""
+    if workspace is None:
+        return None
+    levels = []
+    for target in workspace.targets.values():
+        for settings in [target.platform_settings, *[o.platform_settings for o in target.overlays]]:
+            value = settings.get("ios", {}).get("min_os")
+            if isinstance(value, str):
+                levels.append(value)
+    return max(levels, key=lambda v: tuple(int(p) for p in v.split(".") if p.isdigit())) if levels else None
+
+
 def toolchain_for(parsed: argparse.Namespace, workspace: Optional[Workspace] = None) -> "tuple[OS, Toolchain]":
     """(target OS, toolchain) for `--platform` / `--toolchain` (native build when neither is given)."""
     from .. import cross
 
     target_os, toolchain = cross.select(getattr(parsed, "platform", None), getattr(parsed, "toolchain", None),
-                                        android_api=android_min_sdk(workspace))
+                                        android_api=android_min_sdk(workspace),
+                                        apple_min=apple_min_os(workspace))
+    sanitize_kinds = getattr(parsed, "sanitize", None)
+    if sanitize_kinds:
+        from .. import variants
+
+        toolchain = variants.require(variants.sanitize(toolchain, [k for k in sanitize_kinds.split(",") if k]),
+                                     "sanitizers")
+    if getattr(parsed, "coverage", False):
+        from .. import variants
+
+        toolchain = variants.require(variants.coverage(toolchain), "coverage")
     if toolchain.target:
         from .. import platforms
 
@@ -105,6 +129,19 @@ def program_argv(toolchain: Toolchain, output: "Path | str", args: "List[str] | 
 def toolchain_for_host() -> "tuple[OS, Toolchain]":
     target_os = host_os()
     return target_os, pick_default(target_os)
+
+
+def find_root(start: Optional[Path] = None) -> Path:
+    """The project root: the folder of the workspace file when there is one, else the Git top level, else `start`/cwd."""
+    from ..quality import files as files_mod
+
+    here = (start or Path.cwd()).resolve()
+    try:
+        return find_workspace_file(start_dir=here).parent
+    except ChError:
+        pass
+    top = files_mod._git(here, ["rev-parse", "--show-toplevel"])
+    return Path(top[0]) if top else here
 
 
 def resolve_target(workspace: Workspace, name: Optional[str]) -> Target:

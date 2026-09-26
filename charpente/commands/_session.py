@@ -44,6 +44,11 @@ def add_engine_args(parser: argparse.ArgumentParser, *, output: bool = True) -> 
                         help="Set a workspace option declared with ws.option() (repeatable)")
     parser.add_argument("--platform", metavar="OS-ARCH", default=None,
                         help="Build for another platform (`charpente platforms` lists them), e.g. linux-arm64")
+    parser.add_argument("--sanitize", metavar="KINDS", default=None,
+                        help="Instrument the build with sanitizers, e.g. address,undefined (own build directory; "
+                             "needs Clang or GCC with sanitizer runtimes)")
+    parser.add_argument("--coverage", action="store_true",
+                        help="Instrument the build for gcov-style coverage (own build directory)")
     parser.add_argument("--toolchain", metavar="NAME", default=None,
                         help="Use this toolchain instead of the first detected one (`charpente toolchain list`)")
     if output:

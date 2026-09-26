@@ -11,9 +11,10 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Any, List, Mapping, Optional, Sequence
 
-from .dsl.model import OS, Kind, Language, Target
+from . import apple, embedded
+from .dsl.model import APP_KINDS, OS, Kind, Language, Target
 from .errors import ChValueError
 from .toolchains import Toolchain
 
@@ -44,7 +45,7 @@ def _optimization_flags(family_name: str, debug: bool) -> List[str]:
 def is_shared(target: Target, toolchain: Toolchain) -> bool:
     """Built as a shared library: SHARED_LIBRARY and PLUGIN everywhere, and an Android app (NativeActivity
     loads it as a library)."""
-    return target.kind in _SHARED or (target.kind == Kind.MOBILE_APP and toolchain.target.startswith("android"))
+    return target.kind in _SHARED or (target.kind in APP_KINDS and toolchain.target.startswith(("android", "harmonyos")))
 
 
 def _needs_pic(target: Target, toolchain: Toolchain) -> bool:
@@ -84,6 +85,9 @@ def compile_args(toolchain: Toolchain, target: Target, source: Path, obj: Path, 
     args += _optimization_flags(fam, debug)
     if _needs_pic(target, toolchain):
         args.append("-fPIC")
+    if embedded.is_baremetal(toolchain):
+        args += embedded.compile_flags(toolchain, embedded.settings_from(target.name, _embedded_raw(target)),
+                                       target.language.value == "cpp")
     if depfile is not None:
         args += ["-MMD", "-MF", str(depfile)]
     args += [f"-I{d}" for d in target.include_dirs]
@@ -102,6 +106,8 @@ def _other_language_args(toolchain: Toolchain, target: Target, source: Path, obj
     compiler = toolchain.cxx_compiler if plus else toolchain.c_compiler
     driver = toolchain.cxx_args if plus else toolchain.c_args
     args = [compiler, *driver, "-c", str(source), "-o", str(obj)]
+    if toolchain.name == "xcode":
+        args.append("-fobjc-arc")                      # what Xcode's own templates use
     if plus and target.language.value == "cpp":
         args.append(f"-std={target.standard}")
     args += _optimization_flags("gnu", debug)
@@ -120,6 +126,7 @@ def link_args(
     output: Path,
     *,
     library_dirs: Sequence[Path] = (),
+    root: Optional[Path] = None,
 ) -> List[str]:
     """`library_dirs` are extra `-L`/`/LIBPATH:` search paths -- the builder
     passes each dependency's own build directory here, so `t.links([dep])`
@@ -157,17 +164,33 @@ def link_args(
         args.append("-shared")
     if toolchain.target.startswith("android") and target.platform_settings.get("android", {}).get("stl", "static") == "static":
         args.append("-static-libstdc++")           # else the app needs libc++_shared.so next to it
+    if toolchain.target.startswith("harmonyos"):
+        if target.platform_settings.get("harmony", {}).get("stl", "shared") == "static":
+            args.append("-static-libstdc++")       # the SDK's default is c++_shared
+        args.append("-Wl,--gc-sections" if target.kind in (Kind.EXECUTABLE, Kind.TEST) else "-Wl,--no-undefined")
+        args += ["-lunwind", "-lm"]
+    if toolchain.name == "xcode":
+        args += apple.link_frameworks(target.platform_settings.get("ios", {}).get("frameworks", ()))
+    if embedded.is_baremetal(toolchain):
+        args += embedded.link_flags(toolchain, embedded.settings_from(target.name, _embedded_raw(target)),
+                                    root or Path("."), output.with_suffix(".map"))
     args += [f"-L{d}" for d in library_dirs]
     args += [f"-l{lib}" for lib in target.link_libraries]
     args += target.extra_link_flags
     return args
 
 
-def side_outputs(target: Target, target_os: OS, output: Path) -> List[Path]:
+def _embedded_raw(target: Target) -> Mapping[str, Any]:
+    return target.platform_settings.get("embedded", {})
+
+
+def side_outputs(target: Target, target_os: OS, output: Path, toolchain: Optional[Toolchain] = None) -> List[Path]:
     """Files the link step writes next to its main output: Emscripten's `app.js` comes with `app.wasm`.
     They are declared so the cache stores and restores them with the rest."""
     if target_os == OS.WASM and target.kind in (Kind.EXECUTABLE, Kind.TEST):
         return [output.with_suffix(".wasm")]
+    if target_os == OS.BAREMETAL and target.kind == Kind.FIRMWARE and (toolchain is None or toolchain.name != "zig"):
+        return [output.with_suffix(".map")]                 # the GNU linker writes a memory map
     return []
 
 
@@ -178,13 +201,14 @@ def output_filename(target: Target, target_os: OS, toolchain: Toolchain) -> str:
     fam = family(toolchain)
     name = target.name
 
-    if target.kind in (Kind.EXECUTABLE, Kind.TEST):
+    if (target.kind in (Kind.EXECUTABLE, Kind.TEST) or (target.kind == Kind.FIRMWARE and target_os == OS.BAREMETAL)
+            or (target.kind in APP_KINDS and target_os in (OS.IOS, OS.VISIONOS))):
         return name + _EXECUTABLE_SUFFIX.get(target_os, "")
 
     if target.kind == Kind.STATIC_LIBRARY:
         return f"{name}.lib" if fam == "msvc" else f"lib{name}.a"
 
-    if target.kind in _SHARED or (target.kind == Kind.MOBILE_APP and target_os == OS.ANDROID):
+    if target.kind in _SHARED or (target.kind in APP_KINDS and target_os in (OS.ANDROID, OS.OHOS)):
         if target_os in _NO_SHARED_LIBRARIES:
             raise ChValueError("CH3007", kind=f"{target.kind.value} (not available for {target_os.value})")
         if target_os == OS.WINDOWS:

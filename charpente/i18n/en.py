@@ -621,6 +621,42 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "Charpente never accepts a vendor's license for you. The agreement's text was printed above.",
         "fix": "Read it (full terms: {url}); if you agree, repeat the command with --accept-android-license.",
     },
+    "CH8011": {
+        "title": "Sanitizers or coverage not available",
+        "message": "This toolchain cannot build with {what}: {reason}",
+        "cause": "Sanitizers and coverage need compiler and runtime support that not every toolchain ships (MinGW has no AddressSanitizer; MSVC uses other options).",
+        "fix": "Use Clang or GCC on Linux/macOS, or run the strict gate on a machine (or CI job) that has them.",
+    },
+    "CH8012": {
+        "title": "Invalid quality gate configuration",
+        "message": "Cannot use {path}: {detail}",
+        "cause": "The quality configuration or a gate option is malformed or names something that does not exist.",
+        "fix": "Fix the file (see `charpente check --init` for a valid starter), or use a check name from `charpente check --list`.",
+    },
+    "CH8013": {
+        "title": "Git command failed",
+        "message": "{command} failed: {detail}",
+        "cause": "Git returned an error, is not installed, or the folder is not a repository.",
+        "fix": "Read Git's message above; `git status` shows the state of the repository.",
+    },
+    "CH8014": {
+        "title": "Blocked",
+        "message": "Blocked: {reason}",
+        "cause": "The quality gate, the commit-message rules or a safety check stopped this action.",
+        "fix": "Fix what the report says and retry; `charpente check` shows the details. `--no-verify` skips the gate but is recorded and flagged in pull requests.",
+    },
+    "CH8015": {
+        "title": "Cannot open the pull request",
+        "message": "Pull request not opened: {detail}",
+        "cause": "The branch, the remote or the GitHub credentials are not in a state where a pull request can be created.",
+        "fix": "Follow the message; `gh auth login` (GitHub CLI) is the easiest way to authenticate.",
+    },
+    "CH8016": {
+        "title": "Release refused",
+        "message": "Release refused: {reason}",
+        "cause": "A precondition of a release is not met (clean tree, gate, version, tools).",
+        "fix": "Fix the reason and run `charpente release` again; `--dry-run` shows the plan without changing anything.",
+    },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {
         "title": "Command must be a list of arguments",

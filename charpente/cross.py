@@ -30,26 +30,41 @@ def os_of(platform: platforms.Platform) -> OS:
 
 
 def variant_name(config: str, toolchain: Toolchain) -> str:
-    """The build sub-directory: `Debug` natively, `Debug-linux-arm64` when cross-compiling, so
-    two platforms never overwrite each other's objects."""
-    return f"{config}-{toolchain.target}" if toolchain.target else config
+    """The build sub-directory: `Debug` natively, `Debug-linux-arm64` when cross-compiling, `Debug-san-address`
+    for a sanitizer build, so different flavours never overwrite each other's objects."""
+    return "-".join(part for part in (config, toolchain.target, toolchain.variant) if part)
+
+
+def id_prefix(toolchain: Toolchain) -> str:
+    """Action ids of a cross or flavoured build carry their own prefix, so each keeps its own records."""
+    parts = [p for p in (toolchain.target, toolchain.variant) if p]
+    return "/".join(parts) + "/" if parts else ""
 
 
 def can_target(toolchain: Toolchain, platform: platforms.Platform) -> bool:
     return platform.name in toolchain.targets
 
 
-def specialise(toolchain: Toolchain, platform: platforms.Platform, android_api: Optional[int] = None) -> Toolchain:
+def specialise(toolchain: Toolchain, platform: platforms.Platform, android_api: Optional[int] = None,
+               apple_min: Optional[str] = None) -> Toolchain:
     """A copy of `toolchain` that builds for `platform`. `android_api` is the minimum Android API level
     (the manifest's minSdkVersion) when the platform is Android."""
     if not can_target(toolchain, platform):
         raise ChError("CH8002", platform=platform.name, hint=_hint(platform))
+    if toolchain.name == "ohos":
+        from . import ohos
+
+        return ohos.specialise_ohos(toolchain, platform.name)
+    if toolchain.name == "xcode":
+        from . import apple
+
+        return apple.specialise_xcode(toolchain, platform.name, apple_min)
     if toolchain.name == "ndk":
         from . import android
 
         return android.specialise_ndk(toolchain, platform.name, android_api or android.DEFAULT_API)
     if toolchain.name == "zig":
-        triple = platform.triple(_ZIG_ABI.get(platform.os))
+        triple = platform.triple("zig" if platform.os == "baremetal" else _ZIG_ABI.get(platform.os))
         target = ("-target", triple)
         return replace(toolchain, c_args=("cc", *target), cxx_args=("c++", *target),
                        ar_args=("ar",), ld_args=("c++", *target), target=platform.name)
@@ -65,7 +80,8 @@ def _hint(platform: platforms.Platform) -> str:
 
 
 def select(platform_name: Optional[str], toolchain_name: Optional[str], *,
-           detect: Optional[DetectFn] = None, android_api: Optional[int] = None) -> Tuple[OS, Toolchain]:
+           detect: Optional[DetectFn] = None, android_api: Optional[int] = None,
+           apple_min: Optional[str] = None) -> Tuple[OS, Toolchain]:
     """(target OS, toolchain) for the requested platform/toolchain (either may be None)."""
     find = detect or toolchains.detect
     here = host_os()
@@ -88,7 +104,7 @@ def select(platform_name: Optional[str], toolchain_name: Optional[str], *,
         return here, candidates[0]
     for candidate in candidates:
         if can_target(candidate, wanted):
-            return os_of(wanted), specialise(candidate, wanted, android_api)
+            return os_of(wanted), specialise(candidate, wanted, android_api, apple_min)
     raise ChError("CH8002", platform=wanted.name, hint=_hint(wanted))
 
 

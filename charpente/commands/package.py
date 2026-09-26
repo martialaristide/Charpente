@@ -22,7 +22,9 @@ from ..core import process
 from ..dsl.model import OS, Target, Workspace
 from ..toolchains import Toolchain
 from ._android import add_apk_args, build_apk
+from ._apple import build_app
 from ._common import CommandError, load, resolve_target, toolchain_for
+from ._harmony import build_package
 from ._session import Session, add_engine_args
 
 
@@ -32,9 +34,9 @@ def execute(args: List[str]) -> int:
     parser.add_argument("--target", help="Target to package (default: the only one, if unambiguous)")
     parser.add_argument("--config", default="Release", choices=["Debug", "Release"])
     parser.add_argument("--output", help="Output path (default: dist/<target>-<config>.<ext>)")
-    parser.add_argument("--format", default="zip", choices=["zip", "installer", "apk"],
+    parser.add_argument("--format", default="zip", choices=["zip", "installer", "apk", "app", "ipa", "hap", "har", "hsp"],
                         help="'zip' (default, no external tool needed), 'installer' "
-                             "(a real platform installer: .exe/.deb/.pkg) or 'apk' (Android; a Kind.MOBILE_APP target)")
+                             "(a real platform installer: .exe/.deb/.pkg) 'apk' (Android; a Kind.MOBILE_APP target), 'app' or 'ipa' (iOS/visionOS, on a Mac)")
     parser.add_argument("--version", default="1.0.0", help="Version string embedded in the installer")
     parser.add_argument("--maintainer", default="unknown <unknown@example.com>",
                         help="Maintainer field for a .deb package")
@@ -44,6 +46,15 @@ def execute(args: List[str]) -> int:
 
     workspace = load(parsed.file, parsed.opt)
     target = resolve_target(workspace, parsed.target)
+    if parsed.format in ("hap", "har", "hsp"):
+        packages, _harmony_settings = build_package(parsed, workspace, target)
+        for package in packages:
+            print(f"Packaged {package}")
+        return 0 if packages else 1
+    if parsed.format in ("app", "ipa"):
+        artifact, app_settings = build_app(parsed, workspace, target, ipa=parsed.format == "ipa")
+        print(f"Packaged {artifact}  ({app_settings.bundle_id})")
+        return 0
     if parsed.format == "apk":
         apk, app = build_apk(parsed, workspace, target, workspace.root / parsed.output if parsed.output else None)
         print(f"Packaged {apk}  ({app.package}, minSdk {app.min_sdk}, signature verified)")
@@ -83,7 +94,7 @@ def _package_zip(workspace: Workspace, target: Target, parsed: argparse.Namespac
                  toolchain: Toolchain) -> int:
     archive_path = (
         workspace.root / parsed.output if parsed.output
-        else out_dir / (f"{target.name}-{parsed.config}" + (f"-{toolchain.target}" if toolchain.target else "") + ".zip")
+        else out_dir / (f"{target.name}-{parsed.config}" + (f"-{toolchain.target}" if toolchain.target else "") + (f"-{toolchain.variant}" if toolchain.variant else "") + ".zip")
     )
     archive_path.parent.mkdir(parents=True, exist_ok=True)
 

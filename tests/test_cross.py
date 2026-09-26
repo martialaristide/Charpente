@@ -347,8 +347,9 @@ def test_detection_with_an_injected_which_ignores_installed_copies(tmp_path):
 
 def test_zig_is_the_last_native_choice_and_lists_its_targets():
     found = toolchains.detect(OS.LINUX, lambda n: f"/bin/{n}")
-    assert [t.name for t in found][-2:] == ["zig", "emscripten"]
-    assert "wasm32-wasi" in found[-2].targets
+    names = [t.name for t in found]
+    assert names[-4:] == ["zig", "emscripten", "arm-none-eabi", "avr-gcc"]
+    assert "wasm32-wasi" in found[names.index("zig")].targets
 
 
 # ------------------------------------------------------------------ the commands

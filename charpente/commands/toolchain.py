@@ -67,10 +67,14 @@ def _install(spec: str, accept_license: bool = False) -> int:
         directory = toolchain_install.install_android(spec, accept_license=accept_license)
         print(f"Installed in {directory}")
         return 0
+    if name == "ohos":
+        directory = toolchain_install.install_ohos(version or toolchain_install.OHOS_DEFAULT, progress=_progress())
+        print(f"Installed in {directory}")
+        return 0
     if name != "zig":
         from ..errors import ChError
 
-        raise ChError("CH8005", name=spec, detail="components: zig, emsdk, ndk, build-tools, platform, "
+        raise ChError("CH8005", name=spec, detail="components: zig, emsdk, ohos, ndk, build-tools, platform, "
                                                   "platform-tools (wasmtime is planned)")
     print(f"Installing zig{'@' + version if version else ' (latest release)'} ...")
     directory = toolchain_install.install_zig(version or None, progress=_progress())

@@ -176,12 +176,14 @@ class AppSettings:
     resources: str = ""
     #: "static" (default: libc++ linked into the app's library) or "shared" (libc++_shared.so shipped in the APK).
     stl: str = "static"
+    #: Headset profile: "" (a phone/tablet app), "openxr" (any OpenXR runtime), "quest" or "pico".
+    xr: str = ""
 
 
 def settings_from(target_name: str, raw: Mapping[str, Any], *, debuggable: bool) -> AppSettings:
     """Validate a target's `platform_settings("android", ...)`. Bad values are errors, not guesses."""
     known = {"package", "label", "min_sdk", "target_sdk", "version_code", "version_name", "permissions",
-             "gles_version", "orientation", "assets", "resources", "native_app_glue", "debuggable", "stl"}
+             "gles_version", "orientation", "assets", "resources", "native_app_glue", "debuggable", "stl", "xr"}
     unknown = sorted(set(raw) - known)
     if unknown:
         raise ChError("CH8006", platform="android", detail=f"unknown setting(s) {', '.join(unknown)} "
@@ -202,6 +204,9 @@ def settings_from(target_name: str, raw: Mapping[str, Any], *, debuggable: bool)
     stl = str(raw.get("stl", "static"))
     if stl not in ("static", "shared"):
         raise ChError("CH8006", platform="android", detail=f"stl must be \"static\" or \"shared\", not {stl!r}")
+    xr = str(raw.get("xr", ""))
+    if xr not in ("", "openxr", "quest", "pico"):
+        raise ChError("CH8006", platform="android", detail=f"xr must be openxr, quest or pico, not {xr!r}")
     permissions = raw.get("permissions", ())
     if isinstance(permissions, str):
         permissions = (permissions,)
@@ -215,7 +220,17 @@ def settings_from(target_name: str, raw: Mapping[str, Any], *, debuggable: bool)
         library=target_name, permissions=tuple(str(p) for p in permissions),
         debuggable=bool(raw.get("debuggable", debuggable)), gles_version=str(raw.get("gles_version", "")),
         orientation=orientation, assets=str(raw.get("assets", "")), resources=str(raw.get("resources", "")),
-        stl=stl)
+        stl=stl, xr=xr)
+
+
+def _xr_categories(xr: str) -> List[str]:
+    """Intent categories that tell a headset's launcher this is an immersive app (vendor documentation)."""
+    if not xr:
+        return []
+    lines = ['        <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD"/>']
+    if xr == "quest":
+        lines.append('        <category android:name="com.oculus.intent.category.VR"/>')
+    return lines
 
 
 def manifest_xml(app: AppSettings) -> str:
@@ -228,10 +243,23 @@ def manifest_xml(app: AppSettings) -> str:
     for permission in app.permissions:
         name = permission if "." in permission else f"android.permission.{permission}"
         lines.append(f'  <uses-permission android:name={quoteattr(name)}/>')
+    if app.xr:
+        lines.append('  <uses-feature android:name="android.hardware.vr.headtracking" android:required="true" '
+                     'android:version="1"/>')
+        lines += ['  <uses-permission android:name="org.khronos.openxr.permission.OPENXR"/>',
+                  '  <uses-permission android:name="org.khronos.openxr.permission.OPENXR_SYSTEM"/>',
+                  '  <queries>',
+                  '    <provider android:authorities="org.khronos.openxr.runtime_broker"/>',
+                  '    <provider android:authorities="org.khronos.openxr.system_runtime_broker"/>',
+                  '  </queries>']
     if app.gles_version:
         lines.append(f'  <uses-feature android:glEsVersion="{app.gles_version}" android:required="true"/>')
     lines.append(f'  <application android:label={quoteattr(app.label)} android:hasCode="false"'
                  f' android:debuggable="{"true" if app.debuggable else "false"}">')
+    if app.xr == "quest":
+        lines.append('    <meta-data android:name="com.oculus.supportedDevices" android:value="all"/>')
+    if app.xr == "pico":
+        lines.append('    <meta-data android:name="pvr.app.type" android:value="vr"/>')
     activity = ['    <activity android:name="android.app.NativeActivity"',
                 f'        android:label={quoteattr(app.label)} android:exported="true"',
                 '        android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize"']
@@ -243,6 +271,7 @@ def manifest_xml(app: AppSettings) -> str:
               '      <intent-filter>',
               '        <action android:name="android.intent.action.MAIN"/>',
               '        <category android:name="android.intent.category.LAUNCHER"/>',
+              *_xr_categories(app.xr),
               '      </intent-filter>',
               '    </activity>',
               '  </application>',

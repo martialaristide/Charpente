@@ -39,6 +39,10 @@ class Language(Enum):
     CPP = "cpp"
 
 
+#: Kinds that become an application bundle on mobile/XR platforms (APK, .app).
+APP_KINDS = (Kind.MOBILE_APP, Kind.XR_APP)
+
+
 class OS(Enum):
     """The operating system a build *targets* (usually the host's; different when cross-compiling)."""
 

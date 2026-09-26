@@ -37,6 +37,8 @@ work (every source file, independent targets) runs in parallel.
   `build/<Config>-<platform>/`, so platforms never overwrite each other. Also accepted by `run`,
   `test` and `package`. See [platforms.md](platforms.md).
 - `--toolchain NAME`: use that detected toolchain instead of the first one.
+- `--sanitize KINDS` (`address,undefined`) and `--coverage`: instrumented flavours with their own build directory; refused (CH8011) when the
+  toolchain cannot really build them.
 - `--no-cache`: neither read nor write the [content cache](#charpente-cache).
 - `-v` / `--verbose`: show every command that runs and *why* it runs
   (`because: header changed: include/a.h`).
@@ -284,6 +286,21 @@ Debug builds use the standard Android debug key; a release build without `--keys
 APK is debug-signed. The release key's password is read from `$CHARPENTE_KEYSTORE_PASSWORD`, never from
 the command line. `deploy` does the same, then `adb install -r` and starts the app on the one connected
 device or emulator. See [android.md](android.md).
+
+## `charpente check`, `hooks`, `status`, `commit`, `push`, `pr`
+
+See [quality.md](quality.md) and [git.md](git.md). In short: `charpente check --level rapide|standard|strict [--changed] [--fix]`
+runs the quality gate; `charpente hooks install` wires it into Git; `charpente commit`, `push` and `pr` put it in front of Git and GitHub.
+
+## `charpente ci init`, `release`, `sign`
+
+`charpente ci init` writes a GitHub Actions workflow; `charpente release [--dry-run|--publish]` prepares a signed release with checksums and
+SLSA provenance; `charpente sign init` creates the Ed25519 release key. See [git.md](git.md).
+
+## `charpente size`, `flash` (firmware)
+
+`charpente size --platform cortexm4-arm` prints flash/RAM use; `charpente flash --platform ... [--tool openocd] [--dry-run]` programs the
+board. See [embedded.md](embedded.md).
 
 ## `charpente platforms`
 

@@ -5,6 +5,7 @@ import argparse
 import json
 import shutil
 import sys
+from pathlib import Path
 from typing import Any, Dict, List
 
 from .. import _version, cross, platforms, toolchain_install, toolchains
@@ -27,6 +28,18 @@ def gather() -> Dict[str, Any]:
     detected = toolchains.detect(host_os()) if host is not None else []
     report["toolchains"] = [{"name": t.name, "compiler": t.cxx_compiler, "cross_only": t.cross_only,
                              "targets": list(t.targets)} for t in detected]
+    notes: List[str] = []
+    for tc in detected:
+        if tc.name == "ohos":
+            from .. import ohos
+
+            root = dict(tc.extras).get("native_root")
+            if root:
+                info = ohos.sdk_info(Path(root))
+                drift = ohos.alignment(Path(root))
+                notes.append(f"OpenHarmony native SDK {info.get('version', '?')} (API {info.get('api', '?')})"
+                             + (f": Charpente's defaults differ from the SDK's toolchain file on {', '.join(drift)}" if drift else ""))
+    report["notes"] = notes
     tools = {name: shutil.which(name) for name in ("git", "node", "wasmtime", "cmake", "ninja")}
     report["tools"] = {name: path for name, path in tools.items()}
     report["installed_by_charpente"] = [f"{n}@{v}" for n, v, _ in toolchain_install.installed()]

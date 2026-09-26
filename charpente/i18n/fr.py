@@ -615,6 +615,42 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "Charpente n'accepte jamais la licence d'un éditeur à votre place. Le texte de l'accord a été affiché ci-dessus.",
         "fix": "Lisez-le (conditions complètes : {url}) ; si vous êtes d'accord, relancez la commande avec --accept-android-license.",
     },
+    "CH8011": {
+        "title": "Sanitizers ou couverture indisponibles",
+        "message": "Cette toolchain ne sait pas construire avec {what} : {reason}",
+        "cause": "Les sanitizers et la couverture exigent un support du compilateur et de l'exécution que toutes les toolchains n'ont pas (MinGW n'a pas AddressSanitizer ; MSVC utilise d'autres options).",
+        "fix": "Utilisez Clang ou GCC sous Linux/macOS, ou lancez le portail strict sur une machine (ou un job CI) qui les a.",
+    },
+    "CH8012": {
+        "title": "Configuration du portail qualité invalide",
+        "message": "Impossible d'utiliser {path} : {detail}",
+        "cause": "La configuration qualité ou une option du portail est mal formée ou nomme quelque chose d'inexistant.",
+        "fix": "Corrigez le fichier (`charpente check --init` en écrit un valide), ou utilisez un nom de vérification de `charpente check --list`.",
+    },
+    "CH8013": {
+        "title": "Commande Git en échec",
+        "message": "{command} a échoué : {detail}",
+        "cause": "Git a renvoyé une erreur, n'est pas installé, ou le dossier n'est pas un dépôt.",
+        "fix": "Lisez le message de Git ci-dessus ; `git status` montre l'état du dépôt.",
+    },
+    "CH8014": {
+        "title": "Bloqué",
+        "message": "Bloqué : {reason}",
+        "cause": "Le portail qualité, les règles de message de commit ou un garde-fou a arrêté cette action.",
+        "fix": "Corrigez ce que dit le rapport et recommencez ; `charpente check` donne le détail. `--no-verify` saute le portail mais est enregistré et signalé dans les pull requests.",
+    },
+    "CH8015": {
+        "title": "Impossible d'ouvrir la pull request",
+        "message": "Pull request non ouverte : {detail}",
+        "cause": "La branche, le dépôt distant ou les identifiants GitHub ne permettent pas de créer une pull request.",
+        "fix": "Suivez le message ; `gh auth login` (GitHub CLI) est le moyen le plus simple de s'authentifier.",
+    },
+    "CH8016": {
+        "title": "Release refusée",
+        "message": "Release refusée : {reason}",
+        "cause": "Une condition préalable de la release n'est pas remplie (arbre propre, portail, version, outils).",
+        "fix": "Corrigez la raison et relancez `charpente release` ; `--dry-run` montre le plan sans rien modifier.",
+    },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {
         "title": "La commande doit être une liste d'arguments",

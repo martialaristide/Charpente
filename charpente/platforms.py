@@ -39,6 +39,10 @@ class Platform:
     #: Something the user must install that Charpente cannot legally/practically provide.
     needs: str = ""
     note: str = ""
+    #: Microcontroller targets: the CPU (GCC spelling), float ABI and FPU.
+    cpu: str = ""
+    float_abi: str = ""
+    fpu: str = ""
 
     def triple(self, abi: Optional[str] = None) -> str:
         table = dict(self.triples)
@@ -79,9 +83,16 @@ _TABLE: List[Platform] = [
        needs="the OpenHarmony/HarmonyOS native SDK"),
     _p("harmonyos-x64", "ohos", "x64", 2, {"ohos": "x86_64-linux-ohos"}, family="mobile",
        needs="the OpenHarmony/HarmonyOS native SDK"),
-    _p("ios-arm64", "ios", "arm64", 2, {"apple": "aarch64-ios"}, family="mobile",
-       needs="Xcode on a Mac (the Apple SDK cannot be redistributed)"),
-    _p("visionos-arm64", "visionos", "arm64", 3, {"apple": "aarch64-visionos"}, family="xr",
+    _p("ios-arm64", "ios", "arm64", 2, {"apple": "arm64-apple-ios"}, family="mobile",
+       needs="Xcode on a Mac (the Apple SDK cannot be redistributed)",
+       note="Written without a Mac: command lines and bundle layout are tested, nothing has run against Xcode."),
+    _p("ios-sim-arm64", "ios", "arm64", 3, {"apple": "arm64-apple-ios-simulator"}, family="mobile",
+       needs="Xcode on a Mac", note="The iOS simulator on Apple silicon."),
+    _p("ios-sim-x64", "ios", "x64", 3, {"apple": "x86_64-apple-ios-simulator"}, family="mobile",
+       needs="Xcode on a Mac", note="The iOS simulator on an Intel Mac."),
+    _p("visionos-arm64", "visionos", "arm64", 3, {"apple": "arm64-apple-xros"}, family="xr",
+       needs="Xcode on a Mac"),
+    _p("visionos-sim-arm64", "visionos", "arm64", 3, {"apple": "arm64-apple-xros-simulator"}, family="xr",
        needs="Xcode on a Mac"),
     # ---- web / WASI
     _p("wasm32-emscripten", "wasm", "wasm32", 1, {"emscripten": "wasm32-emscripten"}, family="web",
@@ -93,11 +104,25 @@ _TABLE: List[Platform] = [
     _p("openbsd-x64", "openbsd", "x64", 3, {"gnu": "x86_64-openbsd"}, family="server"),
     _p("netbsd-x64", "netbsd", "x64", 3, {"gnu": "x86_64-netbsd"}, family="server"),
     # ---- embedded
-    _p("cortexm-arm", "baremetal", "cortex-m", 2, {"eabi": "thumbv7em-none-eabihf"}, family="embedded",
-       needs="arm-none-eabi-gcc"),
+    _p("cortexm0-arm", "baremetal", "cortex-m0", 2, {"zig": "thumb-freestanding-eabi", "eabi": "thumbv6m-none-eabi"},
+       family="embedded", needs="arm-none-eabi-gcc, or zig (`charpente toolchain install zig`)",
+       cpu="cortex-m0", float_abi="soft"),
+    _p("cortexm3-arm", "baremetal", "cortex-m3", 2, {"zig": "thumb-freestanding-eabi", "eabi": "thumbv7m-none-eabi"},
+       family="embedded", needs="arm-none-eabi-gcc, or zig (`charpente toolchain install zig`)",
+       cpu="cortex-m3", float_abi="soft"),
+    _p("cortexm4-arm", "baremetal", "cortex-m4", 2, {"zig": "thumb-freestanding-eabihf", "eabi": "thumbv7em-none-eabihf"},
+       family="embedded", needs="arm-none-eabi-gcc, or zig (`charpente toolchain install zig`)",
+       cpu="cortex-m4", float_abi="hard", fpu="fpv4-sp-d16"),
+    _p("cortexm7-arm", "baremetal", "cortex-m7", 2, {"zig": "thumb-freestanding-eabihf", "eabi": "thumbv7em-none-eabihf"},
+       family="embedded", needs="arm-none-eabi-gcc, or zig (`charpente toolchain install zig`)",
+       cpu="cortex-m7", float_abi="hard", fpu="fpv5-d16"),
+    _p("cortexm33-arm", "baremetal", "cortex-m33", 3, {"zig": "thumb-freestanding-eabihf", "eabi": "thumbv8m.main-none-eabihf"},
+       family="embedded", needs="arm-none-eabi-gcc, or zig (`charpente toolchain install zig`)",
+       cpu="cortex-m33", float_abi="hard", fpu="fpv5-sp-d16"),
     _p("esp32-xtensa", "baremetal", "xtensa", 3, {"esp": "xtensa-esp32-elf"}, family="embedded",
-       needs="ESP-IDF"),
-    _p("avr-avr", "baremetal", "avr", 3, {"avr": "avr"}, family="embedded", needs="avr-gcc"),
+       needs="ESP-IDF (not integrated yet)"),
+    _p("avr-avr", "baremetal", "avr", 2, {"zig": "avr-freestanding", "avr": "avr"}, family="embedded",
+       needs="avr-gcc, or zig (`charpente toolchain install zig`)"),
 ]
 
 _BY_NAME: Dict[str, Platform] = {p.name: p for p in _TABLE}

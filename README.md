@@ -25,6 +25,12 @@ Running build/Debug/hello/hello...
 Hello, world!
 ```
 
+## Quality and releases
+
+`charpente check` runs a configurable quality gate (build, format, secrets, warnings, tests, sanitizers, coverage, licenses, SBOM...) that
+Git hooks, `charpente commit`/`push`/`pr` and CI all share; `charpente release` prepares a signed release with checksums and provenance.
+See [docs/quality.md](docs/quality.md) and [docs/git.md](docs/git.md).
+
 ## Cross-compilation
 
 `charpente toolchain install zig` then `charpente build --platform linux-arm64` (or `windows-arm64`,

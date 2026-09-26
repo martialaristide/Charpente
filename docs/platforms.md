@@ -36,10 +36,13 @@ also says whether your machine can build each platform right now.
 | wasm32-emscripten | emsdk 6.0.10 | build **and run** under Node; `.js` + `.wasm` both restored from the cache |
 | assembly (`.S`) | zig, MinGW | build, header dependency tracking, run natively |
 | android-x64 | NDK 28.2 | build, signed APK, **installed and launched on an x86_64 emulator** (API 30), the app's log line read back |
+| harmonyos-arm64, harmonyos-arm, harmonyos-x64 | OpenHarmony SDK 5.0.0.71 | build (library + C++ executable); ELF machine and musl interpreter checked; flags match the SDK's own toolchain file. **Not run**; HAP/hdc unverified ([harmonyos.md](harmonyos.md)) |
+| cortexm0/3/4/7-arm, avr-avr | zig 0.16.0 | firmware ELF (ARM machine 40, AVR 83), `.bin`/`.hex`/`.uf2`. **Not run on hardware** ([embedded.md](embedded.md)) |
+| ios-*, visionos-* | Xcode | **written without a Mac; not run** ([apple.md](apple.md)) |
 | android-arm64 | NDK 28.2 | build and APK (ELF machine 183, `zipalign -P 16` verified). **Not run**: no arm64 device or emulator here |
 
 The Linux and macOS CI jobs run the same builds natively; until those run on real runners, their
-results are not claimed here. Android is described in [android.md](android.md); HarmonyOS, iOS and embedded targets are Phases P4c-P4d.
+results are not claimed here. Android is described in [android.md](android.md), HarmonyOS in [harmonyos.md](harmonyos.md), microcontrollers in [embedded.md](embedded.md), iOS/visionOS in [apple.md](apple.md), headsets in [xr.md](xr.md).
 
 ## How it works
 

@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Tuple
 from .. import android, cross
 from ..builder import build_dir, build_workspace, dependency_closure
 from ..core.planner import effective_scope
-from ..dsl.model import Kind, Target, Workspace
+from ..dsl.model import APP_KINDS, Target, Workspace
 from ..errors import ChError
 from ..flags import output_filename
 from ._common import CommandError, android_min_sdk
@@ -35,7 +35,7 @@ def _platforms(parsed: argparse.Namespace) -> List[str]:
 def build_apk(parsed: argparse.Namespace, workspace: Workspace, target: Target, out_path: Optional[Path] = None,
               ) -> Tuple[Path, android.AppSettings]:
     """Build `target` for each requested Android ABI, then package, align, sign and verify one APK."""
-    if target.kind != Kind.MOBILE_APP:
+    if target.kind not in APP_KINDS:
         raise ChError("CH8006", platform="android",
                       detail=f"target {target.name!r} is a {target.kind.value}; an APK needs Kind.MOBILE_APP")
     sdk = android.require_tools(android.find_sdk(api=android_min_sdk(workspace)))

@@ -323,3 +323,80 @@ def install_android(spec: str, *, accept_license: bool = False, base_url: str = 
     except OSError:
         pass
     return target
+
+
+# ------------------------------------------------------------------ OpenHarmony native SDK
+OHOS_BASE = "https://repo.huaweicloud.com/openharmony/os/"
+OHOS_DEFAULT = "5.0.0"
+MAX_OHOS_BYTES = 6 * 1024 * 1024 * 1024
+
+
+def ohos_host_tag(platform_name: Optional[str] = None) -> str:
+    """The token the SDK's native archives carry in their names (`native-windows-x64-...zip`)."""
+    name = platform_name or sys.platform
+    return {"win32": "windows-x64", "linux": "linux-x64", "darwin": "mac"}.get(name, "linux-x64")
+
+
+def ohos_release_url(version: str, base: str = OHOS_BASE) -> str:
+    """`5.0.0` -> .../5.0.0-Release/ohos-sdk-windows_linux-public.tar.gz (macOS has its own archive)."""
+    if not re.fullmatch(r"[0-9]+(\.[0-9]+){1,3}(-[A-Za-z0-9]+)?", version):
+        raise ChError("CH8005", name="ohos", detail=f"{version!r} is not a release like 5.0.0 or 6.0-Release")
+    folder = version if "-" in version else f"{version}-Release"
+    archive = "ohos-sdk-mac-public.tar.gz" if sys.platform == "darwin" else "ohos-sdk-windows_linux-public.tar.gz"
+    return f"{base}{folder}/{archive}"
+
+
+def pick_ohos_native(names: List[str], host_tag: str) -> Optional[str]:
+    """The member of the SDK archive holding the native (C/C++) component for this host."""
+    candidates = [n for n in names if re.search(rf"(^|/)native-{re.escape(host_tag)}[^/]*\.zip$", n)]
+    return sorted(candidates)[0] if candidates else None
+
+
+def install_ohos(version: str = OHOS_DEFAULT, *, base: str = OHOS_BASE, progress: Progress = None,
+                 say: Callable[[str], None] = print, host_tag: Optional[str] = None) -> Path:
+    """Install the OpenHarmony *native* SDK (clang, sysroot, cmake toolchain file) for cross-compiling to
+    `harmonyos-*` platforms. The whole SDK archive (~2.6 GB) is downloaded, checked against the SHA-256
+    published next to it, and only the native component is unpacked."""
+    import tarfile
+
+    url = ohos_release_url(version, base)
+    target = toolchains_dir() / f"ohos-{version}"
+    if target.exists():
+        return target
+    say("Reading the published checksum ...")
+    sha_file = toolchains_dir() / "downloads" / (url.rsplit("/", 1)[-1] + ".sha256")
+    download.download(url + ".sha256", sha_file, max_bytes=4096)
+    digest = sha_file.read_text(encoding="utf-8").split()[0].strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise ChError("CH8005", name="ohos", detail="the published checksum file is not a SHA-256")
+    say("Downloading the OpenHarmony SDK archive (large; resumable) ...")
+    archive = toolchains_dir() / "downloads" / url.rsplit("/", 1)[-1]
+    download.download(url, archive, sha256=digest, max_bytes=MAX_OHOS_BYTES, progress=progress, timeout=120)
+    tag = host_tag or ohos_host_tag()
+    say(f"Unpacking the native component for {tag} ...")
+    holder = toolchains_dir() / "downloads" / f"ohos-{version}-native.zip"
+    try:
+        with tarfile.open(archive, "r:gz") as tf:
+            wanted: Optional[str] = None
+            for member in tf:
+                if member.isfile() and pick_ohos_native([member.name], tag):
+                    wanted = member.name
+                    source = tf.extractfile(member)
+                    if source is None:
+                        continue
+                    with source, open(holder, "wb") as out:
+                        shutil.copyfileobj(source, out)
+                    break
+        if wanted is None:
+            raise ChError("CH8005", name="ohos", detail=f"the archive has no native component for {tag}")
+    except (tarfile.TarError, EOFError, OSError) as exc:
+        raise ChError("CH8005", name="ohos", detail=f"cannot read the SDK archive: {exc}") from exc
+    fetch.extract(holder, target, strip_prefix="*", keep_exec=True)
+    (target / "charpente-install.json").write_text(
+        json.dumps({"name": "ohos", "version": version, "url": url, "sha256": digest}, indent=1), encoding="utf-8")
+    for leftover in (holder, archive):
+        try:
+            leftover.unlink()
+        except OSError:
+            pass
+    return target

@@ -37,6 +37,8 @@ class Toolchain:
     cross_only: bool = False
     #: Facts about the installation other modules need (name, value), e.g. the NDK's root directory.
     extras: Tuple[Tuple[str, str], ...] = ()
+    #: A build flavour of the same toolchain ("san-address", "cov"): its own build directory and action records.
+    variant: str = ""
 
 
 WhichFn = Callable[[str], Optional[str]]
@@ -102,7 +104,9 @@ def detect_macos(which: WhichFn = shutil.which) -> List[Toolchain]:
 
 
 _ZIG_PLATFORMS = ("windows-x64", "windows-arm64", "linux-x64", "linux-arm64", "linux-riscv64",
-                  "macos-x64", "macos-arm64", "wasm32-wasi", "freebsd-x64", "netbsd-x64")
+                  "macos-x64", "macos-arm64", "wasm32-wasi", "freebsd-x64", "netbsd-x64",
+                  "cortexm0-arm", "cortexm3-arm", "cortexm4-arm", "cortexm7-arm", "cortexm33-arm", "avr-avr")
+_CORTEX_M = ("cortexm0-arm", "cortexm3-arm", "cortexm4-arm", "cortexm7-arm", "cortexm33-arm")
 
 
 def toolchains_dir() -> Path:
@@ -134,7 +138,7 @@ def detect_zig(which: WhichFn = shutil.which) -> List[Toolchain]:
         return []
     return [Toolchain(name="zig", c_compiler=zig, cxx_compiler=zig, archiver=zig, linker=zig,
                       c_args=("cc",), cxx_args=("c++",), ar_args=("ar",), ld_args=("c++",),
-                      targets=_ZIG_PLATFORMS)]
+                      targets=_ZIG_PLATFORMS, extras=(("objcopy", zig), ("objcopy_args", "objcopy")))]
 
 
 def _emscripten_from(root: Path) -> Optional[Toolchain]:
@@ -175,6 +179,52 @@ def detect_emscripten(which: WhichFn = shutil.which) -> List[Toolchain]:
             if found is not None:
                 return [found]
     return []
+
+
+def detect_ohos(which: WhichFn = shutil.which) -> List[Toolchain]:
+    """The OpenHarmony native SDK's clang (see ohos.py). An injected `which` keeps tests hermetic."""
+    if which is not shutil.which:
+        return []
+    from . import ohos
+
+    native = ohos.find_native()
+    if native is None:
+        return []
+    toolchain = ohos.ohos_toolchain(native)
+    return [toolchain] if Path(toolchain.cxx_compiler).is_file() else []
+
+
+def detect_xcode(which: WhichFn = shutil.which) -> List[Toolchain]:
+    """Xcode's clang for iOS/visionOS targets (macOS with Xcode only). An injected `which` keeps tests hermetic."""
+    if which is not shutil.which:
+        return []
+    from . import apple
+
+    found = apple.xcode_toolchain()
+    return [found] if found is not None else []
+
+
+def detect_arm_gnu(which: WhichFn = shutil.which) -> List[Toolchain]:
+    """Arm's bare-metal GNU toolchain (`arm-none-eabi-gcc`) for Cortex-M microcontrollers."""
+    gcc, gxx = which("arm-none-eabi-gcc"), which("arm-none-eabi-g++")
+    if not (gcc and gxx):
+        return []
+    return [Toolchain(name="arm-none-eabi", c_compiler=gcc, cxx_compiler=gxx,
+                      archiver=_which(which, "arm-none-eabi-ar") or "arm-none-eabi-ar", linker=gxx,
+                      targets=_CORTEX_M, cross_only=True,
+                      extras=(("objcopy", _which(which, "arm-none-eabi-objcopy") or "arm-none-eabi-objcopy"),
+                              ("size", _which(which, "arm-none-eabi-size") or "arm-none-eabi-size")))]
+
+
+def detect_avr_gcc(which: WhichFn = shutil.which) -> List[Toolchain]:
+    """`avr-gcc` for AVR microcontrollers (Arduino boards...)."""
+    gcc, gxx = which("avr-gcc"), which("avr-g++")
+    if not (gcc and gxx):
+        return []
+    return [Toolchain(name="avr-gcc", c_compiler=gcc, cxx_compiler=gxx,
+                      archiver=_which(which, "avr-gcc-ar", "avr-ar") or "avr-ar", linker=gxx,
+                      targets=("avr-avr",), cross_only=True,
+                      extras=(("objcopy", _which(which, "avr-objcopy") or "avr-objcopy"),))]
 
 
 def detect_ndk(which: WhichFn = shutil.which) -> List[Toolchain]:

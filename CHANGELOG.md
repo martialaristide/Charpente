@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.9.0 -- Phase P5: quality gate, Git and GitHub, releases
+
+- **`charpente check`**: a configurable quality gate (`.charpente/quality.toml`) with three levels. Checks: build, clang-format, DSL lint, **secrets**,
+  file size, warnings-as-errors on changed code, clang-tidy, cppcheck, tests (**flaky** detection), sanitizers, **coverage** (gcov), other platforms, dependency
+  **audit**, **licenses**, SBOM. A check whose tool is missing is *skipped visibly* (`fail_on_skipped` makes CI strict); every problem is a located diagnostic event.
+  `--changed`, `--fix` (then re-verify), `--only/--skip`, `--json`; modules can add checks.
+- **Build flavours**: `--sanitize address,undefined` and `--coverage` on build/test, probed rather than assumed (MinGW correctly refused).
+- **Git integration**: `charpente hooks install`, `status`, `commit` (Conventional Commits, drafted message you review, optional AI draft), `push` (standard gate,
+  typed confirmation for forced pushes), `pr` (summary, gate result, **warning for commits that skipped the gate**, SBOM section; `gh` or GitHub API), `ci init`.
+- **Releases**: `charpente release` (version from commits, changelog, zip packages, SBOM, `SHA256SUMS`, Ed25519 signature, **SLSA v1 provenance in a signed DSSE
+  envelope**, commit and tag; publishes only with `--publish`); `charpente sign` with an encrypted local key vault.
+- Also added: `charpente deploy` now covers iOS simulators/devices and HarmonyOS; new error codes CH8011-CH8016.
+- Verified for real: strict gate on a C++ project (coverage, three cross builds, SBOM), and a full release in a temporary Git repository. Not verified: GitHub itself.
+- Fixed: `*.charpente` matched the `.charpente/` directory in the release reader (again); an operator-precedence slip made a gate error message always truthy.
+
+## v0.8.0 -- Phases P4c and P4d: HarmonyOS, microcontrollers, Apple, XR
+
+- **HarmonyOS/OpenHarmony**: the native SDK's clang with the flags of its own `ohos.toolchain.cmake` (drift reported by `doctor`), `toolchain install ohos` (public SDK, SHA-256 verified),
+  hvigor delegation for `.hap/.har/.hsp`, hdc deployment, Node-API skeleton. Built for real for arm64/arm/x64 with SDK 5.0.0.71; hvigor/hdc/device **not** available.
+- **Microcontrollers**: `Kind.FIRMWARE` for Cortex-M0/M3/M4/M7/M33 and AVR with zig or the vendor GCC, `.bin`/`.hex`/`.uf2`, `charpente size`, `charpente flash`. Built for real with zig; nothing run on hardware.
+- **iOS/visionOS**: Xcode toolchain, `.app`/`.ipa`, codesign, simulator and device deployment -- **written without a Mac, not run**.
+- **XR**: Quest/Pico/OpenXR manifest profiles on Android (`xr=`), verified with aapt2.
+- Fixed: zig has no linker-map option; the NDK-style flags for 32-bit OpenHarmony ARM were wrong (corrected from the SDK's own file).
+
 ## v0.7.0 -- Phase P4b: Android
 
 - **Native Android apps without Gradle**: `Kind.MOBILE_APP` + `platform_settings("android", ...)`,

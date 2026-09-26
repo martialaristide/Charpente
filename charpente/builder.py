@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
 
+from . import cross
 from .core import analysis, compdb, fastpath, hashing, process
 from .core import engine as engine_mod
 from .core import planner as planner_mod
@@ -63,7 +64,7 @@ class BuildResult:
 
 def build_dir(workspace: Workspace, config: str, target: Target, toolchain: Optional[Toolchain] = None) -> Path:
     """`build/<config>[-<platform>]/<target>`: a cross build has its own directory."""
-    variant = f"{config}-{toolchain.target}" if toolchain is not None and toolchain.target else config
+    variant = cross.variant_name(config, toolchain) if toolchain is not None else config
     return _build_dir(workspace, variant, target)
 
 
@@ -148,7 +149,7 @@ def _context(workspace: Workspace, toolchain: Toolchain, target_os: OS, config: 
     tools = ToolIdentities()
     tool_keys = sorted({tools.identify(t, fam).key() for t in (
         toolchain.c_compiler, toolchain.cxx_compiler, toolchain.archiver, toolchain.linker)})
-    parts = [_version.__version__, config, target_os.value, toolchain.name, toolchain.target,
+    parts = [_version.__version__, config, target_os.value, toolchain.name, toolchain.target, toolchain.variant,
              repr((toolchain.c_args, toolchain.cxx_args, toolchain.ar_args, toolchain.ld_args)), str(workspace.root),
              "|".join(tool_keys), "|".join(f"{k}={os.environ.get(k, '')}" for k in engine_mod.KEYED_ENV),
              ",".join(scope)]
