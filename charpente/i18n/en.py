@@ -693,6 +693,36 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "`charpente tui` is an optional feature built on Textual.",
         "fix": "Install it with `pip install \"charpente[tui]\"`. Every command still works without it.",
     },
+    "CH8019": {
+        "title": "Charpente Studio cannot start",
+        "message": "Charpente Studio cannot start: {detail}",
+        "cause": "The pages of Studio are missing, or the address/port could not be used.",
+        "fix": "Reinstall Charpente (pip install --force-reinstall charpente), or pick another port with --port.",
+    },
+    "CH8020": {
+        "title": 'The AI assistant is not available',
+        "message": 'The AI assistant is not available: {detail}',
+        "cause": 'AI features are optional and need a provider: an API key, or a local OpenAI-compatible server.',
+        "fix": 'Set ANTHROPIC_API_KEY or OPENAI_API_KEY, or CHARPENTE_AI_URL for a local server. Every other command works without it.',
+    },
+    "CH8021": {
+        "title": 'Proposed change refused',
+        "message": 'The proposed change cannot be used: {reason}',
+        "cause": "The assistant's answer was not a diff that applies cleanly to your files (or touched something a fix may not touch).",
+        "fix": 'Nothing was changed. Run the command again, or fix it by hand; `--show-context` shows what the assistant was given.',
+    },
+    "CH8022": {
+        "title": 'Nothing was sent to the AI',
+        "message": 'Nothing was sent to the AI: {reason}',
+        "cause": 'Charpente never sends code to an AI provider without your explicit agreement.',
+        "fix": 'Answer yes when asked, or pass --yes to agree in advance; `--dry-run` shows what would be sent.',
+    },
+    "CH8023": {
+        "title": 'No debugger available',
+        "message": 'No debugger available: needs {wanted}.',
+        "cause": 'Debugging uses gdb 14 or newer (its built-in DAP mode) or lldb-dap from LLVM; neither was found on PATH.',
+        "fix": "Install gdb (MSYS2: pacman -S mingw-w64-ucrt-x86_64-gdb; Linux: your package manager) or LLVM's lldb, then run `charpente debug --list`.",
+    },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {
         "title": "Command must be a list of arguments",

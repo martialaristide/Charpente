@@ -58,6 +58,7 @@ class ServerState:
         self.workspace_file = workspace_file
         self.workspace: Optional[Workspace] = None
         self.load_error: Optional[str] = None
+        self.notice: Optional[str] = None                 # set while declared packages are not installed
         self._build_lock = threading.Lock()
         self.subscribers: Dict[int, Callable[[Dict[str, Any]], None]] = {}
         self._next_subscriber = 1
@@ -72,7 +73,16 @@ class ServerState:
         try:
             path = find_workspace_file(start_dir=self.root, explicit=self.workspace_file)
             self.root = path.parent
-            self.workspace = load(str(path), self.options)
+            self.notice = None
+            try:
+                self.workspace = load(str(path), self.options)
+            except ChError as exc:
+                if exc.code != "CH6005":
+                    raise
+                # Packages are declared but not installed yet: the project can still be shown and edited; building it is refused
+                # (with this message) until they are installed.
+                self.workspace = load(str(path), self.options, materialize_packages=False)
+                self.notice = f"[{exc.code}] {exc}"
             self.load_error = None
         except ChError as exc:
             self.workspace = None
@@ -84,6 +94,24 @@ class ServerState:
         if self.workspace is None:
             return self.load()
         return self.workspace
+
+    def workspace_path(self) -> Path:
+        return find_workspace_file(start_dir=self.root, explicit=self.workspace_file)
+
+    def safe_path(self, relative: str, *, for_write: bool = False) -> Path:
+        """`relative` (a project-relative path with `/`) as an absolute path, refusing anything that leaves the project: `..`, absolute
+        paths, drive letters, and symbolic links pointing outside. Writing under `.git` is refused (use Git for that)."""
+        text = relative.replace("\\", "/")
+        parts = [p for p in text.split("/") if p not in ("", ".")]
+        if text.startswith("/") or (len(text) > 1 and text[1] == ":") or ".." in parts:
+            raise RpcError(-32602, f"path outside the project: {relative!r}")
+        if for_write and ".git" in [p.lower() for p in parts]:
+            raise RpcError(-32602, "files under .git are managed by Git, not written directly")
+        root = self.root.resolve()
+        candidate = root.joinpath(*parts).resolve()
+        if candidate != root and root not in candidate.parents:
+            raise RpcError(-32602, f"path outside the project: {relative!r}")
+        return candidate
 
     # ------------------------------------------------------------------ events
     def subscribe(self, callback: Callable[[Dict[str, Any]], None]) -> int:
@@ -217,8 +245,10 @@ class ServerState:
         return {"name": workspace.name, "version": workspace.version, "root": str(self.root),
                 "file": str(find_workspace_file(start_dir=self.root, explicit=self.workspace_file)),
                 "configurations": list(workspace.configurations), "platforms": list(workspace.platforms),
-                "requires": list(workspace.requires), "kits": dict(workspace.kits), "host": host,
-                "options": {n: {"default": str(o.default), "help": o.help, "value": str(workspace.option_values.get(n, o.default))}
+                "requires": list(workspace.requires), "kits": dict(workspace.kits), "host": host, "notice": self.notice,
+                "options": {n: {"default": _option_text(o.default), "help": o.help, "kind": o.kind,
+                                "choices": [str(c) for c in (o.choices or ())],
+                                "value": _option_text(workspace.option_values.get(n, o.default))}
                             for n, o in workspace.options.items()}}
 
     def toolchain_report(self) -> Dict[str, Any]:
@@ -235,6 +265,8 @@ class ServerState:
                 on_event: Optional[Callable[[Event], None]] = None) -> Tuple[bool, List[Dict[str, Any]], List[Dict[str, Any]]]:
         """Build `names` (and what they need). Returns (ok, per-target results, diagnostics). One build at a time."""
         workspace = self.require()
+        if self.notice:
+            raise RpcError(NOT_LOADED, self.notice + " Install them (charpente pkg install) and reload.", {"code": "CH6005"})
         if not self._build_lock.acquire(blocking=False):
             raise RpcError(BUSY, "a build is already running")
         try:
@@ -259,6 +291,7 @@ class ServerState:
                     on_event(event)
 
             bus.subscribe(observe, sync=True)
+            history.HistoryRecorder(bus, builder.state_dir(workspace) / "history.db", command="build", config=config, toolchain=tc.name)
             bus.emit("session.started", command="serve.compile", argv=list(names), cwd=str(self.root), version="", config=config)
             begun = time.monotonic()
             result = builder.build_workspace(workspace, tc, target_os, config=config, only=closure or None, jobs=jobs, bus=bus,
@@ -289,6 +322,10 @@ class ServerState:
         return [{"id": s.id, "command": s.command, "ok": s.ok, "duration": s.duration, "started": s.started, "config": s.config,
                  "toolchain": s.toolchain, "executed": s.executed, "cached": s.cached}
                 for s in history.list_sessions(builder.state_dir(workspace) / "history.db", limit=limit)]
+
+
+def _option_text(value: Any) -> str:
+    return ("true" if value else "false") if isinstance(value, bool) else str(value)
 
 
 def _has_host() -> bool:

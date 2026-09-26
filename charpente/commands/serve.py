@@ -9,12 +9,12 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ..serve import ServerState, StdioServer, make_dispatcher
 from ..serve.bsp import bsp_connection_details
 from ..serve.rpc import PARSE_ERROR, Dispatcher, RpcError
-from ..serve.ws import Connection, WebSocketServer
+from ..serve.ws import Connection, HttpHandler, WebSocketServer
 from ._common import find_root
 
 
@@ -28,20 +28,20 @@ def install_bsp(root: Path) -> Path:
     return path
 
 
-def _serve_websocket(state: ServerState, port: int) -> int:
-    token = secrets.token_urlsafe(24)
-    pool = ThreadPoolExecutor(max_workers=8, thread_name_prefix="ws-rpc")
-    subscriptions: Dict[Connection, List[int]] = {}
+def make_ws_server(state: ServerState, token: str, port: int = 0, http_handler: Optional[HttpHandler] = None) -> WebSocketServer:
+    """A (not yet started) WebSocket server that gives every connection its own dispatcher over the shared `state`."""
+    pool = ThreadPoolExecutor(max_workers=16, thread_name_prefix="ws-rpc")
+    connections: Dict[Connection, Tuple[Dispatcher, List[int]]] = {}
 
     def on_connect(connection: Connection) -> Callable[[str], None]:
         ids: List[int] = []
-        subscriptions[connection] = ids
 
         def notify(method: str, params: Any) -> None:
             if not connection.closed:
                 connection.send_text(json.dumps({"jsonrpc": "2.0", "method": method, "params": params}, ensure_ascii=False))
 
         dispatcher = make_dispatcher(state, notify, track_subscription=ids.append)
+        connections[connection] = (dispatcher, ids)
 
         def handle(text: str) -> None:
             try:
@@ -60,16 +60,20 @@ def _serve_websocket(state: ServerState, port: int) -> int:
         return on_message
 
     def on_close(connection: Connection) -> None:
-        for ident in subscriptions.pop(connection, []):
+        dispatcher, ids = connections.pop(connection, (None, []))
+        for ident in ids:
             state.unsubscribe(ident)
+        if dispatcher is not None:
+            dispatcher.close()
 
-    server = WebSocketServer(token, on_connect, on_close, port=port)
-    server.start()
-    print(json.dumps({"charpente-server": {"url": server.url, "host": server.host, "port": server.port, "token": token,
-                                           "pid": os.getpid(), "root": str(state.root)}}), flush=True)
+    return WebSocketServer(token, on_connect, on_close, port=port, http_handler=http_handler)
+
+
+def wait_for_parent(server: WebSocketServer) -> None:
+    """Serve until Ctrl+C or until our stdin closes (a parent that dies, or closes the pipe, takes the server with it)."""
     stop = threading.Event()
 
-    def watch_stdin() -> None:                              # a parent that dies (or closes our stdin) takes the server with it
+    def watch_stdin() -> None:
         try:
             while sys.stdin.buffer.read(4096):
                 pass
@@ -83,6 +87,15 @@ def _serve_websocket(state: ServerState, port: int) -> int:
     except KeyboardInterrupt:
         pass
     server.shutdown()
+
+
+def _serve_websocket(state: ServerState, port: int) -> int:
+    token = secrets.token_urlsafe(24)
+    server = make_ws_server(state, token, port)
+    server.start()
+    print(json.dumps({"charpente-server": {"url": server.url, "host": server.host, "port": server.port, "token": token,
+                                           "pid": os.getpid(), "root": str(state.root)}}), flush=True)
+    wait_for_parent(server)
     return 0
 
 

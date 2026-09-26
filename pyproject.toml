@@ -62,7 +62,7 @@ include = ["charpente*"]
 # templates were missing from the wheel until this was declared -- tests/test_packaging.py now guards it.)
 [tool.setuptools.package-data]
 charpente = ["pkg/recipes/*.toml", "pkg/kits/*.toml", "kit_sources/**/*", "templates_data/**/*",
-             "modules/official/*.toml"]
+             "modules/official/*.toml", "studio_web/**/*"]
 
 [tool.setuptools.dynamic]
 version = { attr = "charpente._version.__version__" }

@@ -9,7 +9,9 @@ import {
   buildArguments,
   compileCommandsJson,
   convertDiagnostics,
+  debugAdapterArgv,
   errorCodeIn,
+  resolveDebugConfiguration,
   statusText,
   targetItems,
   taskArgv,
@@ -332,6 +334,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("charpente.restartServer", async () => {
       await client?.stop();
       await startServer(context);
+    }),
+    vscode.debug.registerDebugAdapterDescriptorFactory("charpente", {
+      createDebugAdapterDescriptor: () => {
+        const [program, ...args] = debugAdapterArgv(settings().command, workspaceRoot() ?? "");
+        return new vscode.DebugAdapterExecutable(program, args);
+      },
+    }),
+    vscode.debug.registerDebugConfigurationProvider("charpente", {
+      resolveDebugConfiguration: (_folder, config) => resolveDebugConfiguration(config as Record<string, any>, settings()) as vscode.DebugConfiguration,
     }),
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (settings().buildOnSave && /\.(c|cc|cpp|cxx|h|hh|hpp)$/i.test(doc.fileName) && !state.building) {

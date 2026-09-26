@@ -6,6 +6,7 @@ Build, run, test and check C/C++ projects that use [Charpente](https://github.co
 - **Diagnostics**: compiler errors and warnings appear in the Problems panel, on the right line, and are cleared when you fix them.
 - **Status bar**: workspace name, configuration and the result of the last build.
 - **Tasks**: `charpente` tasks (`build`, `test`, `check`) with a problem matcher, usable from `tasks.json`.
+- **Debugging**: a `charpente` debug type that builds a target and drives gdb or lldb-dap.
 - **clangd**: writes `compile_commands.json` with the exact flags Charpente compiles with, so IntelliSense matches the build.
 - **`.charpente` files** get syntax highlighting (they are Python).
 
@@ -13,7 +14,7 @@ It talks to `charpente serve` (Build Server Protocol 2.1 over stdio). Nothing is
 
 ## Requirements
 
-Charpente 0.11 or later on your machine (`pip install charpente`). If the `charpente` script is not on your PATH, set
+Charpente 0.12 or later on your machine (`pip install charpente`). If the `charpente` script is not on your PATH, set
 `charpente.command` to `["python", "-m", "charpente"]`.
 
 ## Trust

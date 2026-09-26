@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { pathToUri, uriToPath } from "../src/client";
-import { BuildTarget, buildArguments, convertDiagnostics, errorCodeIn, statusText, targetItems, taskArgv } from "../src/model";
+import { BuildTarget, buildArguments, convertDiagnostics, debugAdapterArgv, errorCodeIn, resolveDebugConfiguration, statusText, targetItems, taskArgv } from "../src/model";
 
 const target = (name: string, run: boolean, deps: string[] = []): BuildTarget => ({
   id: { uri: `file:///p?id=${name}` },
@@ -68,4 +68,19 @@ test("file URIs round-trip, including spaces and Windows drives", () => {
     assert.equal(back, p.replace(/\\/g, "/"));
   }
   assert.throws(() => uriToPath("http://example.com/x"), /not a file/);
+});
+
+test("the debug adapter is started as an argument list", () => {
+  assert.deepEqual(debugAdapterArgv(["charpente"], "/p"), ["charpente", "debug-adapter", "--root", "/p"]);
+  assert.deepEqual(debugAdapterArgv(["python", "-m", "charpente"], "C:\my proj"), ["python", "-m", "charpente", "debug-adapter", "--root", "C:\my proj"]);
+});
+
+test("a launch configuration gets its defaults, and a program is left alone", () => {
+  assert.deepEqual(resolveDebugConfiguration({}, { configuration: "Release", platform: "" }), {
+    type: "charpente", request: "launch", name: "Charpente: debug the program", config: "Release",
+  });
+  assert.equal(resolveDebugConfiguration({ target: "app", config: "Debug" }, { configuration: "Release", platform: "" }).config, "Debug");
+  assert.equal(resolveDebugConfiguration({}, { configuration: "Debug", platform: " wasm32-wasi " }).platform, "wasm32-wasi");
+  const direct = resolveDebugConfiguration({ program: "/x/y", name: "mine" }, { configuration: "Release", platform: "linux-x64" });
+  assert.deepEqual(direct, { program: "/x/y", name: "mine", type: "charpente", request: "launch" });
 });

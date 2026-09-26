@@ -922,6 +922,46 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** `charpente tui` est une fonction optionnelle construite sur Textual.
 - **Correction (FR) :** Installez-le avec `pip install "charpente[tui]"`. Toutes les commandes fonctionnent sans lui.
 
+### CH8019 — Charpente Studio cannot start
+*FR : Charpente Studio ne peut pas démarrer*
+
+- **Cause:** The pages of Studio are missing, or the address/port could not be used.
+- **Fix:** Reinstall Charpente (pip install --force-reinstall charpente), or pick another port with --port.
+- **Cause (FR) :** Les pages de Studio sont absentes, ou l'adresse/le port n'a pas pu être utilisé.
+- **Correction (FR) :** Réinstallez Charpente (pip install --force-reinstall charpente), ou choisissez un autre port avec --port.
+
+### CH8020 — The AI assistant is not available
+*FR : L'assistant IA n'est pas disponible*
+
+- **Cause:** AI features are optional and need a provider: an API key, or a local OpenAI-compatible server.
+- **Fix:** Set ANTHROPIC_API_KEY or OPENAI_API_KEY, or CHARPENTE_AI_URL for a local server. Every other command works without it.
+- **Cause (FR) :** Les fonctions IA sont optionnelles et demandent un fournisseur : une clé d'API, ou un serveur local compatible OpenAI.
+- **Correction (FR) :** Définissez ANTHROPIC_API_KEY ou OPENAI_API_KEY, ou CHARPENTE_AI_URL pour un serveur local. Toutes les autres commandes fonctionnent sans.
+
+### CH8021 — Proposed change refused
+*FR : Modification proposée refusée*
+
+- **Cause:** The assistant's answer was not a diff that applies cleanly to your files (or touched something a fix may not touch).
+- **Fix:** Nothing was changed. Run the command again, or fix it by hand; `--show-context` shows what the assistant was given.
+- **Cause (FR) :** La réponse de l'assistant n'était pas un diff applicable proprement à vos fichiers (ou touchait ce qu'un correctif ne doit pas toucher).
+- **Correction (FR) :** Rien n'a été modifié. Relancez la commande, ou corrigez à la main ; `--show-context` montre ce qui a été donné à l'assistant.
+
+### CH8022 — Nothing was sent to the AI
+*FR : Rien n'a été envoyé à l'IA*
+
+- **Cause:** Charpente never sends code to an AI provider without your explicit agreement.
+- **Fix:** Answer yes when asked, or pass --yes to agree in advance; `--dry-run` shows what would be sent.
+- **Cause (FR) :** Charpente n'envoie jamais de code à un fournisseur d'IA sans votre accord explicite.
+- **Correction (FR) :** Répondez oui quand on vous le demande, ou passez --yes pour accepter d'avance ; `--dry-run` montre ce qui serait envoyé.
+
+### CH8023 — No debugger available
+*FR : Aucun débogueur disponible*
+
+- **Cause:** Debugging uses gdb 14 or newer (its built-in DAP mode) or lldb-dap from LLVM; neither was found on PATH.
+- **Fix:** Install gdb (MSYS2: pacman -S mingw-w64-ucrt-x86_64-gdb; Linux: your package manager) or LLVM's lldb, then run `charpente debug --list`.
+- **Cause (FR) :** Le débogage utilise gdb 14 ou plus récent (son mode DAP intégré) ou lldb-dap de LLVM ; aucun n'a été trouvé dans le PATH.
+- **Correction (FR) :** Installez gdb (MSYS2 : pacman -S mingw-w64-ucrt-x86_64-gdb ; Linux : votre gestionnaire de paquets) ou lldb de LLVM, puis lancez `charpente debug --list`.
+
 ## CH9xxx — Internal
 
 ### CH9001 — Command must be a list of arguments

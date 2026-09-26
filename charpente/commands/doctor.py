@@ -40,8 +40,11 @@ def gather() -> Dict[str, Any]:
                 notes.append(f"OpenHarmony native SDK {info.get('version', '?')} (API {info.get('api', '?')})"
                              + (f": Charpente's defaults differ from the SDK's toolchain file on {', '.join(drift)}" if drift else ""))
     report["notes"] = notes
-    tools = {name: shutil.which(name) for name in ("git", "node", "wasmtime", "cmake", "ninja")}
+    tools = {name: shutil.which(name) for name in ("git", "node", "wasmtime", "cmake", "ninja", "clangd", "clang-format", "clang-tidy")}
     report["tools"] = {name: path for name, path in tools.items()}
+    from .. import debug as debug_mod
+
+    report["debuggers"] = [f"{d['name']} {d['version']}".strip() for d in debug_mod.find_debuggers()]
     report["installed_by_charpente"] = [f"{n}@{v}" for n, v, _ in toolchain_install.installed()]
     buildable: List[str] = []
     missing: Dict[str, str] = {}
@@ -78,7 +81,8 @@ def execute(args: List[str]) -> int:
         print(f"  {tc['name']:<12} {tc['compiler']}{extra}")
     print("\nOther tools:")
     for name, path in report["tools"].items():
-        print(f"  {name:<9} {path or 'not found'}")
+        print(f"  {name:<12} {path or 'not found'}")
+    print(f"  {'debugger':<12} {', '.join(report['debuggers']) or 'not found (gdb 14+ or lldb-dap: `charpente debug --list`)'}")
     print(f"\nCan build now ({len(report['buildable'])}): {', '.join(report['buildable']) or 'nothing'}")
     if report["missing"]:
         print("\nNot available yet:")

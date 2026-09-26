@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 from .. import _version, i18n
 from ..errors import describe
 from ..events import Event
+from . import ai_api, studio
 from .rpc import INVALID_PARAMS, SERVER_NOT_INITIALIZED, Dispatcher, RpcError
 from .state import ServerState, path_to_uri, severity_to_bsp, uri_to_path
 
@@ -169,6 +170,10 @@ def make_dispatcher(state: ServerState, notify: Notify, *, exit_callback: Callab
         def forward(event: Event) -> None:
             if event.type == "action.output":
                 notify("build/logMessage", {"type": 3, "task": task, "originId": origin, "message": str(event.payload.get("text", ""))})
+            elif event.type == "action.failed":
+                # what the compiler said, line by line, as errors (the diagnostics are published separately, per file)
+                for line in str(event.payload.get("output") or "").splitlines()[:200]:
+                    notify("build/logMessage", {"type": 1, "task": task, "originId": origin, "message": line})
             elif event.type in ("target.finished", "target.failed"):
                 notify("build/taskProgress", {"taskId": task, "originId": origin, "eventTime": _now(),
                                               "message": f"{event.payload.get('target')}: {event.type.split('.')[1]}"})
@@ -276,6 +281,8 @@ def make_dispatcher(state: ServerState, notify: Notify, *, exit_callback: Callab
 
     d.add_method("charpente/unsubscribe", unsubscribe)
     d.add_method("charpente/ping", lambda params: {"pong": True, "version": _version.__version__})
+    studio.register(d, state, notify)
+    ai_api.register(d, state)
     return d
 
 

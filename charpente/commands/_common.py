@@ -41,7 +41,10 @@ def load(file_arg: Optional[str] = None, opts: Optional[List[str]] = None, *,
     coded `ChError`s and propagate."""
     entry = find_workspace_file(explicit=file_arg)
     _lint_before_running(entry)
-    workspace = load_workspace(str(entry), options=parse_options(opts) or None)
+    from ..dsl.edit import load_saved_options
+
+    options = {**load_saved_options(entry.parent), **parse_options(opts)}        # --opt wins over the saved options file
+    workspace = load_workspace(str(entry), options=options or None)
     if materialize_packages and workspace.requires:
         from ..pkg.materialize import materialize
 

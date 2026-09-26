@@ -687,6 +687,36 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "`charpente tui` est une fonction optionnelle construite sur Textual.",
         "fix": "Installez-le avec `pip install \"charpente[tui]\"`. Toutes les commandes fonctionnent sans lui.",
     },
+    "CH8019": {
+        "title": "Charpente Studio ne peut pas démarrer",
+        "message": "Charpente Studio ne peut pas démarrer : {detail}",
+        "cause": "Les pages de Studio sont absentes, ou l'adresse/le port n'a pas pu être utilisé.",
+        "fix": "Réinstallez Charpente (pip install --force-reinstall charpente), ou choisissez un autre port avec --port.",
+    },
+    "CH8020": {
+        "title": "L'assistant IA n'est pas disponible",
+        "message": "L'assistant IA n'est pas disponible : {detail}",
+        "cause": "Les fonctions IA sont optionnelles et demandent un fournisseur : une clé d'API, ou un serveur local compatible OpenAI.",
+        "fix": 'Définissez ANTHROPIC_API_KEY ou OPENAI_API_KEY, ou CHARPENTE_AI_URL pour un serveur local. Toutes les autres commandes fonctionnent sans.',
+    },
+    "CH8021": {
+        "title": 'Modification proposée refusée',
+        "message": 'La modification proposée est inutilisable : {reason}',
+        "cause": "La réponse de l'assistant n'était pas un diff applicable proprement à vos fichiers (ou touchait ce qu'un correctif ne doit pas toucher).",
+        "fix": "Rien n'a été modifié. Relancez la commande, ou corrigez à la main ; `--show-context` montre ce qui a été donné à l'assistant.",
+    },
+    "CH8022": {
+        "title": "Rien n'a été envoyé à l'IA",
+        "message": "Rien n'a été envoyé à l'IA : {reason}",
+        "cause": "Charpente n'envoie jamais de code à un fournisseur d'IA sans votre accord explicite.",
+        "fix": "Répondez oui quand on vous le demande, ou passez --yes pour accepter d'avance ; `--dry-run` montre ce qui serait envoyé.",
+    },
+    "CH8023": {
+        "title": 'Aucun débogueur disponible',
+        "message": 'Aucun débogueur disponible : il faut {wanted}.',
+        "cause": "Le débogage utilise gdb 14 ou plus récent (son mode DAP intégré) ou lldb-dap de LLVM ; aucun n'a été trouvé dans le PATH.",
+        "fix": 'Installez gdb (MSYS2 : pacman -S mingw-w64-ucrt-x86_64-gdb ; Linux : votre gestionnaire de paquets) ou lldb de LLVM, puis lancez `charpente debug --list`.',
+    },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {
         "title": "La commande doit être une liste d'arguments",

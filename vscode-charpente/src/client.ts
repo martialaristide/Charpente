@@ -71,7 +71,7 @@ export class ServerClient extends EventEmitter {
     await started;
     this.info = await this.request("build/initialize", {
       displayName: "vscode-charpente",
-      version: "0.11.0",
+      version: "0.12.0",
       bspVersion: "2.1.0",
       rootUri: pathToUri(this.root),
       capabilities: { languageIds: ["c", "cpp"] },

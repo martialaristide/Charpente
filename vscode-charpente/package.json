@@ -2,15 +2,33 @@
   "name": "charpente",
   "displayName": "Charpente",
   "description": "Build, run, test and check C/C++ projects with Charpente: targets view, diagnostics, tasks, status bar, compile_commands.json for clangd.",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "publisher": "charpente",
   "license": "Apache-2.0",
-  "repository": { "type": "git", "url": "https://github.com/martialaristide/Charpente" },
-  "engines": { "vscode": "^1.85.0", "node": ">=18" },
-  "categories": ["Programming Languages", "Other"],
-  "keywords": ["c", "c++", "build", "charpente", "bsp"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/martialaristide/Charpente"
+  },
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "c",
+    "c++",
+    "build",
+    "charpente",
+    "bsp"
+  ],
   "main": "./out/src/extension.js",
-  "activationEvents": ["workspaceContains:**/*.charpente"],
+  "activationEvents": [
+    "workspaceContains:**/*.charpente",
+    "onDebugResolve:charpente"
+  ],
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": false,
@@ -22,8 +40,13 @@
     "languages": [
       {
         "id": "charpente",
-        "aliases": ["Charpente", "charpente"],
-        "extensions": [".charpente"],
+        "aliases": [
+          "Charpente",
+          "charpente"
+        ],
+        "extensions": [
+          ".charpente"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -32,45 +55,140 @@
         "language": "charpente",
         "scopeName": "source.charpente",
         "path": "./syntaxes/charpente.tmLanguage.json",
-        "embeddedLanguages": { "source.python": "python" }
+        "embeddedLanguages": {
+          "source.python": "python"
+        }
       }
     ],
     "commands": [
-      { "command": "charpente.build", "title": "Build the workspace", "category": "Charpente", "icon": "$(tools)" },
-      { "command": "charpente.buildTarget", "title": "Build this target", "category": "Charpente", "icon": "$(play)" },
-      { "command": "charpente.runTarget", "title": "Run this target", "category": "Charpente", "icon": "$(debug-start)" },
-      { "command": "charpente.test", "title": "Run the tests", "category": "Charpente", "icon": "$(beaker)" },
-      { "command": "charpente.check", "title": "Run the quality gate", "category": "Charpente", "icon": "$(checklist)" },
-      { "command": "charpente.reload", "title": "Reload the workspace", "category": "Charpente", "icon": "$(refresh)" },
-      { "command": "charpente.explain", "title": "Explain an error code", "category": "Charpente" },
-      { "command": "charpente.generateCompileCommands", "title": "Generate compile_commands.json (for clangd)", "category": "Charpente" },
-      { "command": "charpente.showOutput", "title": "Show the output", "category": "Charpente" },
-      { "command": "charpente.restartServer", "title": "Restart the server", "category": "Charpente" }
+      {
+        "command": "charpente.build",
+        "title": "Build the workspace",
+        "category": "Charpente",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "charpente.buildTarget",
+        "title": "Build this target",
+        "category": "Charpente",
+        "icon": "$(play)"
+      },
+      {
+        "command": "charpente.runTarget",
+        "title": "Run this target",
+        "category": "Charpente",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "charpente.test",
+        "title": "Run the tests",
+        "category": "Charpente",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "charpente.check",
+        "title": "Run the quality gate",
+        "category": "Charpente",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "charpente.reload",
+        "title": "Reload the workspace",
+        "category": "Charpente",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "charpente.explain",
+        "title": "Explain an error code",
+        "category": "Charpente"
+      },
+      {
+        "command": "charpente.generateCompileCommands",
+        "title": "Generate compile_commands.json (for clangd)",
+        "category": "Charpente"
+      },
+      {
+        "command": "charpente.showOutput",
+        "title": "Show the output",
+        "category": "Charpente"
+      },
+      {
+        "command": "charpente.restartServer",
+        "title": "Restart the server",
+        "category": "Charpente"
+      }
     ],
     "menus": {
       "view/title": [
-        { "command": "charpente.build", "when": "view == charpente.targets", "group": "navigation@1" },
-        { "command": "charpente.reload", "when": "view == charpente.targets", "group": "navigation@2" }
+        {
+          "command": "charpente.build",
+          "when": "view == charpente.targets",
+          "group": "navigation@1"
+        },
+        {
+          "command": "charpente.reload",
+          "when": "view == charpente.targets",
+          "group": "navigation@2"
+        }
       ],
       "view/item/context": [
-        { "command": "charpente.buildTarget", "when": "view == charpente.targets && viewItem == target", "group": "inline@1" },
-        { "command": "charpente.runTarget", "when": "view == charpente.targets && viewItem == runnable", "group": "inline@2" }
+        {
+          "command": "charpente.buildTarget",
+          "when": "view == charpente.targets && viewItem == target",
+          "group": "inline@1"
+        },
+        {
+          "command": "charpente.runTarget",
+          "when": "view == charpente.targets && viewItem == runnable",
+          "group": "inline@2"
+        }
       ]
     },
     "viewsContainers": {
-      "activitybar": [{ "id": "charpente", "title": "Charpente", "icon": "media/charpente.svg" }]
+      "activitybar": [
+        {
+          "id": "charpente",
+          "title": "Charpente",
+          "icon": "media/charpente.svg"
+        }
+      ]
     },
     "views": {
-      "charpente": [{ "id": "charpente.targets", "name": "Targets" }]
+      "charpente": [
+        {
+          "id": "charpente.targets",
+          "name": "Targets"
+        }
+      ]
     },
     "taskDefinitions": [
       {
         "type": "charpente",
-        "required": ["command"],
+        "required": [
+          "command"
+        ],
         "properties": {
-          "command": { "type": "string", "enum": ["build", "test", "check"], "description": "What Charpente does." },
-          "target": { "type": "string", "description": "A target to build (build only; default: everything)." },
-          "config": { "type": "string", "enum": ["Debug", "Release"], "description": "Configuration (default: the charpente.configuration setting)." }
+          "command": {
+            "type": "string",
+            "enum": [
+              "build",
+              "test",
+              "check"
+            ],
+            "description": "What Charpente does."
+          },
+          "target": {
+            "type": "string",
+            "description": "A target to build (build only; default: everything)."
+          },
+          "config": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ],
+            "description": "Configuration (default: the charpente.configuration setting)."
+          }
         }
       }
     ],
@@ -78,10 +196,17 @@
       {
         "name": "charpente-cpp",
         "owner": "charpente",
-        "fileLocation": ["autoDetect", "${workspaceFolder}"],
+        "fileLocation": [
+          "autoDetect",
+          "${workspaceFolder}"
+        ],
         "pattern": {
           "regexp": "^(.+?):(\\d+):(?:(\\d+):)?\\s+(warning|error|note):\\s+(.*)$",
-          "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
         }
       }
     ],
@@ -89,23 +214,122 @@
       "title": "Charpente",
       "properties": {
         "charpente.command": {
-          "type": "array", "items": { "type": "string" }, "default": ["charpente"],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "charpente"
+          ],
           "markdownDescription": "The command that starts Charpente, as a list. Use `[\"python\", \"-m\", \"charpente\"]` when the `charpente` script is not on PATH."
         },
         "charpente.configuration": {
-          "type": "string", "enum": ["Debug", "Release"], "default": "Debug", "description": "The configuration used by the commands and the status bar."
+          "type": "string",
+          "enum": [
+            "Debug",
+            "Release"
+          ],
+          "default": "Debug",
+          "description": "The configuration used by the commands and the status bar."
         },
         "charpente.platform": {
-          "type": "string", "default": "", "description": "Target platform for builds (empty: this machine). Example: wasm32-wasi."
+          "type": "string",
+          "default": "",
+          "description": "Target platform for builds (empty: this machine). Example: wasm32-wasi."
         },
         "charpente.buildOnSave": {
-          "type": "boolean", "default": false, "description": "Build the whole workspace when a C/C++ file is saved."
+          "type": "boolean",
+          "default": false,
+          "description": "Build the whole workspace when a C/C++ file is saved."
         },
         "charpente.generateCompileCommandsOnLoad": {
-          "type": "boolean", "default": true, "description": "Write compile_commands.json when the workspace loads, so clangd knows your include paths and flags."
+          "type": "boolean",
+          "default": true,
+          "description": "Write compile_commands.json when the workspace loads, so clangd knows your include paths and flags."
         }
       }
-    }
+    },
+    "breakpoints": [
+      {
+        "language": "c"
+      },
+      {
+        "language": "cpp"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "charpente",
+        "label": "Charpente",
+        "languages": [
+          "c",
+          "cpp"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {
+              "target": {
+                "type": "string",
+                "description": "The target to build and debug (default: the only program of the workspace)."
+              },
+              "config": {
+                "type": "string",
+                "enum": [
+                  "Debug",
+                  "Release"
+                ],
+                "description": "Configuration to build (default: Debug)."
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Arguments of the program."
+              },
+              "program": {
+                "type": "string",
+                "description": "Debug this executable instead of building a target."
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Working directory (default: the workspace folder)."
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables for the program."
+              },
+              "stopAtBeginningOfMainSubprogram": {
+                "type": "boolean",
+                "description": "Stop at the start of main."
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "charpente",
+            "request": "launch",
+            "name": "Charpente: debug the program",
+            "config": "Debug",
+            "args": []
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Charpente: debug a target",
+            "body": {
+              "type": "charpente",
+              "request": "launch",
+              "name": "Debug ${1:target}",
+              "target": "${1:target}",
+              "config": "Debug",
+              "args": []
+            }
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p ./",

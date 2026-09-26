@@ -15,7 +15,7 @@ import socketserver
 import struct
 import threading
 import urllib.parse
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 OP_CONT, OP_TEXT, OP_BINARY, OP_CLOSE, OP_PING, OP_PONG = 0x0, 0x1, 0x2, 0x8, 0x9, 0xA
@@ -191,11 +191,22 @@ class Connection:
                 self.closed = True
 
 
+_REASONS = {200: "OK", 204: "No Content", 302: "Found", 400: "Bad Request", 401: "Unauthorized", 403: "Forbidden", 404: "Not Found",
+            405: "Method Not Allowed", 500: "Internal Server Error"}
+HttpHandler = Callable[[str, str, Dict[str, str]], Tuple[int, Dict[str, str], bytes]]
+
+
 class WebSocketServer:
-    """`on_connect(connection)` returns the callback `on_message(text)`; `on_close(connection)` runs at disconnect."""
+    """`on_connect(connection)` returns the callback `on_message(text)`; `on_close(connection)` runs at disconnect.
+
+    `http_handler(method, target, headers) -> (status, headers, body)`, when given, answers the plain HTTP requests that are not
+    WebSocket upgrades (Charpente Studio serves its static pages this way, on the same port). Only the WebSocket needs the token: a page's
+    files are public code, and a cookie would be sent to any page on the same host whatever its port.
+    """
 
     def __init__(self, token: str, on_connect: Callable[[Connection], Callable[[str], None]],
-                 on_close: Callable[[Connection], None] = lambda c: None, host: str = "127.0.0.1", port: int = 0) -> None:
+                 on_close: Callable[[Connection], None] = lambda c: None, host: str = "127.0.0.1", port: int = 0,
+                 http_handler: Optional[HttpHandler] = None) -> None:
         outer = self
 
         class Handler(socketserver.BaseRequestHandler):
@@ -208,6 +219,8 @@ class WebSocketServer:
 
         self._token = token
         self._on_connect, self._on_close = on_connect, on_close
+        self._http = http_handler
+        self.allowed_hosts: Optional[Set[str]] = None           # when set: a request whose Host header is not listed is refused (DNS rebinding)
         self._server = Server((host, port), Handler)
         address = self._server.server_address
         self.host, self.port = str(address[0]), int(address[1])
@@ -239,6 +252,15 @@ class WebSocketServer:
                 data += chunk
             head, _, rest = data.partition(b"\r\n\r\n")
             method, target, headers = parse_request(head + b"\r\n\r\n")
+            if self.allowed_hosts is not None and headers.get("host", "").lower() not in self.allowed_hosts:
+                sock.sendall(http_response(403, "Forbidden", {"Connection": "close"}, "Forbidden"))
+                return
+            if self._http is not None and headers.get("upgrade", "").lower() != "websocket":
+                code, extra, body = self._http(method, target, headers)
+                lines = [f"HTTP/1.1 {code} {_REASONS.get(code, 'Status')}", f"Content-Length: {len(body)}", "Connection: close"]
+                lines += [f"{k}: {v}" for k, v in extra.items()]
+                sock.sendall(("\r\n".join(lines) + "\r\n\r\n").encode("latin-1") + (b"" if method == "HEAD" else body))
+                return
             status, reason = check_upgrade(method, target, headers, self._token)
             if status != 101:
                 sock.sendall(http_response(status, reason, {"Connection": "close"}, reason))

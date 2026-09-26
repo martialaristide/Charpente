@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Charpente Studio</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="studio.css">
+</head>
+<body>
+  <div id="boot" role="status" data-i18n="boot.loading">Connecting to Charpente…</div>
+
+  <div id="app" hidden>
+    <header id="topbar" role="banner">
+      <span class="brand"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 20 12 4l9 16z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7.5 12h9M5.2 16h13.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Charpente Studio</span>
+      <span id="project" class="project"></span>
+      <label class="field"><span class="sr-only" data-i18n="top.config">Configuration</span><select id="config" data-i18n-aria-label="top.config"></select></label>
+      <label class="field"><span class="sr-only" data-i18n="top.platform">Platform</span><input id="platform" type="text" size="14" placeholder="platform" data-i18n-placeholder="top.platform" data-i18n-aria-label="top.platform" spellcheck="false"></label>
+      <button id="btn-build" class="primary" title="F7"><span data-i18n="top.build">Build</span></button>
+      <button id="btn-run" title="F5"><span data-i18n="top.run">Run</span></button>
+      <button id="btn-test"><span data-i18n="top.test">Test</span></button>
+      <button id="btn-check"><span data-i18n="top.check">Check</span></button>
+      <button id="btn-reload" data-i18n-title="top.reload" title="Reload">⟳</button>
+      <span class="spacer"></span>
+      <span id="task" class="task" role="status" aria-live="polite"></span>
+      <button id="btn-palette" data-i18n-title="top.palette" title="Ctrl+Shift+P">⌘</button>
+      <button id="btn-theme" data-i18n-title="top.theme" title="Theme">◐</button>
+      <label class="field"><span class="sr-only" data-i18n="top.language">Language</span><select id="lang" data-i18n-aria-label="top.language"></select></label>
+    </header>
+
+    <div id="main">
+      <nav id="sidebar" aria-label="Explorer">
+        <div class="tabs" role="tablist">
+          <button id="sidetab-files" role="tab" data-i18n="tab.files">Files</button>
+          <button id="sidetab-targets" role="tab" data-i18n="tab.targets">Targets</button>
+          <button id="sidetab-options" role="tab" data-i18n="tab.options">Options</button>
+          <button id="sidetab-packages" role="tab" data-i18n="tab.packages">Packages</button>
+        </div>
+        <div id="side-files" class="pane" role="tabpanel"></div>
+        <div id="side-targets" class="pane" role="tabpanel" hidden></div>
+        <div id="side-options" class="pane" role="tabpanel" hidden></div>
+        <div id="side-packages" class="pane" role="tabpanel" hidden></div>
+      </nav>
+
+      <section id="center">
+        <div id="editor-area">
+          <div id="tabs" class="editor-tabs" role="tablist"></div>
+          <div id="editor-empty" class="empty" data-i18n="editor.empty">Open a file from the explorer.</div>
+          <div id="editor-host" class="editor-host" hidden></div>
+        </div>
+        <section id="bottom" aria-label="Panels">
+          <div class="tabs" role="tablist">
+            <button id="tab-build" role="tab" data-i18n="tab.build">Build</button>
+            <button id="tab-problems" role="tab" data-i18n="tab.problems">Problems</button>
+            <button id="tab-graph" role="tab" data-i18n="tab.graph">Graph</button>
+            <button id="tab-profile" role="tab" data-i18n="tab.profile">Profile</button>
+            <button id="tab-git" role="tab" data-i18n="tab.git">Git</button>
+            <button id="tab-devices" role="tab" data-i18n="tab.devices">Devices</button>
+            <button id="tab-debug" role="tab" data-i18n="tab.debug">Debug</button>
+            <button id="tab-terminal" role="tab" data-i18n="tab.terminal">Terminal</button>
+            <button id="tab-ai" role="tab" data-i18n="tab.ai">Assistant</button>
+          </div>
+          <div id="panel-build" class="pane" role="tabpanel"></div>
+          <div id="panel-problems" class="pane" role="tabpanel" hidden></div>
+          <div id="panel-graph" class="pane" role="tabpanel" hidden></div>
+          <div id="panel-profile" class="pane" role="tabpanel" hidden></div>
+          <div id="panel-git" class="pane" role="tabpanel" hidden></div>
+          <div id="panel-devices" class="pane" role="tabpanel" hidden></div>
+          <div id="panel-debug" class="pane" role="tabpanel" hidden></div>
+          <div id="panel-terminal" class="pane" role="tabpanel" hidden></div>
+          <div id="panel-ai" class="pane" role="tabpanel" hidden></div>
+        </section>
+      </section>
+    </div>
+
+    <footer id="statusbar" role="contentinfo">
+      <span id="connection" data-status="connecting" title="">○</span>
+      <span id="problem-status">⛔ 0  ⚠ 0</span>
+      <span class="spacer"></span>
+      <span id="lsp"></span>
+      <span id="cursor"></span>
+      <span id="language"></span>
+      <span id="eol"></span>
+    </footer>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+  <dialog id="modal"></dialog>
+  <dialog id="palette" aria-label="Command palette"></dialog>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

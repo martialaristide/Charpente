@@ -106,3 +106,23 @@ export function compileCommandsJson(entries: unknown[]): string {
 export function errorCodeIn(text: string): string | undefined {
   return /\bCH\d{4}\b/.exec(text)?.[0];
 }
+
+/** The command that starts the debug adapter: `[...charpente.command, "debug-adapter", "--root", folder]` (never through a shell). */
+export function debugAdapterArgv(command: string[], root: string): string[] {
+  return [...command, "debug-adapter", "--root", root];
+}
+
+/** Fill in what a `charpente` launch configuration leaves out (the debugger picks the target when there is only one program). */
+export function resolveDebugConfiguration(config: Record<string, any>, settings: Settings): Record<string, any> {
+  const resolved = { ...config };
+  resolved.type = "charpente";
+  resolved.request = resolved.request || "launch";
+  resolved.name = resolved.name || "Charpente: debug the program";
+  if (!resolved.program) {
+    resolved.config = resolved.config || settings.configuration || "Debug";
+    if (settings.platform.trim() && !resolved.platform) {
+      resolved.platform = settings.platform.trim();
+    }
+  }
+  return resolved;
+}

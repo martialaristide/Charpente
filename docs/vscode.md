@@ -14,6 +14,7 @@ folder, shows what the server says, and asks it to build, run, test and check.
   *Charpente: Generate compile_commands.json*. It contains the exact arguments used to build, so IntelliSense and the build agree.
 - **Explain**: *Charpente: Explain an error code*; error messages with a `CHxxxx` code offer an *Explain* button.
 - **`.charpente` files** are highlighted as Python with the Charpente names emphasised.
+- **Debugging**: a `charpente` debug type (`launch.json`: `target`, `config`, `args`, or `program`) driven by `charpente debug-adapter` — it builds the target, then gdb or lldb-dap. See [debugging.md](debugging.md).
 - Saving a `.charpente` file reloads the workspace; `charpente.buildOnSave` builds when a C/C++ file is saved.
 
 ## Install (from source, nothing is published)
@@ -21,9 +22,9 @@ folder, shows what the server says, and asks it to build, run, test and check.
 ```
 cd vscode-charpente
 npm install
-npm test                      # compile + 23 tests
-npm run package               # writes charpente-0.11.0.vsix
-code --install-extension charpente-0.11.0.vsix
+npm test                      # compile + 26 tests
+npm run package               # writes charpente-0.12.0.vsix
+code --install-extension charpente-0.12.0.vsix
 ```
 
 `code --install-extension` is a normal, reversible install that **you** run; nothing in this repository installs the extension for you or publishes it
@@ -48,4 +49,4 @@ not been loaded in a live VS Code by the author.
 
 ## Not there yet
 
-Debugging (DAP, Phase 8), a WebSocket mode for remote workspaces, testing-API integration (the Test Explorer), and a Marketplace release.
+Remote debugging, a WebSocket mode for remote workspaces, testing-API integration (the Test Explorer), and a Marketplace release.

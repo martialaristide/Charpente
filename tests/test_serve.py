@@ -230,7 +230,7 @@ class _Client:
         self.sock = socket.create_connection(("127.0.0.1", port), timeout=20)
         extra = f"Origin: {origin}\r\n" if origin else ""
         key = base64.b64encode(os.urandom(16)).decode()
-        self.sock.sendall((f"GET /?token={token} HTTP/1.1\r\nHost: 127.0.0.1\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+        self.sock.sendall((f"GET /?token={token} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
                            f"Sec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n{extra}\r\n").encode())
         data = b""
         while b"\r\n\r\n" not in data:

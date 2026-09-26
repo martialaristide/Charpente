@@ -138,3 +138,158 @@ def run(argv: Argv, *, capture: bool = True, cwd: Optional[str] = None,
         stderr=_decode(completed.stderr),
         duration=time.monotonic() - start,
     )
+
+
+class LineStream:
+    """A running process whose output lines are delivered to `on_line(line)` as they appear (stdout and stderr merged).
+
+    For things that never "finish" the way `run` needs -- a device log, an interactive-ish terminal command. `on_exit(code)` runs once at the
+    end. `stop()` ends the process (and is safe to call twice). The child gets no stdin: it cannot read the caller's channel.
+    """
+
+    def __init__(self, argv: Argv, on_line: Callable[[str], None], on_exit: Callable[[int], None] = lambda code: None, *,
+                 cwd: Optional[str] = None, env: Optional[Mapping[str, str]] = None) -> None:
+        import threading
+
+        items = _check_argv(argv)
+        self._on_line, self._on_exit = on_line, on_exit
+        try:
+            self._proc = subprocess.Popen(items, shell=False, cwd=cwd, env=dict(env) if env is not None else None,
+                                          stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        except FileNotFoundError as exc:
+            raise ChError("CH2002", tool=items[0]) from exc
+        except PermissionError as exc:
+            raise ChError("CH2004", tool=items[0]) from exc
+        self.stopped = False
+        self._thread = threading.Thread(target=self._pump, daemon=True, name="line-stream")
+        self._thread.start()
+
+    @property
+    def pid(self) -> int:
+        return self._proc.pid
+
+    def _pump(self) -> None:
+        assert self._proc.stdout is not None
+        for raw in iter(self._proc.stdout.readline, b""):
+            try:
+                self._on_line(_decode(raw).rstrip("\r\n"))
+            except Exception:                              # a broken consumer must not kill the reader (or leave a pipe unread)
+                pass
+        code = self._proc.wait()
+        try:
+            self._on_exit(code)
+        except Exception:
+            pass
+
+    def stop(self, timeout: float = 5.0) -> None:
+        if self.stopped:
+            return
+        self.stopped = True
+        if self._proc.poll() is None:
+            self._proc.terminate()
+            try:
+                self._proc.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                self._proc.kill()
+        self._thread.join(timeout=timeout)
+
+    def wait(self, timeout: Optional[float] = None) -> Optional[int]:
+        self._thread.join(timeout=timeout)
+        return self._proc.poll()
+
+
+class Duplex:
+    """A long-running child we talk to over its stdin and stdout (a language server): `write(bytes)` sends, `on_data(bytes)` receives.
+
+    Binary on both sides (the caller frames messages). Stderr is discarded (a server's logs are not our output) unless `on_stderr` is given.
+    `on_exit(code)` runs once at the end; `stop()` ends the child. Like every process here: an argument list, never a shell.
+    """
+
+    def __init__(self, argv: Argv, on_data: Callable[[bytes], None], on_exit: Callable[[int], None] = lambda code: None, *,
+                 cwd: Optional[str] = None, env: Optional[Mapping[str, str]] = None,
+                 on_stderr: Optional[Callable[[str], None]] = None) -> None:
+        import threading
+
+        items = _check_argv(argv)
+        self._on_data, self._on_exit = on_data, on_exit
+        try:
+            self._proc = subprocess.Popen(items, shell=False, cwd=cwd, env=dict(env) if env is not None else None,
+                                          stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE if on_stderr else subprocess.DEVNULL)
+        except FileNotFoundError as exc:
+            raise ChError("CH2002", tool=items[0]) from exc
+        except PermissionError as exc:
+            raise ChError("CH2004", tool=items[0]) from exc
+        self.stopped = False
+        self._write_lock = threading.Lock()
+        self._thread = threading.Thread(target=self._pump, daemon=True, name="duplex-out")
+        self._thread.start()
+        if on_stderr is not None:
+            def drain() -> None:
+                assert self._proc.stderr is not None
+                for raw in iter(self._proc.stderr.readline, b""):
+                    on_stderr(_decode(raw).rstrip("\r\n"))
+
+            threading.Thread(target=drain, daemon=True, name="duplex-err").start()
+
+    @property
+    def pid(self) -> int:
+        return self._proc.pid
+
+    def _pump(self) -> None:
+        stream = self._proc.stdout
+        assert stream is not None
+        while True:
+            chunk = stream.read1(65536)                       # type: ignore[attr-defined]
+            if not chunk:
+                break
+            try:
+                self._on_data(chunk)
+            except Exception:
+                pass
+        code = self._proc.wait()
+        try:
+            self._on_exit(code)
+        except Exception:
+            pass
+
+    def write(self, data: bytes) -> bool:
+        """Send bytes; False when the child is gone (never raises for a closed pipe)."""
+        if self.stopped or self._proc.poll() is not None or self._proc.stdin is None:
+            return False
+        with self._write_lock:
+            try:
+                self._proc.stdin.write(data)
+                self._proc.stdin.flush()
+                return True
+            except (OSError, ValueError):
+                return False
+
+    def close_input(self) -> None:
+        """End of input for the child (it can still finish what it was doing and answer): the graceful half of `stop`."""
+        if self._proc.stdin is not None:
+            try:
+                self._proc.stdin.close()
+            except OSError:
+                pass
+
+    def stop(self, timeout: float = 5.0) -> None:
+        if self.stopped:
+            return
+        self.stopped = True
+        if self._proc.stdin is not None:
+            try:
+                self._proc.stdin.close()
+            except OSError:
+                pass
+        if self._proc.poll() is None:
+            self._proc.terminate()
+            try:
+                self._proc.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                self._proc.kill()
+        self._thread.join(timeout=timeout)
+
+    def wait(self, timeout: Optional[float] = None) -> Optional[int]:
+        self._thread.join(timeout=timeout)
+        return self._proc.poll()

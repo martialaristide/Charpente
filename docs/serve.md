@@ -63,6 +63,25 @@ Deliberate choices:
 | `charpente/history` | recent sessions |
 | `charpente/subscribe` / `unsubscribe` | every engine event as `charpente/event` notifications (dropped when the connection closes) |
 
+### Methods added for Studio
+
+| Method | Result |
+|---|---|
+| `charpente/files/list`, `read`, `write`, `create` | The project's files (never outside it; `.git` is never written). `write` takes the `sha256` the client read: a file that changed meanwhile is a conflict (`-32011`), not overwritten. |
+| `charpente/dsl/schema` | The methods (with signatures) of `Workspace`/`Target`/`Rule` and the members of `Kind`/`Language`, for completion. |
+| `charpente/profile`, `charpente/headers` | Time per target and action of the latest build that did work, its critical path; the most expensive headers. |
+| `charpente/git/status`, `diff`, `log`, `stage`, `apply` (one block), `commit` (through the quality gate) | The Git panel. |
+| `charpente/devices`, `devices/logs`, `deploy` | Android and HarmonyOS devices, live logs, deployment. |
+| `charpente/packages/search`, `list`, `add`, `remove`, `install` | Edits `ws.requires` in your file. |
+| `charpente/options/set` | Validates and saves option values in `.charpente/options.toml`, then reloads. |
+| `charpente/terminal/run`, `charpente/stream/stop` | Runs an argument list in the project environment; output arrives as `charpente/stream` notifications (`{id, kind, line}` and a final `{exit}`). Streams stop when the connection closes. |
+| `charpente/lsp/start`, `send`, `stop` | Starts clangd for the project and relays LSP (`charpente/lsp` notifications). `charpente/format` runs clang-format. |
+| `charpente/debug/available`, `start`, `send`, `stop` | Starts `charpente debug-adapter` and relays DAP (`charpente/dap` notifications). See [debugging.md](debugging.md). |
+| `charpente/ai/status`, `context`, `send`, `apply` | The assistant, in two steps: `context` returns exactly what would be sent (nothing is sent); `send` sends a context by id. See [ai.md](ai.md). |
+| `charpente/compileCommands` | (P7) the compilation database with the engine's own arguments. |
+
+`charpente studio` serves these plus static pages on one port; see [studio.md](studio.md). Workspace-load errors carry their `CHxxxx` code in the message, and a workspace whose packages are declared but not installed still loads (with `notice`: `CH6005`) — building it is refused until they are installed.
+
 Errors use JSON-RPC codes: `-32001` workspace could not be loaded (the message starts with `[CHxxxx]`, and `data.code` has it), `-32002` call
 `build/initialize` first, `-32000` busy, `-32602` bad parameters, `-32601` unknown method.
 

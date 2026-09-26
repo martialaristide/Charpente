@@ -20,6 +20,8 @@ const statusItem: any = { text: "", tooltip: "", command: "", show() {} };
 const treeProviders = new Map<string, any>();
 const taskProviders = new Map<string, any>();
 const saveHandlers: Handler[] = [];
+const debugFactories = new Map<string, any>();
+const debugProviders = new Map<string, any>();
 let root = "";
 let configuration: Record<string, unknown> = {};
 
@@ -87,6 +89,13 @@ const fakeVscode = {
   commands: {
     registerCommand: (id: string, handler: Handler) => (commands.set(id, handler), { dispose() {} }),
     executeCommand: (id: string, ...args: any[]) => commands.get(id)?.(...args),
+  },
+  DebugAdapterExecutable: class {
+    constructor(public command: string, public args: string[]) {}
+  },
+  debug: {
+    registerDebugAdapterDescriptorFactory: (type: string, factory: unknown) => (debugFactories.set(type, factory), { dispose() {} }),
+    registerDebugConfigurationProvider: (type: string, provider: unknown) => (debugProviders.set(type, provider), { dispose() {} }),
   },
   workspace: {
     get workspaceFolders() {
@@ -172,6 +181,15 @@ test("the workspace loads: targets in the tree, name in the status bar, compile_
   const database = JSON.parse(fs.readFileSync(path.join(root, "compile_commands.json"), "utf8"));
   assert.equal(database.length, 2);
   assert.ok(database.every((e: any) => e.arguments.includes("-c") && path.isAbsolute(e.file)));
+});
+
+test("debugging is wired to the adapter of charpente", () => {
+  const descriptor = debugFactories.get("charpente").createDebugAdapterDescriptor({});
+  assert.equal(descriptor.command, python);
+  assert.deepEqual(descriptor.args, ["-m", "charpente", "debug-adapter", "--root", root]);
+  const resolved = debugProviders.get("charpente").resolveDebugConfiguration(undefined, {});
+  assert.equal(resolved.type, "charpente");
+  assert.equal(resolved.config, "Debug");
 });
 
 test("tasks are built from the settings without a shell", () => {

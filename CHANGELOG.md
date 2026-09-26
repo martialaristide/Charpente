@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.12.0 -- Phase P8: Studio, debugging, AI assistance
+
+- **`charpente studio`**: a workspace UI served locally (French/English, light/dark): file explorer, targets, options (saved in `.charpente/options.toml`), package search/add/remove, an editor
+  with highlighting, DSL completion and **clangd** (completion, diagnostics, go to definition, rename), format on save, save-conflict detection; live build panel, problems, dependency graph with the
+  **critical path**, build profile, Git (per-block staging, gate-guarded commit), devices (deploy, `logcat`/`hilog`), terminal tabs, command palette. Loopback only; token, Origin and Host checks, strict CSP.
+- **Debugging**: `charpente debug`, `charpente debug-adapter` (a DAP adapter that builds the target, then drives **gdb 14+** or **lldb-dap**), a Debug panel in Studio (breakpoints, stack, variables, watch,
+  stepping) and a `charpente` debug type in the VS Code extension. Verified with a real gdb 17.2, not with lldb-dap.
+- **AI, opt-in**: `charpente fix` (a diff you approve; rebuilt and reverted if it does not build; the gate runs after), `charpente ai tests` (proposed only if it compiles and passes), `charpente ai migrate`,
+  `charpente ai status`. Every request shows what it sends first (`--show-context`, `--dry-run`), probable secrets are replaced, secret files are never sent. **No real provider was called.**
+- New error codes CH8019-CH8023; `charpente doctor` lists clangd, clang-format, clang-tidy and the debugger.
+- Studio was checked end to end in a real headless Edge (23 tests) plus 33 front-end unit tests; `studio-desktop/` (Tauri) is an **uncompiled skeleton** and no installers exist.
+- **Fixed (found by these tests)**: `clang-cl` was picked as the default Windows compiler when merely on PATH (it cannot compile without MSVC's headers): it is now offered only if it compiles a test file;
+  builds started by a server were not recorded in the history (empty profile); compiler errors were missing from the server's build log; `charpente/format` reformatted everything in LLVM style (now only with a `.clang-format`);
+  a captured child process no longer inherits stdin (`core/process.py`).
+- Not done: a compiled desktop wrapper and installers, a terminal with a pty, Monaco, build cancellation, remote debugging, an action timeline, lldb-dap and non-Windows verification.
+
 ## v0.11.0 -- Phase P7: server, VS Code extension, terminal
 
 - **`charpente serve`**: the engine as a JSON-RPC 2.0 server. Build Server Protocol 2.1 (with the C/C++ `cppOptions` extension) over stdio, plus `charpente/*` methods

@@ -52,6 +52,31 @@ def _which(which: WhichFn, *candidates: str) -> Optional[str]:
     return None
 
 
+_REAL_WHICH = shutil.which
+_CLANG_CL_PROBES: "dict[str, bool]" = {}
+
+
+def clang_cl_works(clang_cl: str) -> bool:
+    """clang-cl only drives the compiler: it needs MSVC's headers and libraries (Visual Studio or the Build Tools) to build anything. Having it
+    on PATH -- for example from an LLVM or MSYS2 install -- proves nothing, so it is only offered after compiling a tiny C++ file that
+    includes the standard library. The answer is remembered for the process."""
+    if clang_cl not in _CLANG_CL_PROBES:
+        import tempfile
+
+        from .core import process
+
+        ok = False
+        with tempfile.TemporaryDirectory(prefix="charpente-probe-") as folder:
+            source = Path(folder) / "probe.cpp"
+            source.write_text("#include <cstdio>" + chr(10) + "int main() { return 0; }" + chr(10), encoding="utf-8")
+            try:
+                ok = process.run([clang_cl, "/nologo", "/c", str(source), f"/Fo{Path(folder) / 'probe.obj'}"], timeout=60).returncode == 0
+            except (ChError, OSError):
+                ok = False
+        _CLANG_CL_PROBES[clang_cl] = ok
+    return _CLANG_CL_PROBES[clang_cl]
+
+
 def detect_windows(which: WhichFn = shutil.which) -> List[Toolchain]:
     found: List[Toolchain] = []
 
@@ -61,7 +86,7 @@ def detect_windows(which: WhichFn = shutil.which) -> List[Toolchain]:
                                 archiver=_which(which, "lib") or "lib", linker=cl))
 
     clang_cl = which("clang-cl")
-    if clang_cl:
+    if clang_cl and (which is not _REAL_WHICH or clang_cl_works(clang_cl)):   # an injected `which` (tests) is trusted as is
         found.append(Toolchain(name="clang-cl", c_compiler=clang_cl, cxx_compiler=clang_cl,
                                 archiver=_which(which, "llvm-lib", "lib") or "llvm-lib",
                                 linker=clang_cl))

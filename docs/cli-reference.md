@@ -323,6 +323,10 @@ folder from a template (`charpente init --list`); `charpente kit list|show|add` 
 `charpente shell [--platform P] [-- CMD]` opens a shell with the project's toolchain on PATH and `CC/CXX/AR` set; `--print-env` prints the variables.
 `charpente tui` is the Textual terminal interface (`pip install "charpente[tui]"`). See [terminal.md](terminal.md); the VS Code extension is in [vscode.md](vscode.md).
 
+## `charpente studio`, `debug`, `debug-adapter`, `fix`, `ai`
+
+`charpente studio` opens the workspace UI in your browser ([studio.md](studio.md)). `charpente debug [TARGET] [-- ARGS]` builds a target and debugs it in gdb/lldb; `charpente debug-adapter` is the DAP server editors use; `charpente debug --list` shows the debuggers found ([debugging.md](debugging.md)). `charpente fix` proposes a fix for a failing build as a diff you approve; `charpente ai tests|migrate|status` write tests (only if they pass), draft a `.charpente` from CMake, and explain the rules ([ai.md](ai.md)). All AI commands show what they send first (`--show-context`, `--dry-run`, `--yes`).
+
 ## `charpente doctor`
 
 ```

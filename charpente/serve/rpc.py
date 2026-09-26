@@ -82,6 +82,19 @@ class Dispatcher:
     def __init__(self) -> None:
         self._methods: Dict[str, Handler] = {}
         self._notifications: Dict[str, Handler] = {}
+        self._closers: List[Callable[[], None]] = []
+
+    def on_close(self, fn: Callable[[], None]) -> None:
+        """Run `fn` when the connection ends (stop what this client started: log streams, terminal commands)."""
+        self._closers.append(fn)
+
+    def close(self) -> None:
+        closers, self._closers = self._closers, []
+        for fn in closers:
+            try:
+                fn()
+            except Exception:
+                pass
 
     def method(self, name: str) -> Callable[[Handler], Handler]:
         def register(fn: Handler) -> Handler:
@@ -184,4 +197,43 @@ class StdioServer:
             else:
                 self.dispatcher.handle(message)
         self._pool.shutdown(wait=True)
+        self.dispatcher.close()
         self.exited.set()
+
+
+class MessageBuffer:
+    """Incremental `Content-Length` parser for a byte stream that arrives in arbitrary chunks (a language server's stdout).
+
+    `feed(data)` returns the complete message bodies (raw bytes, not decoded) found so far; garbage raises RpcError(PARSE_ERROR)
+    and empties the buffer (the stream cannot be resynchronised reliably).
+    """
+
+    def __init__(self) -> None:
+        self._data = b""
+
+    def feed(self, data: bytes) -> List[bytes]:
+        self._data += data
+        out: List[bytes] = []
+        while True:
+            end = self._data.find(b"\r\n\r\n")
+            if end < 0:
+                if len(self._data) > 8192:
+                    self._data = b""
+                    raise RpcError(PARSE_ERROR, "header too long")
+                return out
+            length: Optional[int] = None
+            for line in self._data[:end].split(b"\r\n"):
+                name, _, value = line.decode("ascii", "replace").partition(":")
+                if name.strip().lower() == "content-length":
+                    try:
+                        length = int(value.strip())
+                    except ValueError:
+                        length = None
+            if length is None or length < 0 or length > MAX_MESSAGE:
+                self._data = b""
+                raise RpcError(PARSE_ERROR, "missing or invalid Content-Length")
+            start = end + 4
+            if len(self._data) < start + length:
+                return out
+            out.append(self._data[start:start + length])
+            self._data = self._data[start + length:]
