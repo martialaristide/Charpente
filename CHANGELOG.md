@@ -19,7 +19,7 @@
 - **Fixed (found by these tests)**: a change saved while `charpente dev`'s first build ran was lost; `dev` output was not flushed when piped; the engine tests depended on the machine's free memory (now pinned in `tests/conftest.py`);
   `verify-reproducible` could not find outputs from `target.finished` (now read from the action events).
 - **Not done**: remote execution (REAPI) and hybrid execution ([ADR 0019](docs/adr/0019-reproductibilite-cache-partage.md) says why), an Xcode project, a run of `--device all` on several real devices at once, TLS in the cache server, MSVC reproducibility (`/Brepro`),
-  and anything on Linux or macOS. The version stays 0.x: there is no CI.
+  and anything on Linux or macOS. The version stays 0.x: the CI workflow exists but has never run on this work (not pushed), and only Python 3.12 was used.
 
 ## v0.12.0 -- Phase P8: Studio, debugging, AI assistance
 

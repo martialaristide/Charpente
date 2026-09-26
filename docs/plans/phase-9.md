@@ -33,4 +33,4 @@ un budget de taille sur une cible sans fichier de sortie passait sans rien dire 
 ## Écarts et limites
 
 REAPI et exécution hybride **non faits** (voir ADR 0019) ; projet Xcode **non fait** ; Visual Studio **jamais ouvert** ; plusieurs appareils **simulés** (un vrai APK, un faux `adb`) ; un seul appareil réel (émulateur) essayé ; pas de TLS dans le serveur de cache ;
-sondes de batterie/mémoire/chaleur non exécutées hors Windows ; rechargement à chaud vérifié sur Windows seulement ; aucune intégration continue, donc la version reste 0.x ; le paquet PyPI n'est **pas publié**.
+sondes de batterie/mémoire/chaleur non exécutées hors Windows ; rechargement à chaud vérifié sur Windows seulement ; le workflow de CI existe mais n'a jamais tourné sur ce travail (rien poussé ; seul Python 3.12 utilisé), donc la version reste 0.x ; le paquet PyPI n'est **pas publié**.

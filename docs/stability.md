@@ -1,7 +1,7 @@
 # Stability: what each part of Charpente can be relied on for
 
-Charpente is at **version 0.13 (alpha)**. Nothing is called *stable*, and the version will stay `0.x` until every announced platform has continuous integration behind it: there is no CI yet, and everything
-below was verified by hand on **one machine (Windows 10 x64, MinGW-w64 GCC, plus the toolchains named in each row)**. Nothing was run on Linux or macOS.
+Charpente is at **version 0.13 (alpha)**. Nothing is called *stable*, and the version will stay `0.x` until every announced platform has continuous integration behind it: a CI workflow exists (`.github/workflows/tests.yml`: Windows, Linux, macOS, Python 3.9 and 3.12) but it has **never run on this work**, which was not pushed. Everything
+below was verified by hand on **one machine (Windows 10 x64, MinGW-w64 GCC, plus the toolchains named in each row)**. Nothing was run on Linux or macOS, and only Python 3.12 was used (the code declares 3.9+ and a syntax check for 3.9 passes, but no 3.9 interpreter was available).
 
 ## The tiers used in this page
 
@@ -51,5 +51,5 @@ The *platform* support tiers (1, 2, 3) are a separate thing and are described in
 
 ## What is needed to reach 1.0
 
-Continuous integration on Windows, Linux and macOS running this test suite; the "not executed" rows of [platforms.md](platforms.md) executed; the *Tested* rows above turned into *Verified*;
+The CI workflow run, green, on Windows, Linux and macOS with Python 3.9 and 3.12 (push the branch and read the result); the "not executed" rows of [platforms.md](platforms.md) executed; the *Tested* rows above turned into *Verified*;
 a real run of Studio in Chrome and Firefox as well as Edge; and someone other than the author using it on projects that are not the ones in this repository.

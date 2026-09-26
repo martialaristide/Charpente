@@ -110,5 +110,5 @@ Every error has a code: `charpente explain CHxxxx` gives the cause and the fix i
 
 ## 12. Honest limits
 
-Version 0.13 is alpha. It was verified on one Windows machine; Linux and macOS were never run, and there is no CI yet. Remote execution and Xcode projects are not done; a desktop app for Studio exists only as an
+Version 0.13 is alpha. It was verified on one Windows machine; Linux and macOS were never run, and the CI workflow has never run on this work (it was not pushed; only Python 3.12 was used). Remote execution and Xcode projects are not done; a desktop app for Studio exists only as an
 uncompiled skeleton. The complete list is [stability.md](stability.md).
