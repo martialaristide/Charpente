@@ -5,15 +5,26 @@ import sys
 from typing import List
 
 from ..builder import BuildResult, build_workspace
+from ..ui import render as ui_render
 from ._common import load, toolchain_for
 from ._session import Session, add_engine_args
 
 
 def print_result_lines(session: Session, result: BuildResult, *, ai_diagnose: bool = False,
                        toolchain_name: str = "") -> None:
-    """The per-target lines shown after a build (unchanged since v0.1.0), then a one-line summary."""
+    """The per-target lines shown after a build (unchanged since v0.1.0), then a one-line summary.
+
+    With the styled display (`session.fancy`) the renderer has already shown every target and will show the summary box, so only the AI diagnosis (asked for
+    explicitly) is printed here.
+    """
     session.flush()
     if session.machine:
+        return
+    if session.fancy:
+        if ai_diagnose:
+            for t in result.targets:
+                if not (t.skipped or t.ok):
+                    _print_ai_diagnosis(t.target_name, toolchain_name, t.error)
         return
     for t in result.targets:
         if t.skipped:
@@ -34,6 +45,11 @@ def print_result_lines(session: Session, result: BuildResult, *, ai_diagnose: bo
     elif any(counts.values()):
         print(f"Done in {result.duration:.1f}s: {counts['executed']} run, {counts['cached']} from cache, "
               f"{counts['up_to_date']} up to date.")
+
+
+def _styled(parsed: argparse.Namespace) -> bool:
+    """Whether this run will use the styled display (only then is the tool's version worth asking for)."""
+    return getattr(parsed, "output", "plain") == "auto" and not getattr(parsed, "verbose", False) and ui_render.styled_wanted()
 
 
 def check_budgets(session: Session, workspace: object, result: BuildResult) -> int:
@@ -79,8 +95,10 @@ def execute(args: List[str]) -> int:
     workspace = load(parsed.file, parsed.opt)
     target_os, toolchain = toolchain_for(parsed, workspace)
 
-    with Session("build", parsed, workspace, toolchain=toolchain.name, config=parsed.config) as session:
-        session.say(f"Building {workspace.name} ({parsed.config}, {toolchain.name})...")
+    with Session("build", parsed, workspace, toolchain=toolchain.name, config=parsed.config,
+                 tools=ui_render.resolve_tool_label(toolchain) if _styled(parsed) else "") as session:
+        if not session.fancy:
+            session.say(f"Building {workspace.name} ({parsed.config}, {toolchain.name})...")
         result = build_workspace(workspace, toolchain, target_os, config=parsed.config,
                                  keep_going=parsed.keep_going, jobs=parsed.jobs, bus=session.bus,
                                  use_cache=not parsed.no_cache, eco=parsed.eco)

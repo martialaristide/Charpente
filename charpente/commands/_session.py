@@ -3,9 +3,9 @@ start/finish events, in one place so every build-like command behaves alike.
 
 Subscribers attached here:
 
-* how the build is shown -- `--output auto` (default: a live progress bar on an
-  interactive terminal when `rich` is installed, otherwise plain text),
-  `plain`, `rich`, or `jsonl` (one JSON event per line, for scripts and editors);
+* how the build is shown -- `--output auto` (default: the styled display of charpente/ui on
+  an interactive terminal, otherwise plain text), `plain`, `rich` (needs the optional `rich`
+  package), or `jsonl` (one JSON event per line, for scripts and editors);
 * GitHub Actions annotations, automatically when running inside Actions;
 * the replayable per-session log `build/.charpente/events/<session>.jsonl`;
 * the build history database (`charpente history`, `charpente diff-build`);
@@ -19,7 +19,7 @@ import sys
 import time
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Optional, Type
+from typing import Any, Optional, Type, Union
 
 from .. import _version, hooks
 from ..builder import state_dir
@@ -29,6 +29,7 @@ from ..dsl.model import Workspace
 from ..events import EventBus
 from ..output import JsonlStream, PlainRenderer, SessionLog, rich_renderer
 from ..output import github as github_output
+from ..ui import render as ui_render
 
 OUTPUT_MODES = ("auto", "plain", "rich", "jsonl")
 
@@ -63,25 +64,43 @@ def add_engine_args(parser: argparse.ArgumentParser, *, output: bool = True) -> 
                                  "'jsonl' for scripts (one JSON event per line)")
 
 
+def _host_platform() -> str:
+    """The name of this machine's platform (`windows-x64`), or "" when it is not one Charpente knows."""
+    try:
+        from .. import platforms
+
+        return platforms.host().name
+    except Exception:
+        return ""
+
+
 class Session:
     def __init__(self, command: str, parsed: argparse.Namespace, workspace: Optional[Workspace] = None,
-                 *, toolchain: str = "", config: str = "") -> None:
+                 *, toolchain: str = "", config: str = "", tools: str = "") -> None:
         self.command = command
         mode = getattr(parsed, "output", "plain")
         if mode == "auto":
             verbose = bool(getattr(parsed, "verbose", False))
-            mode = "rich" if (not verbose and rich_renderer.wanted_by_default()) else "plain"
+            if not verbose and ui_render.styled_wanted():
+                mode = "styled"
+            else:
+                mode = "rich" if (not verbose and rich_renderer.wanted_by_default()) else "plain"
         self.machine = mode == "jsonl"
+        self.fancy = mode == "styled"                         # the styled display prints the per-target lines itself
         self.bus = EventBus()
         self._started = time.monotonic()
         self._closed = False
         self.log: Optional[SessionLog] = None
         self.history: Optional[HistoryRecorder] = None
-        self.renderer: Optional[rich_renderer.RichRenderer] = None
+        self.renderer: Optional[Union[rich_renderer.RichRenderer, ui_render.StyledRenderer]] = None
         if self.machine:
             JsonlStream(self.bus, sys.stdout)
         elif mode == "rich":
             self.renderer = rich_renderer.RichRenderer(self.bus)
+        elif mode == "styled":
+            self.renderer = ui_render.StyledRenderer(
+                self.bus, context={"platform": str(getattr(parsed, "platform", None) or _host_platform()), "tools": tools or toolchain},
+                target_names=list(workspace.targets) if workspace is not None else [], cwd=workspace.location if workspace is not None else None)
         else:
             PlainRenderer(self.bus, verbose=bool(getattr(parsed, "verbose", False)))
         root = workspace.location if workspace is not None else None

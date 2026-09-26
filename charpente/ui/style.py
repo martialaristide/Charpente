@@ -120,6 +120,10 @@ class Style:
         head = f"{self.indent}{self._symbol(self.sym.fail, ERR)} {paint(self.caps, pad(name, name_width), ERR, bold=True)}"
         return self._fit(head + (f"  {paint(self.caps, message, ERR)}" if message else ""))
 
+    def note(self, text: str) -> str:
+        """A muted line at the margin (a hint)."""
+        return self._fit(f"{self.indent}{paint(self.caps, text, MUTED)}")
+
     def detail(self, text: str) -> str:
         """An indented, dimmed line under a failure (a line of compiler output)."""
         return self._fit(f"{self.indent}    {paint(self.caps, text, MUTED)}")

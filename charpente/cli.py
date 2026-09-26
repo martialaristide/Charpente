@@ -36,6 +36,31 @@ def _print_help() -> None:
     print("\nRun `charpente <command> --help` for command-specific options.")
 
 
+def _peek_output_mode(args: List[str]) -> str:
+    """The `--output` value a command was given (`auto` when it was not): enough to know whether a person or a program reads the output."""
+    for index, arg in enumerate(args):
+        if arg == "--output" and index + 1 < len(args):
+            return args[index + 1]
+        if arg.startswith("--output="):
+            return arg.split("=", 1)[1]
+    return "auto"
+
+
+def _banner(command_name: str, args: List[str]) -> None:
+    """The banner, once, for the interactive commands on a real terminal (see charpente/ui/banner.py). Never raises."""
+    try:
+        if command_name == "menu" or "-h" in args or "--help" in args or "--json" in args:
+            return                                          # the menu draws its own; help and JSON are read by programs
+        from .ui import banner
+        from .ui.term import detect
+
+        caps = detect()
+        if banner.should_show_banner(command_name, caps, mode=_peek_output_mode(args)):
+            banner.print_banner(caps=caps)
+    except Exception:                                       # a picture must never stop a command
+        pass
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
 
@@ -72,6 +97,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         _print_help()
         return 1
 
+    _banner(command_name, rest)
     try:
         return command(rest)
     except ChError as e:
