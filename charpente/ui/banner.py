@@ -85,9 +85,10 @@ def theme_named(name: Optional[str]) -> Theme:
 
 # ---------------------------------------------------------------------- text helpers
 def fold_ascii(text: str) -> str:
-    """`text` with accents removed and typographic characters replaced, for a terminal that can only write ASCII."""
+    """`text` for a terminal that can only write ASCII: accents removed, typographic characters replaced, anything else shown as `?` (never dropped silently)."""
     replaced = text.replace("·", "|").replace("…", "...").replace("—", "-").replace("–", "-").replace("’", "'")
-    return unicodedata.normalize("NFKD", replaced).encode("ascii", "ignore").decode("ascii")
+    decomposed = unicodedata.normalize("NFKD", replaced)
+    return "".join(c if ord(c) < 128 else "?" for c in decomposed if not unicodedata.combining(c))
 
 
 def center(text: str, width: int) -> str:

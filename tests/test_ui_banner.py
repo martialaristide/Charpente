@@ -156,7 +156,7 @@ def test_coloured_ascii_is_still_ascii_plus_escape_codes():
 
 def test_fold_ascii():
     assert banner.fold_ascii("Système · Kits — Paquets…") == "Systeme | Kits - Paquets..."
-    assert banner.fold_ascii("日本") == ""
+    assert banner.fold_ascii("日本") == "??" and banner.fold_ascii("héllo") == "hello"
 
 
 def test_render_is_pure_and_repeatable():

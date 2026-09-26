@@ -28,9 +28,11 @@ EN: Dict[str, str] = {
     "result.cache": "cache",
     "result.duration": "duration",
     "result.next": "next",
-    "result.ok": "{ok} succeeded",
-    "result.ok_failed": "{ok} succeeded, {failed} failed",
-    "result.up_to_date": "{count} up to date",
+    "result.ok.one": "1 succeeded",
+    "result.ok.many": "{n} succeeded",
+    "result.failed.one": "1 failed",
+    "result.failed.many": "{n} failed",
+    "result.up_to_date": "{n} up to date",
     "result.cache_value": "{cached} actions out of {total}",
     "result.interrupted": "build interrupted",
     "result.no_targets": "nothing to build",
@@ -57,15 +59,26 @@ FR: Dict[str, str] = {
     "result.cache": "cache",
     "result.duration": "durée",
     "result.next": "suite",
-    "result.ok": "{ok} réussie(s)",
-    "result.ok_failed": "{ok} réussie(s), {failed} échec(s)",
-    "result.up_to_date": "{count} à jour",
+    "result.ok.one": "1 réussie",
+    "result.ok.many": "{n} réussies",
+    "result.failed.one": "1 échec",
+    "result.failed.many": "{n} échecs",
+    "result.up_to_date": "{n} à jour",
     "result.cache_value": "{cached} actions sur {total}",
     "result.interrupted": "construction interrompue",
     "result.no_targets": "rien à construire",
 }
 
 TABLES = {"en": EN, "fr": FR}
+
+
+def plural_key(lang: Optional[str], n: int) -> str:
+    """`one` or `many`: French uses the singular for 0 and 1, English only for 1."""
+    if lang is None:
+        from . import current_lang
+
+        lang = current_lang()
+    return "one" if (n in (0, 1) if lang == "fr" else n == 1) else "many"
 
 
 class _Safe(dict):  # type: ignore[type-arg]
