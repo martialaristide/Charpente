@@ -1,0 +1,5 @@
+Building Demo (Debug, gcc)...
+  [up to date] core
+  [up to date] app
+  [up to date] tests
+Done in <T>s: 0 run, 0 from cache, 6 up to date.

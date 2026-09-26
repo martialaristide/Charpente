@@ -1,0 +1,15 @@
+{"payload": {"argv": "<X>", "command": "build", "config": "Debug", "cwd": "<X>", "version": "<X>"}, "schema_version": 1, "type": "session.started"}
+{"payload": {"name": "Demo", "path": "<X>", "targets": 3}, "schema_version": 1, "type": "workspace.loaded"}
+{"payload": {"actions": 6, "config": "", "critical_path": "<X>", "targets": 3}, "schema_version": 1, "type": "graph.analyzed"}
+{"payload": {"action": "compile:tests:tests/t.cpp", "kind": "compile", "target": "tests"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"action": "compile:core:core/core.cpp", "kind": "compile", "target": "core"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"actions": 2, "target": "app"}, "schema_version": 1, "type": "target.started"}
+{"payload": {"action": "compile:app:app/main.cpp", "command": ["g++", "-c", "<ROOT>/app/main.cpp", "-o", "<ROOT>/build/Debug/app/obj/app/main.cpp.o", "-std=c++17", "-g", "-O0", "-MMD", "-MF", "<ROOT>/build/Debug/app/obj/app/main.cpp.o.d"], "description": "Compiling main.cpp", "kind": "compile", "reasons": ["input changed: app/main.cpp"], "target": "app"}, "schema_version": 1, "type": "action.started"}
+{"payload": {"action": "compile:app:app/main.cpp", "duration": "<X>", "kind": "compile", "output": "<ROOT>/app/main.cpp:1:1: error: compiling main.cpp failed", "returncode": 1, "target": "app"}, "schema_version": 1, "type": "action.failed"}
+{"payload": {"action": "compile:app:app/main.cpp", "code": null, "column": 1, "file": "<ROOT>/app/main.cpp", "line": 1, "message": "compiling main.cpp failed", "severity": "error"}, "schema_version": 1, "type": "diagnostic.emitted"}
+{"payload": {"action": "archive:core", "kind": "archive", "target": "core"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"target": "core"}, "schema_version": 1, "type": "target.up_to_date"}
+{"payload": {"action": "link:tests", "kind": "link", "target": "tests"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"target": "tests"}, "schema_version": 1, "type": "target.up_to_date"}
+{"payload": {"code": "CH3002", "error": "<ROOT>/app/main.cpp:1:1: error: compiling main.cpp failed", "target": "app"}, "schema_version": 1, "type": "target.failed"}
+{"payload": {"duration": "<X>", "exit_code": 1, "ok": false}, "schema_version": 1, "type": "session.finished"}

@@ -1,0 +1,5 @@
+Building Demo (Debug, gcc)...
+  [up to date] core
+  [FAILED]     app: <ROOT>/app/main.cpp:1:1: error: compiling main.cpp failed
+  [up to date] tests
+Done in <T>s: 0 run, 0 from cache, 4 up to date.

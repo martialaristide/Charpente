@@ -1,0 +1,23 @@
+Building Demo (Debug, gcc)...
+  [1/6] Compiling core.cpp
+      g++ -c <ROOT>/core/core.cpp -o <ROOT>/build/Debug/core/obj/core/core.cpp.o -std=c++17 -g -O0 -MMD -MF <ROOT>/build/Debug/core/obj/core/core.cpp.o.d
+      because: no previous build record
+  [2/6] Compiling main.cpp
+      g++ -c <ROOT>/app/main.cpp -o <ROOT>/build/Debug/app/obj/app/main.cpp.o -std=c++17 -g -O0 -MMD -MF <ROOT>/build/Debug/app/obj/app/main.cpp.o.d
+      because: no previous build record
+  [3/6] Compiling t.cpp
+      g++ -c <ROOT>/tests/t.cpp -o <ROOT>/build/Debug/tests/obj/tests/t.cpp.o -std=c++17 -g -O0 -MMD -MF <ROOT>/build/Debug/tests/obj/tests/t.cpp.o.d
+      because: no previous build record
+  [4/6] Archiving libcore.a
+      ar rcs <ROOT>/build/Debug/core/libcore.a <ROOT>/build/Debug/core/obj/core/core.cpp.o
+      because: no previous build record
+  [5/6] Linking app
+      g++ <ROOT>/build/Debug/app/obj/app/main.cpp.o -o <ROOT>/build/Debug/app/app -L<ROOT>/build/Debug/core
+      because: no previous build record
+  [6/6] Linking tests
+      g++ <ROOT>/build/Debug/tests/obj/tests/t.cpp.o -o <ROOT>/build/Debug/tests/tests -L<ROOT>/build/Debug/core
+      because: no previous build record
+  [ok]         core -> <ROOT>/build/Debug/core/libcore.a
+  [ok]         app -> <ROOT>/build/Debug/app/app
+  [ok]         tests -> <ROOT>/build/Debug/tests/tests
+Done in <T>s: 6 run, 0 from cache, 0 up to date.

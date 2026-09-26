@@ -1,0 +1,13 @@
+{"payload": {"argv": "<X>", "command": "build", "config": "Debug", "cwd": "<X>", "version": "<X>"}, "schema_version": 1, "type": "session.started"}
+{"payload": {"name": "Demo", "path": "<X>", "targets": 3}, "schema_version": 1, "type": "workspace.loaded"}
+{"payload": {"actions": 6, "config": "", "critical_path": "<X>", "targets": 3}, "schema_version": 1, "type": "graph.analyzed"}
+{"payload": {"action": "compile:core:core/core.cpp", "kind": "compile", "target": "core"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"action": "compile:tests:tests/t.cpp", "kind": "compile", "target": "tests"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"action": "archive:core", "kind": "archive", "target": "core"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"target": "core"}, "schema_version": 1, "type": "target.up_to_date"}
+{"payload": {"action": "compile:app:app/main.cpp", "kind": "compile", "target": "app"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"action": "link:tests", "kind": "link", "target": "tests"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"target": "tests"}, "schema_version": 1, "type": "target.up_to_date"}
+{"payload": {"action": "link:app", "kind": "link", "target": "app"}, "schema_version": 1, "type": "action.up_to_date"}
+{"payload": {"target": "app"}, "schema_version": 1, "type": "target.up_to_date"}
+{"payload": {"duration": "<X>", "exit_code": 0, "ok": true}, "schema_version": 1, "type": "session.finished"}

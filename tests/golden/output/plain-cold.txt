@@ -1,0 +1,5 @@
+Building Demo (Debug, gcc)...
+  [ok]         core -> <ROOT>/build/Debug/core/libcore.a
+  [ok]         app -> <ROOT>/build/Debug/app/app
+  [ok]         tests -> <ROOT>/build/Debug/tests/tests
+Done in <T>s: 6 run, 0 from cache, 0 up to date.
