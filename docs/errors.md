@@ -906,6 +906,22 @@ Approvals are stored by SHA-256 of the file content in ~/.charpente/trusted_file
 - **Cause (FR) :** Une condition préalable de la release n'est pas remplie (arbre propre, portail, version, outils).
 - **Correction (FR) :** Corrigez la raison et relancez `charpente release` ; `--dry-run` montre le plan sans rien modifier.
 
+### CH8017 — Cannot start the shell
+*FR : Impossible de lancer le shell*
+
+- **Cause:** `charpente shell` could not find a shell to start (or the command you gave it).
+- **Fix:** Set the SHELL variable (COMSPEC on Windows) to an installed shell, or give a command after `--`.
+- **Cause (FR) :** `charpente shell` n'a pas trouvé de shell à lancer (ou la commande que vous avez donnée).
+- **Correction (FR) :** Définissez la variable SHELL (COMSPEC sous Windows) vers un shell installé, ou donnez une commande après `--`.
+
+### CH8018 — The terminal interface is not installed
+*FR : L'interface terminal n'est pas installée*
+
+- **Cause:** `charpente tui` is an optional feature built on Textual.
+- **Fix:** Install it with `pip install "charpente[tui]"`. Every command still works without it.
+- **Cause (FR) :** `charpente tui` est une fonction optionnelle construite sur Textual.
+- **Correction (FR) :** Installez-le avec `pip install "charpente[tui]"`. Toutes les commandes fonctionnent sans lui.
+
 ## CH9xxx — Internal
 
 ### CH9001 — Command must be a list of arguments

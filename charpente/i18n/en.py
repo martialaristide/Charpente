@@ -681,6 +681,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "A precondition of a release is not met (clean tree, gate, version, tools).",
         "fix": "Fix the reason and run `charpente release` again; `--dry-run` shows the plan without changing anything.",
     },
+    "CH8017": {
+        "title": "Cannot start the shell",
+        "message": "Cannot start the shell: {detail}",
+        "cause": "`charpente shell` could not find a shell to start (or the command you gave it).",
+        "fix": "Set the SHELL variable (COMSPEC on Windows) to an installed shell, or give a command after `--`.",
+    },
+    "CH8018": {
+        "title": "The terminal interface is not installed",
+        "message": "The terminal interface needs the 'textual' package, which is not installed.",
+        "cause": "`charpente tui` is an optional feature built on Textual.",
+        "fix": "Install it with `pip install \"charpente[tui]\"`. Every command still works without it.",
+    },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {
         "title": "Command must be a list of arguments",

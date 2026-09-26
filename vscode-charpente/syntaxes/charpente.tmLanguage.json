@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Charpente",
+  "scopeName": "source.charpente",
+  "patterns": [
+    { "include": "#charpente-names" },
+    { "include": "source.python" }
+  ],
+  "repository": {
+    "charpente-names": {
+      "patterns": [
+        { "name": "support.class.charpente", "match": "\b(Workspace|Target|Kind|Language|Rule|Toolchain)\b" },
+        { "name": "support.function.charpente", "match": "\b(sources|include_dirs|public_include_dirs|uses|uses_public|kind|standard|define|options|option|configurations|platforms|requires|kit|package_settings|platform_settings|output_prefix|output_extension)(?=\s*\()" }
+      ]
+    }
+  }
+}

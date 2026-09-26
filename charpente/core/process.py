@@ -88,6 +88,9 @@ def raw_run(argv: Argv, *, capture_output: bool = True, cwd: Optional[str] = Non
     shell=False)` can pass through unchanged -- but `shell` is never forwarded.
     """
     items = _check_argv(argv)
+    # A child whose output is captured is not interactive: it gets no stdin (rather than ours), so a tool that waits for
+    # input fails at once, and a server that speaks over stdin/stdout never has its channel read by a child.
+    extra: "dict[str, Any]" = {"stdin": subprocess.DEVNULL} if capture_output and input is None else {}
     try:
         completed = subprocess.run(
             items,
@@ -97,6 +100,7 @@ def raw_run(argv: Argv, *, capture_output: bool = True, cwd: Optional[str] = Non
             env=dict(env) if env is not None else None,
             timeout=timeout,
             input=input.encode("utf-8") if isinstance(input, str) else input,
+            **extra,
         )
     except FileNotFoundError as exc:
         raise ChError("CH2002", tool=items[0]) from exc
@@ -106,6 +110,11 @@ def raw_run(argv: Argv, *, capture_output: bool = True, cwd: Optional[str] = Non
         completed.args, completed.returncode,
         _decode(completed.stdout), _decode(completed.stderr),
     )
+
+
+def windows_command_line(argv: Sequence[str]) -> str:
+    """`argv` quoted the way Windows programs parse a command line (for display and environment variables; never executed)."""
+    return subprocess.list2cmdline([str(a) for a in argv])
 
 
 def run(argv: Argv, *, capture: bool = True, cwd: Optional[str] = None,

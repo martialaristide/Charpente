@@ -317,6 +317,12 @@ Lists every target platform with its support tier, and whether *this* machine ca
 folder from a template (`charpente init --list`); `charpente kit list|show|add` browses the curated library sets. See [templates.md](templates.md) and
 [kits.md](kits.md).
 
+## `charpente serve`, `charpente shell`, `charpente tui`
+
+`charpente serve [--stdio|--ws] [--root D]` runs the engine as a Build Server Protocol / JSON-RPC server for editors and Studio ([serve.md](serve.md)).
+`charpente shell [--platform P] [-- CMD]` opens a shell with the project's toolchain on PATH and `CC/CXX/AR` set; `--print-env` prints the variables.
+`charpente tui` is the Textual terminal interface (`pip install "charpente[tui]"`). See [terminal.md](terminal.md); the VS Code extension is in [vscode.md](vscode.md).
+
 ## `charpente doctor`
 
 ```

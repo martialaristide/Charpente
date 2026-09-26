@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.11.0 -- Phase P7: server, VS Code extension, terminal
+
+- **`charpente serve`**: the engine as a JSON-RPC 2.0 server. Build Server Protocol 2.1 (with the C/C++ `cppOptions` extension) over stdio, plus `charpente/*` methods
+  (workspace, graph, toolchains, build, compile database, quality gate, explain, why, history, event subscription). `--ws` serves the same over a loopback WebSocket with a random
+  token and an Origin check; `--bsp-install` writes `.bsp/charpente.json`. Compiler errors are published as located diagnostics and cleared when fixed.
+- **VS Code extension** (`vscode-charpente/`): targets view, Problems, status bar, tasks with a problem matcher, `compile_commands.json` for clangd, `.charpente` highlighting.
+  23 automated tests (real server + a fake `vscode` module); packaged as a local `.vsix`; **not** loaded in a live VS Code, not published.
+- **`charpente shell`**: a shell/command with the project's toolchain on PATH and `CC/CXX/AR` set (`--print-env` for sh/PowerShell/cmd/JSON).
+- **`charpente tui`**: a Textual terminal interface (targets, live log, build/run/test/check keys); optional `charpente[tui]`.
+- New error codes CH8017 (shell), CH8018 (terminal interface not installed).
+- **Fixed (found by exercising the extension): a captured child process inherited the parent's stdin.** From a server that speaks over stdin/stdout, `charpente run`/`check` could
+  hang or swallow protocol bytes; `core/process.py` now gives captured children no stdin (unless `input=` is given). Also fixed: an invalid `Content-Length` produced two errors;
+  workspace-load errors lacked their `CHxxxx` code in the message; `buildTarget/run` split `--config Debug` into a flag and a program argument.
+- Not done: build cancellation, debugging (DAP), remote serving, a third-party BSP client check, a live VS Code check.
+
 ## v0.10.0 -- Phase P6: kits and project templates
 
 - **Kits**: `kit-core`, `kit-app`, `kit-graphics`, `kit-xr`, `kit-game`, `kit-net`, `kit-embedded`, `kit-mobile`, `kit-android`, `kit-ohos`: curated recipe sets with a stated

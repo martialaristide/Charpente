@@ -675,6 +675,18 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "cause": "Une condition préalable de la release n'est pas remplie (arbre propre, portail, version, outils).",
         "fix": "Corrigez la raison et relancez `charpente release` ; `--dry-run` montre le plan sans rien modifier.",
     },
+    "CH8017": {
+        "title": "Impossible de lancer le shell",
+        "message": "Impossible de lancer le shell : {detail}",
+        "cause": "`charpente shell` n'a pas trouvé de shell à lancer (ou la commande que vous avez donnée).",
+        "fix": "Définissez la variable SHELL (COMSPEC sous Windows) vers un shell installé, ou donnez une commande après `--`.",
+    },
+    "CH8018": {
+        "title": "L'interface terminal n'est pas installée",
+        "message": "L'interface terminal a besoin du paquet « textual », qui n'est pas installé.",
+        "cause": "`charpente tui` est une fonction optionnelle construite sur Textual.",
+        "fix": "Installez-le avec `pip install \"charpente[tui]\"`. Toutes les commandes fonctionnent sans lui.",
+    },
     # ------------------------------------------------------------------ 9xxx
     "CH9001": {
         "title": "La commande doit être une liste d'arguments",
