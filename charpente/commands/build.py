@@ -21,6 +21,8 @@ def print_result_lines(session: Session, result: BuildResult, *, ai_diagnose: bo
     if session.machine:
         return
     if session.fancy:
+        if result.interrupted:                               # the engine handled Ctrl+C itself (no exception reached the session): tell the display
+            session.bus.emit("session.interrupted", reason="keyboard")
         if ai_diagnose:
             for t in result.targets:
                 if not (t.skipped or t.ok):

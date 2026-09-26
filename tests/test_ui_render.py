@@ -353,3 +353,17 @@ def test_the_command_still_prints_its_own_lines_when_the_display_is_not_styled(t
         session.finish(result.ok, 0)
     out = capsys.readouterr().out
     assert "[ok]" in out and "Done in" in out and "▸" not in out
+
+
+def test_an_interrupted_build_is_shown_as_interrupted_by_the_styled_display(tmp_path, monkeypatch, capsys):
+    """The engine handles Ctrl+C itself and returns an interrupted result (no exception reaches the session); the plain display prints "Build interrupted."."""
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(render, "styled_wanted", lambda *a, **k: True)
+    monkeypatch.setenv("NO_COLOR", "1")
+    with Session("build", parsed(), None, toolchain="gcc", config="Debug") as session:
+        session.bus.emit("graph.analyzed", actions=6, targets=2, critical_path=0.0, config="")
+        build_cmd.print_result_lines(session, SimpleNamespace(targets=[], interrupted=True, ok=False, duration=1.0), toolchain_name="gcc")
+        session.finish(False, 130)
+    out = capsys.readouterr().out
+    assert "build interrupted" in out and "╭─ Result" in out
