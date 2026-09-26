@@ -727,3 +727,71 @@ def test_on_a_terminal_an_end_of_input_at_a_question_cancels_it_but_a_pipe_still
     c, out, _, _ = make([], caps=LINE_CAPS)
     with pytest.raises(EOFError):
         c.ask("Name")
+
+
+# ---------------------------------------------------------------------- the big banner on the first screen
+def big_logo():
+    from charpente.ui import banner as ui_banner
+    from charpente.ui.term import Caps as UiCaps
+
+    return ui_banner.render_banner(UiCaps(tty=True, unicode=True, width=100), lang="en", version="9.9.9")
+
+
+def tall(height, width=100):
+    return Caps(interactive=True, ansi=True, color=True, unicode=True, width=width, height=height)
+
+
+@pytest.fixture
+def fresh_banner():
+    from charpente.ui import banner as ui_banner
+
+    ui_banner.reset()
+    yield ui_banner
+    ui_banner.reset()
+
+
+def test_the_first_screen_shows_the_big_banner_when_the_window_is_tall_enough(fresh_banner):
+    c, out, ran, _ = make(["", ""], caps=tall(70), keys=Keyed(["1", "enter", "q"]), dash=project(), logo=big_logo)
+    c.run()
+    screens = frames(out).split("\x1b[2J\x1b[H")
+    assert "██████╗" in screens[1] and "Multi-platform C/C++ Build System v9.9.9" in screens[1]      # the first menu screen
+    assert all("██████╗" not in s for s in screens[2:])                                             # the redraws and the command output do not repeat it
+    assert fresh_banner.already_shown()
+
+
+def test_a_short_window_keeps_the_one_line_title_but_still_counts_the_banner_as_shown(fresh_banner):
+    c, out, _, _ = make(caps=tall(30), keys=Keyed(["q"]), dash=project(), logo=big_logo)
+    c.run()
+    assert "██████╗" not in frames(out) and "Charpente" in frames(out)
+    assert fresh_banner.already_shown()                                                            # a command run from this screen will not print another
+
+
+def test_no_big_banner_without_arrow_keys_or_without_a_logo(fresh_banner):
+    c, out, _, _ = make(["q"], dash=project(), logo=big_logo)                                     # line mode
+    c.run()
+    assert "██████╗" not in frames(out)
+    fresh_banner.reset()
+    c, out, _, _ = make(caps=tall(70), keys=Keyed(["q"]), dash=project())                         # no logo given: as before
+    c.run()
+    assert "██████╗" not in frames(out) and not fresh_banner.already_shown()
+
+
+def test_a_logo_that_fails_or_is_too_wide_is_ignored(fresh_banner):
+    def boom():
+        raise RuntimeError("no font")
+
+    c, out, _, _ = make(caps=tall(70), keys=Keyed(["q"]), dash=project(), logo=boom)
+    assert c.run() == 0 and "Charpente" in frames(out)
+    c, out, _, _ = make(caps=tall(70, width=60), keys=Keyed(["q"]), dash=project(), logo=big_logo)   # the banner needs 79 columns
+    c.run()
+    assert "██████╗" not in frames(out)
+    c, out, _, _ = make(caps=tall(70), keys=Keyed(["q"]), dash=project(), logo=lambda: "")
+    assert c.run() == 0
+
+
+def test_the_big_banner_never_overflows_the_screen_it_is_drawn_on(fresh_banner):
+    for height in (45, 50, 70):
+        c, out, _, _ = make(caps=tall(height), keys=Keyed(["q"]), dash=project(), logo=big_logo)
+        c.run()
+        first = term.strip_ansi(frames(out).split("\x1b[2J\x1b[H")[1]).split("\n")
+        assert all(visible_len(line) <= 100 for line in first) and len(first) <= height + 2

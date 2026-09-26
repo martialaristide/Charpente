@@ -224,6 +224,12 @@ def already_shown() -> bool:
     return _shown
 
 
+def mark_shown() -> None:
+    """Record that the banner was shown (or that the screen has its own): commands run afterwards in this process will not print it again."""
+    global _shown
+    _shown = True
+
+
 def reset() -> None:
     """Forget that the banner was shown (for tests)."""
     global _shown

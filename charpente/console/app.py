@@ -19,10 +19,11 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from .. import _version, settings
+from ..ui import banner as banner_mod
 from . import dashboard as dash_mod
 from . import text, view
 from .dashboard import Dashboard
-from .term import Caps, Keys, Style, glyphs_for
+from .term import Caps, Keys, Style, glyphs_for, visible_len
 from .view import Entry, group, selectable, with_hotkeys
 
 RunCli = Callable[[List[str]], int]
@@ -87,7 +88,8 @@ class Console:
                  lang: Optional[str] = None, clock: Callable[[], float] = time.time,
                  templates: Callable[[], List[Tuple[str, str, bool]]] = default_templates,
                  platform_report: Callable[[], Dict[str, Any]] = default_platform_report,
-                 kits: Callable[[Optional[Path]], List[Tuple[str, str]]] = default_kits) -> None:
+                 kits: Callable[[Optional[Path]], List[Tuple[str, str]]] = default_kits,
+                 logo: Optional[Callable[[], str]] = None) -> None:
         self.caps = caps
         self.keys = keys if caps.interactive and caps.ansi else None
         self.read_line = read_line
@@ -100,6 +102,7 @@ class Console:
         self.templates = templates
         self.platform_report = platform_report
         self.kits = kits
+        self.logo = logo                                     # the big banner (charpente/ui/banner.py), shown on the first menu screen when there is room
         self.style = Style(caps.color)
         self.glyphs = glyphs_for(caps)
         self.config = "Debug"
@@ -138,10 +141,13 @@ class Console:
         """A small terminal: the summary shrinks to two lines and the tip goes, so the menu keeps its room."""
         return (self.keys is not None and self.caps.height < TIGHT_HEIGHT) or self.width() < view.DASHBOARD_MIN_WIDTH
 
-    def header(self, dash: Optional[Dashboard] = None, title: str = "", subtitle: str = "") -> List[str]:
+    def header(self, dash: Optional[Dashboard] = None, title: str = "", subtitle: str = "", big: Optional[List[str]] = None) -> List[str]:
         width = self.width()
         tight = self.tight()
-        lines = ([] if tight else [""]) + view.banner(self.tr, _version.__version__, self.style, self.glyphs, width) + ([] if tight else [""])
+        if big:                                              # the big banner takes the place of the one-line title
+            lines = [""] + big + [""]
+        else:
+            lines = ([] if tight else [""]) + view.banner(self.tr, _version.__version__, self.style, self.glyphs, width) + ([] if tight else [""])
         if dash is not None:
             if tight:
                 lines += view.compact_dashboard(dash, str(self.cwd), self.config, self.platform, self.tr, self.style, self.glyphs, width, self.clock())
@@ -328,13 +334,35 @@ class Console:
         self.pause()
 
     # ------------------------------------------------------------------ the main loop
+    def _splash(self, dash: Dashboard, entries: Sequence[Entry]) -> Optional[List[str]]:
+        """The lines of the big banner when the first screen has room for it above the whole menu (a real terminal with arrow keys, and tall enough); else None."""
+        if self.logo is None or self.keys is None:
+            return None
+        try:
+            text = self.logo()
+        except Exception:                                    # a picture must never stop the menu
+            return None
+        big = text.split("\n") if text else []
+        if not big or max(visible_len(x) for x in big) > self.width():
+            return None
+        plain = self.header(dash, big=big)
+        menu_lines, _ = view.menu(with_hotkeys(entries), -1, self.style, self.glyphs, self.width(), 10_000)
+        needed = len(plain) + len(menu_lines) + 4            # the detail line, the footer and a margin
+        return big if needed <= self.caps.height else None
+
     def run(self) -> int:
         initial = ""
+        first = True
         try:
             while True:
                 dash = self.gather(self.cwd)
                 entries = self.project_entries(dash) if dash.has_project else self.start_entries(dash)
-                header = self.header(dash)
+                big = self._splash(dash, entries) if first else None
+                if first:
+                    first = False
+                    if self.logo is not None:
+                        banner_mod.mark_shown()              # whether or not it fitted, this screen has its own title: commands run from here do not print another
+                header = self.header(dash, big=big)
                 if self.notice:
                     header += [" " + self.style.ok(self.notice), ""]
                     self.notice = ""
@@ -696,6 +724,12 @@ def _projects_below(folder: Path) -> List[Path]:
     return found[:30]
 
 
+def detect_ui_caps(stdout: Any) -> Any:
+    from ..ui.term import detect as detect_ui
+
+    return detect_ui(None, stdout)
+
+
 def real_console(stdin: Any = None, stdout: Any = None) -> Console:
     """The console wired to the real terminal."""
     from .term import detect, native_keys
@@ -715,4 +749,11 @@ def real_console(stdin: Any = None, stdout: Any = None) -> Console:
             raise EOFError
         return line.rstrip("\r\n")
 
-    return Console(caps=caps, keys=native_keys() if caps.interactive else None, read_line=read_line, write=write)
+    def logo() -> str:
+        from ..ui.term import detect as detect_ui
+
+        ui_caps = detect_ui(None, stdout)
+        return banner_mod.render_banner(ui_caps, banner_mod.theme_named(os.environ.get("CHARPENTE_THEME")), None, None)
+
+    return Console(caps=caps, keys=native_keys() if caps.interactive else None, read_line=read_line, write=write,
+                   logo=logo if banner_mod.should_show_banner(None, detect_ui_caps(stdout)) else None)
