@@ -550,14 +550,15 @@ bench/  examples/  .github/workflows/  (tests.yml, release.yml)
 
 ### 10.8 Dette technique et prochaines étapes suggérées (par priorité)
 
-1. **Pousser `dev/roadmap` et faire tourner la CI** (Windows/Linux/macOS, Python 3.9 et 3.12) : rien de P1 à P9 n'a été exécuté hors de cette machine.
-2. Vérifier sur Linux et macOS : sondes de ressources, rechargement à chaud (`dlopen`), builds croisés *exécutés* (QEMU/Wine), chemins `/showIncludes` avec un vrai `cl.exe`.
-3. Ouvrir les projets Visual Studio générés ; implémenter Xcode sur un Mac.
-4. Essayer `deploy --device all` sur plusieurs vrais appareils ; lldb-dap ; un vrai fournisseur IA ; Studio sous Chrome et Firefox ; l'extension dans un vrai VS Code.
-5. Cache partagé : TLS (ou guide de proxy testé), test de charge.
-6. REAPI/exécution distante (demande des actions hermétiques : voir ADR 0019).
-7. Compiler l'enveloppe Tauri et produire des installeurs ; publier sur PyPI/Marketplace (décisions du mainteneur).
-8. Clarifier l'adresse e-mail d'auteur de `pyproject.toml` (`martialaristideb02@…`) face à celle de Git (`martialaristidebarra02@…`).
+**Fait depuis la dernière mise à jour de cette page** : `dev/roadmap` a été poussé et fusionné dans `main` ; la CI (`.github/workflows/tests.yml`) est passée sur Windows, Linux et macOS avec Python 3.9 et 3.12. L'adresse e-mail d'auteur de `pyproject.toml` et de `charpente/_version.py` a été harmonisée avec celle de Git (`martialaristidebarra02@…`) ; la configuration Git locale du dépôt, qui imposait la mauvaise adresse (`martialaristideb02@…`) aux commits, a été retirée.
+
+1. Vérifier sur Linux et macOS : sondes de ressources, rechargement à chaud (`dlopen`), builds croisés *exécutés* (QEMU/Wine), chemins `/showIncludes` avec un vrai `cl.exe`.
+2. Ouvrir les projets Visual Studio générés ; implémenter Xcode sur un Mac.
+3. Essayer `deploy --device all` sur plusieurs vrais appareils ; lldb-dap ; un vrai fournisseur IA ; Studio sous Chrome et Firefox ; l'extension dans un vrai VS Code.
+4. Cache partagé : TLS (ou guide de proxy testé), test de charge.
+5. REAPI/exécution distante (demande des actions hermétiques : voir ADR 0019).
+6. Compiler l'enveloppe Tauri et produire des installeurs ; publier sur PyPI/Marketplace (décisions du mainteneur).
+7. Essayer l'interface console (bannière, affichage stylé, menu guidé) dans Windows Terminal, PowerShell 7, et sous macOS.
 
 ---
 
@@ -613,7 +614,7 @@ Format `CHxxxx` (aucun code n'est réutilisé avec un autre sens). Familles : `1
 
 **Niveaux utilisés** : *Vérifié* = tests automatisés *et* essai réel avec un vrai outil, sur la machine de développement ; *Testé* = tests automatisés seulement (outil simulé, réponse enregistrée, fichier généré jamais ouvert par le vrai programme) ; *Expérimental* = fonctionne dans les cas décrits, peut changer ; *Squelette* = fichiers jamais construits ; *Non fait*.
 
-**Version 0.13 = alpha.** Rien n'est déclaré « stable » : le workflow de CI (`.github/workflows/tests.yml`) existe pour Windows, Linux et macOS × Python 3.9 et 3.12, mais **il n'a jamais tourné sur ce travail**, qui n'a pas été poussé ; tout a été vérifié à la main sur **une seule machine Windows, avec Python 3.12**. Rien n'a tourné sous Linux ni macOS.
+**Version 0.13 = alpha.** Rien n'est déclaré « stable » : le workflow de CI (`.github/workflows/tests.yml`, Windows/Linux/macOS × Python 3.9 et 3.12) **est passé sur `main`** après la fusion de `dev/roadmap` — la suite automatique fonctionne donc sur les trois systèmes. Les vérifications *manuelles* avec de vrais outils (émulateur, navigateur, débogueur), elles, n'ont toutes été faites que sur **une seule machine Windows, avec Python 3.12** ; elles n'ont pas été refaites sous Linux ni macOS.
 
 | Fonction | Niveau |
 |---|---|

@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "Apache-2.0" }
 authors = [
-    { name = "Martial Aristide Barra", email = "martialaristideb02@gmail.com" }
+    { name = "Martial Aristide Barra", email = "martialaristidebarra02@gmail.com" }
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",

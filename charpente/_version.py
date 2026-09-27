@@ -4,4 +4,4 @@ attribute) without triggering the rest of the package."""
 
 __version__ = "0.13.0"
 __author__ = "Martial Aristide Barra"
-__email__ = "martialaristideb02@gmail.com"
+__email__ = "martialaristidebarra02@gmail.com"
