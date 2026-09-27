@@ -15,7 +15,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from .. import android, builder, harmony, shellenv
+from .. import android, builder, fsutil, harmony, shellenv
 from .. import debug as debug_mod
 from ..core import history, process
 from ..core.analysis import header_costs
@@ -400,7 +400,7 @@ class StudioApi:
         except ChError as exc:
             raise RpcError(INVALID_PARAMS, f"[{exc.code}] {exc}", {"code": exc.code}) from exc
         if new != text:
-            path.write_text(new, encoding="utf-8", newline="")
+            fsutil.write_text(path, new, newline="")
         return path
 
     def packages_add(self, params: Dict[str, Any]) -> Dict[str, Any]:

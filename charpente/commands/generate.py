@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import Dict, List
 
+from .. import fsutil
 from ..core.planner import plan_workspace
 from ..generators import cmake as cmake_gen
 from ..generators import ninja as ninja_gen
@@ -38,7 +39,7 @@ def _write(files: Dict[str, str], folder: Path, force: bool) -> List[Path]:
     for name, text in files.items():
         target = folder / name
         _refuse_foreign(target, force)
-        target.write_text(text, encoding="utf-8", newline="")
+        fsutil.write_text(target, text, newline="")
         written.append(target)
     return written
 

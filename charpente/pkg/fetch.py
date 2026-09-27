@@ -15,6 +15,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable, List, Optional
 
+from .. import fsutil
 from ..core import download
 from ..errors import ChError
 from . import localsrc
@@ -179,7 +180,7 @@ def apply_unified_diff(text: str, root: Path) -> List[str]:
             cursor = begin + len(hunk_old)
         result += original[cursor:]
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text("".join(result), encoding="utf-8", newline="")
+        fsutil.write_text(target, "".join(result), newline="")
         changed.append(rel)
     return changed
 

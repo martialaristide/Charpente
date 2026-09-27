@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+from .. import fsutil
 from ..errors import ChError
 
 MARKER = "# charpente-managed-hook v1"
@@ -68,7 +69,7 @@ def install(hooks_dir: Path, *, force: bool = False) -> List[Tuple[str, str]]:
             action = "replaced (the old hook is kept as .pre-charpente)"
         elif current.installed:
             action = "updated"
-        path.write_text(script(current.name), encoding="utf-8", newline="\n")
+        fsutil.write_text(path, script(current.name), newline="\n")
         try:
             path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         except OSError:

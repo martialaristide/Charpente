@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from . import _toml
+from . import _toml, fsutil
 from .errors import ChError
 
 _KEYS = {"name", "description", "kits", "platforms", "verified", "unverified", "install", "next"}
@@ -117,7 +117,7 @@ class DirTemplate:
             except UnicodeDecodeError:
                 target.write_bytes(data)                      # binary files are copied as they are
             else:
-                target.write_text(render(text, values), encoding="utf-8", newline="")
+                fsutil.write_text(target, render(text, values), newline="")
             written.append(target)
         return written
 

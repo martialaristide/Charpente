@@ -25,6 +25,7 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .. import fsutil
 from ..dsl.model import Workspace
 from ..errors import ChError
 from . import lock as lock_mod
@@ -65,7 +66,7 @@ def populate(workspace: Workspace, store: PackageStore, destination: Path) -> Li
         # digest*; the lock file of a client using the mirror pins the mirror's recipe.
         text = _repoint_source(text, f"../archives/{archive.name}")
         recipe_dest = destination / "recipes" / f"{name}-{pkg.version}.toml"
-        recipe_dest.write_text(text, encoding="utf-8", newline="\n")
+        fsutil.write_text(recipe_dest, text, newline="\n")
         index["packages"].setdefault(name, {"versions": {}})["versions"][pkg.version] = {
             "recipe": f"recipes/{recipe_dest.name}", "sha256": file_sha256(recipe_dest)}
         added.append(f"{name} {pkg.version}")

@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .. import _toml
+from .. import _toml, fsutil
 from ..errors import ChError
 
 LOCK_NAME = "charpente.lock"
@@ -100,7 +100,7 @@ def load(root: Path) -> Optional[Lock]:
 
 def save(root: Path, lock: Lock) -> Path:
     path = Path(root) / LOCK_NAME
-    path.write_text(lock.dumps(), encoding="utf-8", newline="\n")
+    fsutil.write_text(path, lock.dumps(), newline="\n")
     return path
 
 
