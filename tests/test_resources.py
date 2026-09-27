@@ -136,9 +136,9 @@ def test_an_interrupted_build_resumes_without_redoing_finished_work(tmp_path, ca
                              **({"start_new_session": True} if sys.platform != "win32" else {}))
     objects = project / "build" / "Debug" / "app" / "obj" / "src"
     end = time.time() + 120
-    while time.time() < end and (not objects.exists() or len(list(objects.glob("*.o"))) < 4):
+    while time.time() < end and (not objects.exists() or (len(list(objects.glob("*.o"))) + len(list(objects.glob("*.obj")))) < 4):
         time.sleep(0.02)
-    finished_before_kill = len(list(objects.glob("*.o"))) if objects.exists() else 0
+    finished_before_kill = (len(list(objects.glob("*.o"))) + len(list(objects.glob("*.obj")))) if objects.exists() else 0
     kill_tree(first)
     assert 4 <= finished_before_kill < 14 and first.returncode != 0                                      # it really was cut short
     again = subprocess.run([sys.executable, "-m", "charpente", "build", "-j", "1", "--output", "jsonl"], cwd=project, env=env, capture_output=True, text=True, timeout=600)

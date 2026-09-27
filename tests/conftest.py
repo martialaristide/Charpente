@@ -19,6 +19,10 @@ def _isolated_environment(monkeypatch, tmp_path_factory, request):
     monkeypatch.setenv("CHARPENTE_HOME", str(home))
     monkeypatch.setenv("CHARPENTE_CACHE_DIR", str(home / "cache"))
     monkeypatch.setenv("CHARPENTE_EVENTS_STRICT", "1")
+    # Tests that run `git commit` need an author: a CI machine (or a fresh install) has none configured, and the developer's own must not leak in.
+    for who in ("AUTHOR", "COMMITTER"):
+        monkeypatch.setenv(f"GIT_{who}_NAME", "Charpente Tests")
+        monkeypatch.setenv(f"GIT_{who}_EMAIL", "tests@charpente.invalid")
     from charpente.modules import runtime
 
     runtime.reset()          # the module registry is built from the (per-test) config directory

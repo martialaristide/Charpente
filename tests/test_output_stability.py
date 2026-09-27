@@ -6,6 +6,7 @@ the console-style work (tests/golden/output/). To re-record after an intended ch
 """
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -20,6 +21,8 @@ SCENARIOS = ("cold", "warm", "failing")
 def replay(scenario, mode, *extra):
     env = dict(os.environ, PYTHONHASHSEED="0", CHARPENTE_LANG="en", PYTHONIOENCODING="utf-8", NO_COLOR="1")
     env.pop("CHARPENTE_TRUST_ALL", None)
+    for name in ("CI", "GITHUB_ACTIONS", "GITLAB_CI", "BUILDKITE", "TF_BUILD", "JENKINS_URL", "TEAMCITY_VERSION"):
+        env.pop(name, None)                                                                  # GitHub Actions adds ::error annotations to the plain output
     result = subprocess.run([sys.executable, str(SCRIPT), scenario, mode, *extra], capture_output=True, env=env, timeout=300, stdin=subprocess.DEVNULL)
     assert result.returncode == 0, result.stderr.decode("utf-8", "replace")[-1500:]
     return result.stdout.decode("utf-8")
@@ -39,8 +42,36 @@ def test_plain_output_is_unchanged(scenario):
     check(f"plain-{scenario}", replay(scenario, "plain"))
 
 
+def check_verbose(name, text):
+    """The verbose lines must be the same set. The order in which *independent* actions start (and so their running number `[n/6]`) varies with the operating system,
+    so only the order that is guaranteed is compared: a numbered step is followed by its own command and reason."""
+    path = GOLDEN / f"{name}.txt"
+    if os.environ.get("UPDATE_GOLDEN") == "1":
+        GOLDEN.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(text.encode("utf-8"))
+    assert path.is_file(), f"no reference for {name}: record it with UPDATE_GOLDEN=1"
+
+    def blocks(value):
+        """Each step as one block: its numbered line, command and reason, with the running number masked; then the rest, in order."""
+        out, current = [], None
+        for line in value.splitlines():
+            if re.match(r"\s+\[\d+/\d+\] ", line):
+                current = [re.sub(r"\[\d+/(\d+)\]", r"[n/\1]", line)]
+                out.append(current)
+            elif current is not None and line.startswith("      "):
+                current.append(line)
+            else:
+                current = None
+                out.append([line])
+        head = [b for b in out if not b[0].lstrip().startswith("[n/")]
+        steps = sorted("\n".join(b) for b in out if b[0].lstrip().startswith("[n/"))
+        return head, steps
+
+    assert blocks(text) == blocks(path.read_bytes().decode("utf-8")), f"the {name} output changed (masked text below)\n{text}"
+
+
 def test_verbose_plain_output_is_unchanged():
-    check("plain-cold-verbose", replay("cold", "plain", "verbose"))
+    check_verbose("plain-cold-verbose", replay("cold", "plain", "verbose"))
 
 
 def check_jsonl(name, text):

@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 from browser import Cdp, find_browser
+from helpers import needs_gnu_default
 
 EXE = find_browser()
 pytestmark = pytest.mark.skipif(EXE is None, reason="needs a Chromium-family browser (Edge, Chrome)")
@@ -507,6 +508,7 @@ HAVE_GDB = any(d["name"] == "gdb" for d in __import__("charpente.debug", fromlis
 
 
 @pytest.mark.skipif(not HAVE_GDB, reason="needs gdb 14+")
+@needs_gnu_default
 def test_debugging_a_program_from_the_editor(studio):
     studio.open_file("src/main.cpp")
     line = [n for n, text in enumerate(studio.editor_text().splitlines(), 1) if "std::printf" in text][0]

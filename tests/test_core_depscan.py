@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 from charpente.core import depscan, diagnostics
 
@@ -61,7 +61,7 @@ def test_show_includes_extracts_paths_and_strips_the_notes():
            "Note: including file:  C:\\proj\\include\\sub\\b.h\n"
            "main.cpp(3): warning C4100: 'x': unreferenced formal parameter\n")
     paths, rest = depscan.parse_show_includes(out)
-    assert [p.name for p in paths] == ["a.h", "b.h"]
+    assert [PureWindowsPath(str(p)).name for p in paths] == ["a.h", "b.h"]           # the notes carry Windows paths, whatever system the test runs on
     assert "Note: including" not in rest
     assert "warning C4100" in rest and "main.cpp" in rest
 

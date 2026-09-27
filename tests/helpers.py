@@ -13,6 +13,8 @@ import time
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional
 
+import pytest
+
 from charpente.dsl.model import Kind, Target, Workspace
 from charpente.toolchains import Toolchain
 
@@ -93,3 +95,18 @@ def collect_events(bus, patterns=None):
     events: List = []
     bus.subscribe(events.append, sync=True, types=patterns)
     return events
+
+
+def default_toolchain_is_msvc_style() -> bool:
+    """Whether the toolchain Charpente picks on this machine takes MSVC-style options (`cl`, `clang-cl`): the case on a Windows CI runner."""
+    try:
+        from charpente import toolchains
+        from charpente.flags import family
+        from charpente.platform import host_os
+
+        return family(toolchains.pick_default(host_os())) == "msvc"
+    except Exception:
+        return False
+
+
+needs_gnu_default = pytest.mark.skipif(default_toolchain_is_msvc_style(), reason="needs a GNU-style default toolchain (this machine's takes MSVC-style options)")

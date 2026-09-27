@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import time
+from pathlib import Path
 
 import pytest
 
@@ -202,7 +203,7 @@ def test_compile_commands_json_is_written_for_language_servers(project):
     db = json.loads((project / "build" / "compile_commands.json").read_text())
     assert len(db) == 3
     entry = next(e for e in db if e["file"].endswith("one.cpp"))
-    assert entry["directory"] == str(project) and "-Iinclude" in entry["arguments"]
+    assert Path(entry["directory"]).resolve() == project.resolve() and ("-Iinclude" in entry["arguments"] or "/Iinclude" in entry["arguments"])   # short or long form of the same folder
     assert entry["output"].endswith("one.cpp.o") or entry["output"].endswith("one.cpp.obj")
 
 

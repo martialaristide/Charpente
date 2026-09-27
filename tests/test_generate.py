@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
+from helpers import needs_gnu_default
 
 from charpente.cli import main
 from charpente.dsl.loader import load_workspace
@@ -86,6 +87,7 @@ def test_a_file_charpente_did_not_write_is_never_overwritten(project, capsys):
 
 # ---------------------------------------------------------------------- ninja
 @pytest.mark.skipif(not HAVE_COMPILER, reason="needs a C++ compiler")
+@needs_gnu_default
 def test_the_ninja_text_is_deterministic_and_carries_dependency_information(project):
     assert main(["generate", "ninja"]) == 0
     text = (project / "build.ninja").read_text(encoding="utf-8")
@@ -95,6 +97,7 @@ def test_the_ninja_text_is_deterministic_and_carries_dependency_information(proj
 
 
 @pytest.mark.skipif(not (HAVE_COMPILER and HAVE_NINJA), reason="needs a C++ compiler and ninja")
+@needs_gnu_default
 def test_ninja_builds_the_project_and_tracks_headers(project):
     assert main(["generate", "ninja"]) == 0
     built = subprocess.run(["ninja", "-C", str(project)], capture_output=True, text=True)
@@ -192,5 +195,5 @@ def test_compile_commands_are_written_with_the_engines_arguments(project):
     entries = json.loads((project / "compile_commands.json").read_text(encoding="utf-8"))
     assert sorted(Path(e["file"]).name for e in entries) == ["answer.cpp", "main.cpp", "t.cpp"]
     main_entry = next(e for e in entries if e["file"].endswith("main.cpp"))
-    assert any(a.startswith("-DGREETING=") for a in main_entry["arguments"]) and "-c" in main_entry["arguments"]
+    assert any(a.startswith(("-DGREETING=", "/DGREETING=")) for a in main_entry["arguments"]) and ("-c" in main_entry["arguments"] or "/c" in main_entry["arguments"])
     assert sys.version_info and os.path.isabs(main_entry["file"])

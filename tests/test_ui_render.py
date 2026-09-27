@@ -325,6 +325,7 @@ def test_styled_wanted_needs_a_real_terminal_no_ci_and_no_dumb_terminal():
 
 
 def test_a_real_build_through_a_styled_session(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("CHARPENTE_SYMBOLS", "modern")
     monkeypatch.setattr(render, "styled_wanted", lambda *a, **k: True)
     monkeypatch.setenv("NO_COLOR", "1")
     ws = Workspace(name="Demo", location=tmp_path)
@@ -356,6 +357,7 @@ def test_the_command_still_prints_its_own_lines_when_the_display_is_not_styled(t
 
 
 def test_an_interrupted_build_is_shown_as_interrupted_by_the_styled_display(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("CHARPENTE_SYMBOLS", "modern")
     """The engine handles Ctrl+C itself and returns an interrupted result (no exception reaches the session); the plain display prints "Build interrupted."."""
     from types import SimpleNamespace
 

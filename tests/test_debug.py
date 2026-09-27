@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 from dap import DapClient
+from helpers import needs_gnu_default
 
 from charpente import debug
 from charpente.cli import main
@@ -224,6 +225,7 @@ def all_variables(adapter, frame_id):
 
 
 @pytest.mark.skipif(not (HAVE_GDB and HAVE_COMPILER), reason="needs gdb 14+ and a C++ compiler")
+@needs_gnu_default
 def test_a_real_debugging_session_breakpoint_stack_variables_step_and_run_to_the_end(adapter, project):
     source = str(project / "src" / "main.cpp")
     assert adapter.request("initialize", {"adapterID": "charpente", "linesStartAt1": True, "columnsStartAt1": True, "pathFormat": "path"})["success"]

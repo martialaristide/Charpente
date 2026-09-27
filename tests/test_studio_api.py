@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 import pytest
+from helpers import needs_gnu_default
 
 from charpente.core import process
 from charpente.dsl import edit as dsl_edit
@@ -710,6 +711,7 @@ def test_debug_methods_report_a_missing_debugger(client, monkeypatch):
 
 
 @pytest.mark.skipif(not (HAVE_GDB and HAVE_COMPILER), reason="needs gdb 14+ and a C++ compiler")
+@needs_gnu_default
 def test_a_debugging_session_through_the_relay(client, project):
     started = client.ok("charpente/debug/start")
     ident = started["id"]

@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from helpers import needs_gnu_default
 
 from charpente.cli import main
 from charpente.core import hashing
@@ -269,6 +270,7 @@ def shared(monkeypatch, server):
 
 
 @pytest.mark.skipif(not HAVE_COMPILER, reason="needs a C++ compiler")
+@needs_gnu_default
 def test_a_second_checkout_in_another_folder_gets_everything_from_the_shared_cache(shared, tmp_path, monkeypatch, capsys):
     first = make_project(tmp_path / "alice" / "work")
     second = make_project(tmp_path / "bob" / "somewhere" / "else")
@@ -296,6 +298,7 @@ def test_without_the_reproducible_flavour_another_folder_cannot_share_but_the_sa
 
 
 @pytest.mark.skipif(not HAVE_COMPILER, reason="needs a C++ compiler")
+@needs_gnu_default
 def test_a_changed_header_rebuilds_its_dependents_and_stops_where_the_objects_do_not_change(shared, tmp_path, monkeypatch, capsys):
     first = make_project(tmp_path / "a")
     second = make_project(tmp_path / "b" / "b")
@@ -308,6 +311,7 @@ def test_a_changed_header_rebuilds_its_dependents_and_stops_where_the_objects_do
 
 
 @pytest.mark.skipif(not HAVE_COMPILER, reason="needs a C++ compiler")
+@needs_gnu_default
 def test_signed_entries_are_shared_within_a_team_and_ignored_across_teams(shared, tmp_path, monkeypatch, capsys):
     first = make_project(tmp_path / "a")
     second = make_project(tmp_path / "b" / "b")
@@ -322,6 +326,7 @@ def test_signed_entries_are_shared_within_a_team_and_ignored_across_teams(shared
 
 
 @pytest.mark.skipif(not HAVE_COMPILER, reason="needs a C++ compiler")
+@needs_gnu_default
 def test_a_read_only_client_uses_the_cache_but_never_writes_to_it(shared, tmp_path, monkeypatch, capsys):
     first = make_project(tmp_path / "a")
     second = make_project(tmp_path / "b" / "b")
