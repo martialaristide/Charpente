@@ -222,7 +222,9 @@ def plan_workspace(
             used.add(obj)
             objects.append(obj)
             depfile = None if fam == "msvc" else obj.with_name(obj.name + ".d")
-            argv = flags.compile_args(toolchain, target, source, obj, debug=debug, depfile=depfile,
+            # compile_args asks the compiler to report the headers it reads whenever it is given a `depfile`: a Makefile-style file for GNU-style compilers, `/showIncludes` notes on stdout
+            # for MSVC-style ones (which have no file, so the action's own `depfile` stays None). Passing None for MSVC-style compilers meant the flag was never added and headers were never tracked.
+            argv = flags.compile_args(toolchain, target, source, obj, debug=debug, depfile=obj.with_name(obj.name + ".d"),
                                       language=Language.C if source in c_sources else None)
             compiler = argv[0]
             action = Action(

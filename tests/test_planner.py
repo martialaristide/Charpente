@@ -138,3 +138,15 @@ def test_sources_outside_the_workspace_get_a_stable_separate_object_dir(tmp_path
     assert "_external" in obj.parts and Path(obj).name == "x.cpp.o"
     again = plan_workspace(ws, GCC, OS.LINUX)
     assert again.graph.actions[again.target_actions["app"][0]].outputs[0] == obj
+
+
+@pytest.mark.parametrize("name,compiler", [("msvc", "cl"), ("clang-cl", "clang-cl")])
+def test_msvc_style_compiles_report_the_headers_they_read(tmp_path, name, compiler):
+    """Header tracking never worked with MSVC-style compilers: the planner passed no depfile for them, so `/showIncludes` was never added (found by the Windows CI job,
+    where clang-cl is the default toolchain: editing a header rebuilt nothing)."""
+    tc = Toolchain(name=name, c_compiler=compiler, cxx_compiler=compiler, archiver="lib", linker=compiler)
+    ws = _ws(tmp_path, ["a.cpp"], [Target(name="app", source_patterns=["*.cpp"], location=tmp_path)])
+    compile_action = next(a for a in plan_workspace(ws, tc, OS.WINDOWS).graph.actions.values() if a.kind == "compile")
+    assert "/showIncludes" in compile_action.argv and compile_action.dep_format == "msvc" and compile_action.depfile is None
+    gnu = next(a for a in plan_workspace(ws, GCC, OS.LINUX).graph.actions.values() if a.kind == "compile")
+    assert "-MMD" in gnu.argv and "/showIncludes" not in gnu.argv and gnu.depfile is not None                      # GNU-style: unchanged
