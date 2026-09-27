@@ -116,7 +116,9 @@ def test_locations_also_recognises_msvc_and_clang_cl_style():
 def test_error_context_finds_the_file_from_an_msvc_style_location_too(tmp_path):
     (tmp_path / "src").mkdir()
     put(tmp_path / "src" / "main.cpp", "int main() {\n  return missing;\n}\n")
-    context = error_context(tmp_path, WS(), "src\\main.cpp(2,10): error: 'missing' was not declared")
+    # A backslash is a path separator only on Windows; on POSIX it is just a character in a filename, so the location must use "/" to resolve on every system
+    # (a real clang-cl on Windows was seen using "/" too when the compile command itself was given forward-slash paths, which Charpente does).
+    context = error_context(tmp_path, WS(), "src/main.cpp(2,10): error: 'missing' was not declared")
     assert [i.label for i in context.items] == ["workspace", "build output", "src/main.cpp:2"]
     assert "return missing;" in context.render()
 
