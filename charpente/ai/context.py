@@ -22,7 +22,10 @@ _SECRET_FILES = re.compile(r"(?i)(?:^|/)(?:\.env(?:\..*)?|.*\.(?:pem|key|p12|pfx
                            r"credentials(?:\..*)?|\.netrc|\.npmrc|\.pypirc)$")
 _URL_CREDENTIALS = re.compile(r"(?P<scheme>\b[a-z][a-z0-9+.-]*://)[^\s/@:]+:[^\s/@]+@")
 _BEARER = re.compile(r"(?i)\b(?P<label>authorization\s*:\s*(?:bearer|basic|token)\s+)[A-Za-z0-9._~+/=-]{8,}")
-LOCATION = re.compile(r"(?P<file>(?:[A-Za-z]:)?[^\s:()\"'<>|]+\.(?:c|cc|cpp|cxx|h|hh|hpp|hxx|inl|charpente)):(?P<line>\d+)")
+LOCATION = re.compile(
+    r"(?P<file>(?:[A-Za-z]:)?[^\s:()\"'<>|]+\.(?:c|cc|cpp|cxx|h|hh|hpp|hxx|inl|charpente))"
+    r"(?::(?P<line>\d+)|\((?P<pline>\d+)(?:,\d+)?\))"                        # GNU "file:line:col:" or MSVC/clang-cl "file(line,col):"
+)
 
 
 def redact_text(text: str) -> Tuple[str, int]:
@@ -138,7 +141,7 @@ def locations(error_text: str) -> List[Tuple[str, int]]:
     """Distinct (file, line) pairs mentioned in compiler output, in order of appearance."""
     seen: Dict[Tuple[str, int], None] = {}
     for match in LOCATION.finditer(error_text):
-        seen.setdefault((match.group("file"), int(match.group("line"))), None)
+        seen.setdefault((match.group("file"), int(match.group("line") or match.group("pline"))), None)
     return list(seen)
 
 

@@ -106,6 +106,21 @@ def test_locations_are_found_once_in_order():
     assert locations(text) == [("src/a.cpp", 10), ("C:\\p\\b.hpp", 3), ("src/a.cpp", 20)]
 
 
+def test_locations_also_recognises_msvc_and_clang_cl_style():
+    """`file(line,col): error ...` (MSVC, clang-cl) reports no `file:line`, so the plain GNU regex missed every location on a machine whose default
+    toolchain takes MSVC-style options: no per-file context, so a secret in the file was never redacted (found by the Windows CI job)."""
+    text = "main.cpp(3,21): error: use of undeclared identifier 'missing_name'\nC:\\p\\b.hpp(5): error C2065: 'x'"
+    assert locations(text) == [("main.cpp", 3), ("C:\\p\\b.hpp", 5)]
+
+
+def test_error_context_finds_the_file_from_an_msvc_style_location_too(tmp_path):
+    (tmp_path / "src").mkdir()
+    put(tmp_path / "src" / "main.cpp", "int main() {\n  return missing;\n}\n")
+    context = error_context(tmp_path, WS(), "src\\main.cpp(2,10): error: 'missing' was not declared")
+    assert [i.label for i in context.items] == ["workspace", "build output", "src/main.cpp:2"]
+    assert "return missing;" in context.render()
+
+
 class WS:
     name = "demo"
     targets = {}
