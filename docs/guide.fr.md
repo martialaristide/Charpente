@@ -121,5 +121,5 @@ de versions ne le sont jamais sans `--keys`).
 
 ## 12. Limites, honnêtement
 
-La version 0.13 est en alpha. Elle a été vérifiée sur une seule machine Windows ; Linux et macOS n'ont jamais été essayés, et le workflow de CI n'a jamais tourné sur ce travail (rien n'a été poussé ; seul Python 3.12 a été utilisé). L'exécution distante et les projets Xcode ne sont pas faits ;
+La version 0.13 est en alpha. La CI (`.github/workflows/tests.yml`) est verte sur Windows, Linux et macOS, en Python 3.9 et 3.12, mais la vérification à la main, avec de vrais outils, décrite dans ce guide, n'a été faite que sur une seule machine Windows. L'exécution distante et les projets Xcode ne sont pas faits ;
 une application de bureau pour Studio n'existe que sous forme de squelette non compilé. La liste complète est dans [stability.md](stability.md).

@@ -1,7 +1,9 @@
 # Stability: what each part of Charpente can be relied on for
 
-Charpente is at **version 0.13 (alpha)**. Nothing is called *stable*, and the version will stay `0.x` until every announced platform has continuous integration behind it: a CI workflow exists (`.github/workflows/tests.yml`: Windows, Linux, macOS, Python 3.9 and 3.12) but it has **never run on this work**, which was not pushed. Everything
-below was verified by hand on **one machine (Windows 10 x64, MinGW-w64 GCC, plus the toolchains named in each row)**. Nothing was run on Linux or macOS, and only Python 3.12 was used (the code declares 3.9+ and a syntax check for 3.9 passes, but no 3.9 interpreter was available).
+Charpente is at **version 0.13 (alpha)**. Nothing is called *stable* yet. The CI workflow (`.github/workflows/tests.yml`: Windows, Linux, macOS, Python 3.9 and 3.12) has now **run and passed** on `main` — the first
+time this codebase has been exercised anywhere but the development machine. Everything below, though, was verified *by hand* only on **one machine (Windows 10 x64, MinGW-w64 GCC, plus the toolchains named in each row,
+Python 3.12)**: CI proves the test suite passes on Linux and macOS too, but the manual, real-tool checks in this table (a real emulator, a real browser, a real debugger...) were not repeated there. The version stays
+`0.x` until that gap closes and someone other than the author has used it.
 
 ## The tiers used in this page
 

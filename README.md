@@ -1,5 +1,7 @@
 # Charpente
 
+![Charpente banner](docs/img/console/cmd-demo-100-columns.png)
+
 A cross-platform C/C++ build system driven by a Python DSL. Write a
 `.charpente` file, get a real compile + link on Windows, Linux, or macOS —
 no CMake, no Makefiles, no generated intermediate project files.
@@ -47,7 +49,7 @@ a build server, debugging). What is verified and what is not is written per feat
   browser (Edge), clangd and gdb, CMake import, Ninja/CMake generation, hot reload, the shared cache.
 - **Tested but not against the real thing**: Visual Studio projects, multi-device deploy with several devices (simulated; one real emulator was tried), the AI assistant (no real provider was ever called), the VS Code extension (not loaded in a live VS Code).
 - **Not done**: remote execution, an Xcode project, a compiled desktop app and installers, precompiled headers and C++20 modules.
-- **Never verified on Linux or macOS**, and the CI workflow (`.github/workflows/tests.yml`: Windows, Linux, macOS, Python 3.9 and 3.12) has **never run on this work** (it was not pushed; only Python 3.12 was used here): that is why the version is `0.x` and nothing is called stable.
+- **CI is green** on Windows, Linux and macOS with Python 3.9 and 3.12 (`.github/workflows/tests.yml`), but the version stays `0.x` and nothing is called stable until the "not verified"/"tested" lines above become real-machine-verified too, and someone other than the author has used it.
 
 ## Where to start
 
