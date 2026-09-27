@@ -57,9 +57,18 @@ class Terminal:
             self.proc.terminate(force=True)
 
 
+def wait_for_selected(t, needle, seconds=10):
+    """`t.wait_for(needle)` only waits for `needle` to appear anywhere on screen; the marker can lag behind by one redraw (seen on a loaded CI runner), so
+    the selection itself is polled separately instead of asserted right away."""
+    t.wait_for(needle, seconds)
+    end = time.time() + seconds
+    while time.time() < end and needle not in t.selected_row():
+        time.sleep(0.1)
+    assert needle in t.selected_row(), f"{needle!r} never selected; the screen was:\n{t.text()}"
+
+
 def arrows_shortcuts_and_quit(t, tmp):
-    t.wait_for("Create a new project")
-    assert "Create a new project" in t.selected_row()
+    wait_for_selected(t, "Create a new project")
     t.send("\x1b[B")                                                                # the down arrow
     end = time.time() + 10
     while time.time() < end and "Open an existing project" not in t.selected_row():

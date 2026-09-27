@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -84,6 +85,29 @@ class Studio:
         return self.js("[...document.querySelectorAll('#panel-problems .problem')].map(e => e.textContent)")
 
 
+#: Chromium's names for a socket that could not be opened because the OS is transiently out of resources (seen on a Windows CI runner after many
+#: quick server start/stop cycles: TerminateProcess on the previous test's server leaves sockets closing in the background) -- not a Studio defect.
+_TRANSIENT_NETWORK_ERRORS = ("ERR_NO_BUFFER_SPACE", "ERR_INSUFFICIENT_RESOURCES", "ERR_CONNECTION_RESET", "ERR_CONNECTION_REFUSED")
+
+
+def _navigate_and_wait(page, studio, url, attempts=3):
+    """Load `url` and wait for Studio to report ready, retrying the *navigation* (not the server) a couple of times if the browser reports one of the
+    transient network errors above. A failure for any other reason is raised immediately: this must never hide a real problem."""
+    for attempt in range(1, attempts + 1):
+        page.console.clear()
+        page.exceptions.clear()
+        page.navigate("about:blank")
+        page.navigate(url)
+        try:
+            studio.wait("window.studio && window.studio.ready", 60, "Studio to be ready")
+            return
+        except TimeoutError:
+            transient = any(err in line for line in page.console for err in _TRANSIENT_NETWORK_ERRORS)
+            if not transient or attempt == attempts:
+                raise
+            time.sleep(2 * attempt)                                              # give Windows a moment to release the previous test's sockets
+
+
 @contextlib.contextmanager
 def launched(page, tmp_path, request, extra_env=None):
     if not HAVE_COMPILER:
@@ -102,13 +126,9 @@ def launched(page, tmp_path, request, extra_env=None):
                             stderr=subprocess.PIPE, env=env)
     url = json.loads(proc.stdout.readline())["charpente-studio"]["url"]
     threading.Thread(target=proc.stderr.read, daemon=True).start()
-    page.console.clear()
-    page.exceptions.clear()
-    page.navigate("about:blank")
-    page.navigate(url)
     s = Studio(page, root, url, proc, request)
     try:
-        s.wait("window.studio && window.studio.ready", 60, "Studio to be ready")
+        _navigate_and_wait(page, s, url)
         yield s
         if SHOTS:
             Path(SHOTS).mkdir(parents=True, exist_ok=True)
