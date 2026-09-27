@@ -67,8 +67,11 @@ def reproducible(toolchain: Toolchain, root: Path) -> Toolchain:
     elif toolchain.name in ("gcc", "clang") and not toolchain.target.startswith(("macos", "ios")):
         link = ("-Wl,--build-id=none",)
     flavoured = with_flags(toolchain, "repro", (prefix,), link)
-    return replace(flavoured, env=(*toolchain.env, ("SOURCE_DATE_EPOCH", SOURCE_DATE_EPOCH), ("TZ", "UTC"), ("LC_ALL", "C")),
-                   extras=(*toolchain.extras, ("deterministic_ar", "1")))
+    env = (*toolchain.env, ("SOURCE_DATE_EPOCH", SOURCE_DATE_EPOCH), ("TZ", "UTC"), ("LC_ALL", "C"))
+    if toolchain.name == "apple-clang":
+        # Apple's `ar` has no `D` modifier (`ar rcsD` prints its usage and fails); it, `ranlib` and `libtool` zero the archive members' dates when ZERO_AR_DATE is set.
+        return replace(flavoured, env=(*env, ("ZERO_AR_DATE", "1")))
+    return replace(flavoured, env=env, extras=(*toolchain.extras, ("deterministic_ar", "1")))
 
 
 def _reason(output: str, fallback: str) -> str:

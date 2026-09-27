@@ -8,6 +8,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from helpers import needs_gnu_default
 
 from charpente import flags, repro, variants
 from charpente.cli import main
@@ -113,6 +114,7 @@ def trusted(monkeypatch):
 
 
 @pytest.mark.skipif(not HAVE_COMPILER, reason="needs a C++ compiler")
+@needs_gnu_default
 def test_a_normal_project_builds_reproducibly_in_two_different_folders(tmp_path, monkeypatch, capsys, trusted):
     monkeypatch.chdir(make(tmp_path))
     assert main(["verify-reproducible"]) == 0
@@ -121,6 +123,7 @@ def test_a_normal_project_builds_reproducibly_in_two_different_folders(tmp_path,
 
 
 @pytest.mark.skipif(not HAVE_COMPILER, reason="needs a C++ compiler")
+@needs_gnu_default
 def test_a_build_that_embeds_its_folder_is_reported_with_the_cause(tmp_path, monkeypatch, capsys, trusted):
     # The workspace file itself puts the current folder into the program: a real leak the mapped prefix cannot hide.
     monkeypatch.chdir(make(tmp_path, '        app.defines(["BUILD_DIR=\\"" + os.getcwd().replace("\\\\", "/") + "\\""])\n'))
@@ -142,6 +145,7 @@ def test_a_failing_build_is_reported_not_compared(tmp_path, monkeypatch, capsys,
 
 
 @pytest.mark.skipif(not HAVE_COMPILER, reason="needs a C++ compiler")
+@needs_gnu_default
 def test_the_flavour_has_its_own_folder_and_the_program_still_runs(tmp_path, monkeypatch, capsys, trusted):
     project = make(tmp_path)
     monkeypatch.chdir(project)
@@ -164,3 +168,13 @@ def test_a_copy_never_takes_build_output_along(tmp_path):
     _copy_project(tmp_path / "p", tmp_path / "copy")
     assert sorted(p.name for p in (tmp_path / "copy").iterdir()) == ["src"]
     assert os.path.exists(str(tmp_path / "copy" / "src" / "a.cpp")) and sys.platform
+
+
+def test_apple_archives_are_made_deterministic_without_the_gnu_only_modifier(tmp_path):
+    """Apple's `ar` rejects `rcsD` (found by the macOS CI job); it honours ZERO_AR_DATE instead."""
+    apple = replace(GCC, name="apple-clang", cxx_compiler="clang++", c_compiler="clang")
+    tc = variants.reproducible(apple, tmp_path)
+    assert dict(tc.env)["ZERO_AR_DATE"] == "1" and ("deterministic_ar", "1") not in tc.extras
+    lib = Target("lib", kind=Kind.STATIC_LIBRARY)
+    assert flags.link_args(tc, lib, [Path("a.o")], Path("liblib.a"))[1] == "rcs"
+    assert "ZERO_AR_DATE" not in dict(variants.reproducible(GCC, tmp_path).env)                # GNU toolchains keep the D modifier instead

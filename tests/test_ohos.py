@@ -95,7 +95,10 @@ def test_detection_is_hermetic_with_an_injected_which():
 
 # ------------------------------------------------------------------ installer
 def test_release_urls_are_built_from_a_validated_version():
-    assert toolchain_install.ohos_release_url("5.0.0").endswith("/5.0.0-Release/ohos-sdk-windows_linux-public.tar.gz")
+    assert toolchain_install.ohos_release_url("5.0.0", host_tag="windows-x64").endswith("/5.0.0-Release/ohos-sdk-windows_linux-public.tar.gz")
+    assert toolchain_install.ohos_release_url("5.0.0", host_tag="linux-x64").endswith("/5.0.0-Release/ohos-sdk-windows_linux-public.tar.gz")
+    assert toolchain_install.ohos_release_url("5.0.0", host_tag="mac").endswith("/5.0.0-Release/ohos-sdk-mac-public.tar.gz")          # macOS has its own archive
+    assert toolchain_install.ohos_release_url("5.0.0").endswith(".tar.gz")                                                           # this machine's
     assert "/6.0-Release/" in toolchain_install.ohos_release_url("6.0-Release")
     for bad in ("../x", "5.0.0/evil", "latest", ""):
         with pytest.raises(ChError):
@@ -138,7 +141,7 @@ def test_install_verifies_the_archive_and_unpacks_only_the_native_component(tmp_
     assert ohos.find_native({}, tmp_path) == target
     assert ("ohos", "5.0.0", target) in toolchain_install.installed()
     assert not (toolchains.toolchains_dir() / "downloads" / "ohos-sdk-windows_linux-public.tar.gz").exists()
-    assert toolchain_install.install_ohos("5.0.0", base=base, say=lambda t: None) == target
+    assert toolchain_install.install_ohos("5.0.0", base=base, say=lambda t: None, host_tag="windows-x64") == target
 
 
 def test_a_missing_native_component_or_bad_checksum_installs_nothing(tmp_path):

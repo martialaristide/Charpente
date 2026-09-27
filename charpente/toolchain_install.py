@@ -337,12 +337,12 @@ def ohos_host_tag(platform_name: Optional[str] = None) -> str:
     return {"win32": "windows-x64", "linux": "linux-x64", "darwin": "mac"}.get(name, "linux-x64")
 
 
-def ohos_release_url(version: str, base: str = OHOS_BASE) -> str:
-    """`5.0.0` -> .../5.0.0-Release/ohos-sdk-windows_linux-public.tar.gz (macOS has its own archive)."""
+def ohos_release_url(version: str, base: str = OHOS_BASE, host_tag: Optional[str] = None) -> str:
+    """`5.0.0` -> .../5.0.0-Release/ohos-sdk-windows_linux-public.tar.gz (macOS, `host_tag` "mac", has its own archive). `host_tag` defaults to this machine's."""
     if not re.fullmatch(r"[0-9]+(\.[0-9]+){1,3}(-[A-Za-z0-9]+)?", version):
         raise ChError("CH8005", name="ohos", detail=f"{version!r} is not a release like 5.0.0 or 6.0-Release")
     folder = version if "-" in version else f"{version}-Release"
-    archive = "ohos-sdk-mac-public.tar.gz" if sys.platform == "darwin" else "ohos-sdk-windows_linux-public.tar.gz"
+    archive = "ohos-sdk-mac-public.tar.gz" if (host_tag or ohos_host_tag()) == "mac" else "ohos-sdk-windows_linux-public.tar.gz"
     return f"{base}{folder}/{archive}"
 
 
@@ -359,7 +359,8 @@ def install_ohos(version: str = OHOS_DEFAULT, *, base: str = OHOS_BASE, progress
     published next to it, and only the native component is unpacked."""
     import tarfile
 
-    url = ohos_release_url(version, base)
+    tag = host_tag or ohos_host_tag()
+    url = ohos_release_url(version, base, tag)
     target = toolchains_dir() / f"ohos-{version}"
     if target.exists():
         return target
@@ -372,7 +373,6 @@ def install_ohos(version: str = OHOS_DEFAULT, *, base: str = OHOS_BASE, progress
     say("Downloading the OpenHarmony SDK archive (large; resumable) ...")
     archive = toolchains_dir() / "downloads" / url.rsplit("/", 1)[-1]
     download.download(url, archive, sha256=digest, max_bytes=MAX_OHOS_BYTES, progress=progress, timeout=120)
-    tag = host_tag or ohos_host_tag()
     say(f"Unpacking the native component for {tag} ...")
     holder = toolchains_dir() / "downloads" / f"ohos-{version}-native.zip"
     try:
